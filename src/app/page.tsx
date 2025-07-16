@@ -38,7 +38,7 @@ export default async function Home() {
           </div>
 
           {session?.user ? (
-            <Chat />
+            <Chat currentUserBeingId={session.user.beingId} />
           ) : (
             <p className="text-xl text-white/70">
               Please sign in to join the space.
