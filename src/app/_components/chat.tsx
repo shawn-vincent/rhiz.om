@@ -1,7 +1,7 @@
 // src/app/_components/chat.tsx
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef, useLayoutEffect } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 import { RichContent } from "~/app/_components/rich-content";
@@ -20,6 +20,10 @@ interface ChatProps {
 export function Chat({ currentUserBeingId }: ChatProps) {
   const [message, setMessage] = useState("");
   const [streamingResponses, setStreamingResponses] = useState<Record<string, string>>({});
+  const [isAtBottom, setIsAtBottom] = useState(true); // State to track if user is at the bottom
+
+  const chatContainerRef = useRef<HTMLUListElement>(null); // Ref for the scrollable chat container
+  const bottomAnchorRef = useRef<HTMLLIElement>(null); // Ref for the invisible anchor at the bottom
   
   const utils = api.useUtils();
   const [utterances] = api.intention.getAllUtterancesInSpace.useSuspenseQuery(
@@ -27,12 +31,34 @@ export function Chat({ currentUserBeingId }: ChatProps) {
     { staleTime: 0 }
   );
 
+  const groupedMessages = useMemo(() => {
+    // This logic remains the same and will work with the streaming updates
+    const combinedUtterances = utterances.map(utt => {
+      if (streamingResponses[utt.id]) {
+        return { ...utt, content: [streamingResponses[utt.id]] };
+      }
+      return utt;
+    });
+
+    const groups: Array<{ ownerId: string; messages: Utterance[] }> = [];
+    let currentGroup: { ownerId: string; messages: Utterance[] } | null = null;
+
+    for (const utterance of combinedUtterances) {
+      if (currentGroup && currentGroup.ownerId === utterance.ownerId) {
+        currentGroup.messages.push(utterance);
+      } else {
+        currentGroup = { ownerId: utterance.ownerId, messages: [utterance] };
+        groups.push(currentGroup);
+      }
+    }
+    return groups;
+  }, [utterances, streamingResponses]);
+
   const createUtterance = api.intention.createUtterance.useMutation({
     onSuccess: async (data) => {
       setMessage("");
       await utils.intention.getAllUtterancesInSpace.invalidate();
       
-      // The new AI intention ID is available here if needed for state tracking
       if (data.aiIntentionId) {
         setStreamingResponses(prev => ({ ...prev, [data.aiIntentionId]: "" }));
       }
@@ -42,7 +68,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
 
   const activeStream = utterances.find(u => u.state === 'active');
   
-  // NEW: useEffect for handling SSE
+  // useEffect for handling SSE
   useEffect(() => {
     if (!activeStream) return;
 
@@ -71,7 +97,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
     eventSource.onerror = (err) => {
       console.error("EventSource failed:", err);
       eventSource.close();
-      // Optionally invalidate data to show the 'failed' state from the DB
+      // Invalidate to fetch the final 'failed' state from the DB if an error occurs
       utils.intention.getAllUtterancesInSpace.invalidate();
     };
 
@@ -81,38 +107,47 @@ export function Chat({ currentUserBeingId }: ChatProps) {
     };
   }, [activeStream, utils.intention.getAllUtterancesInSpace]);
 
-  const groupedMessages = useMemo(() => {
-    // This logic remains the same and will work with the streaming updates
-    const combinedUtterances = utterances.map(utt => {
-      if (streamingResponses[utt.id]) {
-        return { ...utt, content: [streamingResponses[utt.id]] };
-      }
-      return utt;
-    });
+  // IntersectionObserver to detect if the user is at the bottom
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsAtBottom(entry.isIntersecting);
+      },
+      { root: chatContainerRef.current, threshold: 0.1 } // Observe within the chat container
+    );
 
-    const groups: Array<{ ownerId: string; messages: Utterance[] }> = [];
-    let currentGroup: { ownerId: string; messages: Utterance[] } | null = null;
-
-    for (const utterance of combinedUtterances) {
-      if (currentGroup && currentGroup.ownerId === utterance.ownerId) {
-        currentGroup.messages.push(utterance);
-      } else {
-        currentGroup = { ownerId: utterance.ownerId, messages: [utterance] };
-        groups.push(currentGroup);
-      }
+    if (bottomAnchorRef.current) {
+      observer.observe(bottomAnchorRef.current);
     }
-    return groups;
-  }, [utterances, streamingResponses]);
 
-  // The rest of the component's JSX remains the same
+    return () => {
+      if (bottomAnchorRef.current) {
+        observer.unobserve(bottomAnchorRef.current);
+      }
+    };
+  }, [chatContainerRef, bottomAnchorRef]);
+
+  // Auto-scroll to bottom if user is already at the bottom
+  useLayoutEffect(() => {
+    if (isAtBottom && bottomAnchorRef.current) {
+      bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [groupedMessages, isAtBottom]); // Re-run when new messages arrive or bottom status changes
+
+  const scrollToBottom = () => {
+    if (bottomAnchorRef.current) {
+      bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-4rem)] w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/5 p-4 shadow-lg">
+    <div className="relative flex h-[calc(100vh-4rem)] w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/5 p-4 shadow-lg">
       <div className="sticky top-0 z-10 mb-4 rounded-md bg-white/70 p-2 backdrop-blur dark:bg-gray-900/70">
         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
           Chat Space: {FAKE_SPACE_ID}
         </h2>
       </div>
-      <ul className="flex grow flex-col gap-3 overflow-y-auto">
+      <ul ref={chatContainerRef} className="flex grow flex-col gap-3 overflow-y-auto">
         {groupedMessages.map((group, groupIndex) => {
             const isCurrentUser = group.ownerId === currentUserBeingId;
             const avatarSrc = group.ownerId === AI_AGENT_BEING_ID 
@@ -140,7 +175,19 @@ export function Chat({ currentUserBeingId }: ChatProps) {
               </li>
             );
         })}
+        <li ref={bottomAnchorRef} className="h-px w-full"></li> {/* Invisible anchor */}
       </ul>
+      {!isAtBottom && (
+        <button
+          onClick={scrollToBottom}
+          className="absolute bottom-24 right-8 z-20 rounded-full bg-blue-500 p-3 text-white shadow-lg transition-all hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
+          title="Jump to latest messages"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-6 w-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 13.5L12 21m0 0l-7.5-7.5M12 21V3" />
+          </svg>
+        </button>
+      )}
        <form
         onSubmit={(e) => {
           e.preventDefault();
