@@ -5,7 +5,7 @@ import { api } from "~/trpc/react";
 
 // A hardcoded spaceId for demonstration purposes.
 // In a real app, this would come from the URL or other context.
-const FAKE_SPACE_ID = " @my-personal-space";
+const FAKE_SPACE_ID = "@my-personal-space";
 
 export function Chat() {
   // Query for all utterances in our hardcoded space

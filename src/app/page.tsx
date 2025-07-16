@@ -6,7 +6,7 @@ import { HydrateClient, api } from "~/trpc/server";
 
 export default async function Home() {
   const session = await auth();
-  const FAKE_SPACE_ID = " @my-personal-space";
+  const FAKE_SPACE_ID = "@my-personal-space";
 
   // Prefetch the utterances if the user is logged in
   if (session?.user) {
