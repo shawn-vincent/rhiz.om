@@ -6,6 +6,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { intentions, users } from "~/server/db/schema";
+import { ContentNode } from "~/server/db/content-types";
 
 export const intentionRouter = createTRPCRouter({
   // A public procedure to get all utterances in a space (location)
@@ -34,6 +35,20 @@ export const intentionRouter = createTRPCRouter({
 
       const newIntentionId = `/utterance-${crypto.randomUUID()}`;
 
+      let content: ContentNode[];
+      if (input.content === "/error") {
+        content = [
+          "This is **important**.",
+          {
+            type: "error",
+            content: ["An error occurred: ```json\n{\n  \"code\": 500,\n  \"message\": \"Internal Server Error\"\n}\n```"],
+          },
+          "Please try again.",
+        ];
+      } else {
+        content = [input.content];
+      }
+
       await ctx.db.insert(intentions).values({
         id: newIntentionId,
         name: `Utterance by ${ctx.session.user.name ?? "user"}`,
@@ -41,7 +56,7 @@ export const intentionRouter = createTRPCRouter({
         state: "complete",
         ownerId: userRecord.beingId,
         locationId: input.spaceId,
-        content: [input.content], // Storing content as an array of strings
+        content: content as any, // Drizzle types jsonb as unknown, so we cast
         modifiedAt: new Date(),
         createdAt: new Date(),
       });

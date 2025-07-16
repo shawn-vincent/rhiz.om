@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
+import { RichContent } from "~/app/_components/rich-content";
+import { type ContentNode } from "~/server/db/content-types";
 
 // A hardcoded spaceId for demonstration purposes.
 // In a real app, this would come from the URL or other context.
@@ -94,7 +96,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
                   {/* Bubbles */}
                   <div className={`flex flex-col gap-0.5 ${isCurrentUser ? "items-end" : "items-start"}`}>
                     {group.messages.map((utt) => (
-                      <p
+                      <div
                         key={utt.id}
                         className={`px-4 py-2 rounded-2xl shadow ${
                           isCurrentUser
@@ -102,8 +104,8 @@ export function Chat({ currentUserBeingId }: ChatProps) {
                             : "bg-gray-100 text-gray-900 dark:bg-gray-700/60 dark:text-gray-50"
                         }`}
                       >
-                        {JSON.stringify(utt.content)}
-                      </p>
+                        <RichContent nodes={utt.content as ContentNode[]} />
+                      </div>
                     ))}
                   </div>
                 </div>
