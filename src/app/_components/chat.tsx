@@ -67,7 +67,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
           groupedMessages.map((group, groupIndex) => {
             const isCurrentUser = group.ownerId === currentUserBeingId;
             const avatarSrc = `https://i.pravatar.cc/40?u=${group.ownerId}`;
-            const firstMessageTime = new Date(group.messages[0].createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const firstMessageTime = new Date(group.messages[0]!.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
             return (
               <li

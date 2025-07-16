@@ -37,11 +37,11 @@ export default async function Home() {
             </div>
           </div>
 
-          {session?.user ? (
+          {session?.user?.beingId ? (
             <Chat currentUserBeingId={session.user.beingId} />
           ) : (
             <p className="text-xl text-white/70">
-              Please sign in to join the space.
+              {session?.user ? "Initializing your being, please wait..." : "Please sign in to join the space."}
             </p>
           )}
         </div>
