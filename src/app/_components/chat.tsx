@@ -111,7 +111,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsAtBottom(entry.isIntersecting);
+        setIsAtBottom(!!entry && entry.isIntersecting);
       },
       { root: chatContainerRef.current, threshold: 0.1 } // Observe within the chat container
     );
