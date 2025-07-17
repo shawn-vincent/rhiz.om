@@ -22,7 +22,7 @@ export const createTable = pgTableCreator((name) => `rhiz.om_${name}`);
 export const beings = createTable("being", {
   id: varchar("id", { length: 255 }).primaryKey(), // e.g., @shawn-vincent or @some-space
   name: varchar("name", { length: 256 }).notNull(),
-  type: varchar("type", { length: 50 }).notNull(), // 'guest', 'space', 'document', etc.
+  type: varchar("type", { length: 50 }).notNull(), // 'guest', 'being', 'document', etc.
   createdAt: timestamp("createdAt", { withTimezone: true })
     .default(sql`CURRENT_TIMESTAMP`)
     .notNull(),

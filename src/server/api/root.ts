@@ -19,6 +19,6 @@ export type AppRouter = typeof appRouter;
  * Create a server-side caller for the tRPC API.
  * @.env.example
  * const trpc = createCaller(createContext);
- * const res = await trpc.intention.getAllUtterancesInSpace({ spaceId: " @some-space" });
+ * const res = await trpc.intention.getAllUtterancesInBeing({ beingId: " @some-being" });
  */
 export const createCaller = createCallerFactory(appRouter);

@@ -9,7 +9,7 @@ export default async function SpacePage({ params }: { params: Promise<{ beingId:
   const beingId = decodeURIComponent(encodedBeingId);
 
   if (session?.user) {
-    void api.intention.getAllUtterancesInSpace.prefetch({ spaceId: beingId });
+    void api.intention.getAllUtterancesInBeing.prefetch({ beingId: beingId });
     // Prefetch beings for the site menu
     void api.being.getAll.prefetch();
   }
@@ -19,12 +19,12 @@ export default async function SpacePage({ params }: { params: Promise<{ beingId:
       <div className="container flex flex-col items-center justify-center p-4">
         {session?.user?.beingId ? (
           <Suspense fallback={<ChatLoading />}>
-            <Chat currentUserBeingId={session.user.beingId} spaceId={beingId} />
+            <Chat currentUserBeingId={session.user.beingId} beingId={beingId} />
           </Suspense>
         ) : (
           <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
             <p className="text-xl text-white/70">
-              {session?.user ? "Initializing your being..." : "Please sign in to join the space."}
+              {session?.user ? "Initializing your being..." : "Please sign in to join the being."}
             </p>
           </div>
         )}

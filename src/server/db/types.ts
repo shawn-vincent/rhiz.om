@@ -71,8 +71,8 @@ export const insertUserSchema = createInsertSchema(schema.users);
 // --- Inferred TypeScript Types ---
 
 // Select Types (for reading from the DB)
-export type SelectBeing = z.infer<typeof selectBeingSchema>;
-export type SelectIntention = z.infer<typeof selectIntentionSchema>;
+export type Being = z.infer<typeof selectBeingSchema>;
+export type Intention = z.infer<typeof selectIntentionSchema>;
 export type SelectUser = z.infer<typeof selectUserSchema>;
 
 // Insert Types (for writing to the DB)

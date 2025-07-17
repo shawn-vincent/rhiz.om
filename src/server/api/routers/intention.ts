@@ -20,12 +20,12 @@ const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 async function streamAiResponse({
   db,
   userContent,
-  spaceId,
+  beingId,
   aiIntentionId,
 }: {
   db: DrizzleDB;
   userContent: string;
-  spaceId: string;
+  beingId: string;
   aiIntentionId: string;
 }) {
   try {
@@ -102,18 +102,18 @@ async function streamAiResponse({
 
 
 export const intentionRouter = createTRPCRouter({
-  getAllUtterancesInSpace: publicProcedure
-    .input(z.object({ spaceId: z.string() }))
+  getAllUtterancesInBeing: publicProcedure
+    .input(z.object({ beingId: z.string() }))
     .query(async ({ ctx, input }) => {
       // This procedure remains the same
       return ctx.db.query.intentions.findMany({
-        where: eq(intentions.locationId, input.spaceId),
+        where: eq(intentions.locationId, input.beingId),
         orderBy: (intentions, { asc }) => [asc(intentions.createdAt)],
       });
     }),
 
   createUtterance: protectedProcedure
-    .input(z.object({ content: z.string().min(1), spaceId: z.string() }))
+    .input(z.object({ content: z.string().min(1), beingId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // This procedure remains the same
       const userRecord = await ctx.db.query.users.findFirst({
@@ -128,7 +128,7 @@ export const intentionRouter = createTRPCRouter({
         type: "utterance",
         state: "complete",
         ownerId: userRecord.beingId,
-        locationId: input.spaceId,
+        locationId: input.beingId,
         content: [input.content],
       });
 
@@ -139,7 +139,7 @@ export const intentionRouter = createTRPCRouter({
         type: "utterance",
         state: "active",
         ownerId: AI_AGENT_BEING_ID,
-        locationId: input.spaceId,
+        locationId: input.beingId,
         content: [""],
       });
 
@@ -147,7 +147,7 @@ export const intentionRouter = createTRPCRouter({
       streamAiResponse({
         db: ctx.db,
         userContent: input.content,
-        spaceId: input.spaceId,
+        beingId: input.beingId,
         aiIntentionId,
       }).catch(console.error);
 

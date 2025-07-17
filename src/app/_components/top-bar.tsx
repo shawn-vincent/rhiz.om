@@ -13,7 +13,7 @@ import { SiteMenu } from "./site-menu";
 
 export function TopBar({ session }: { session: Session | null }) {
   const params = useParams();
-  const spaceId = params.beingId ? decodeURIComponent(params.beingId as string) : undefined;
+  const beingId = params.beingId ? decodeURIComponent(params.beingId as string) : undefined;
 
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-b border-white/20 bg-background/80 px-4 backdrop-blur">
@@ -37,7 +37,7 @@ export function TopBar({ session }: { session: Session | null }) {
       )}
 
       <h1 className="flex-1 text-2xl font-extrabold tracking-tight text-white sm:text-[2rem]">
-        {spaceId || "Rhiz.om"}
+        {beingId || "Rhiz.om"}
       </h1>
 
       {session ? (

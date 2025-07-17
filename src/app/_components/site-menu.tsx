@@ -14,7 +14,7 @@ function AllBeingsList() {
     <ScrollArea className="flex-grow">
       <div className="flex flex-col gap-2 pr-4">
         {beings.map((being) => (
-          <Link href={`/space/${being.id}`} key={being.id} className="text-sm p-2 rounded-md hover:bg-white/5">
+          <Link href={`/being/${being.id}`} key={being.id} className="text-sm p-2 rounded-md hover:bg-white/5">
             <p className="font-semibold truncate">{being.name}</p>
             <p className="text-xs text-white/60">{being.id}</p>
           </Link>

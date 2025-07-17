@@ -11,14 +11,14 @@ import superjson from "superjson";
 
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 
-type Utterance = RouterOutputs["intention"]["getAllUtterancesInSpace"][number];
+type Utterance = RouterOutputs["intention"]["getAllUtterancesInBeing"][number];
 
 interface ChatProps {
   currentUserBeingId: string;
-  spaceId: string;
+  beingId: string;
 }
 
-export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
+export function Chat({ currentUserBeingId, beingId }: ChatProps) {
   const [message, setMessage] = useState("");
   const [streamingResponses, setStreamingResponses] = useState<Record<string, string>>({});
   const [isAtBottom, setIsAtBottom] = useState(true); // State to track if user is at the bottom
@@ -27,8 +27,8 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
   const bottomAnchorRef = useRef<HTMLLIElement>(null); // Ref for the invisible anchor at the bottom
   
   const utils = api.useUtils();
-  const [utterances] = api.intention.getAllUtterancesInSpace.useSuspenseQuery(
-    { spaceId },
+  const [utterances] = api.intention.getAllUtterancesInBeing.useSuspenseQuery(
+    { beingId },
     { staleTime: 0 }
   );
 
@@ -58,7 +58,7 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
   const createUtterance = api.intention.createUtterance.useMutation({
     onSuccess: async (data) => {
       setMessage("");
-      await utils.intention.getAllUtterancesInSpace.invalidate();
+      await utils.intention.getAllUtterancesInBeing.invalidate();
       
       if (data.aiIntentionId) {
         setStreamingResponses(prev => ({ ...prev, [data.aiIntentionId]: "" }));
@@ -86,7 +86,7 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
           [activeStream.id]: (prev[activeStream.id] ?? "") + data,
         }));
       } else if (type === 'end' || type === 'error') {
-        utils.intention.getAllUtterancesInSpace.invalidate();
+        utils.intention.getAllUtterancesInBeing.invalidate();
         setStreamingResponses(prev => {
           const { [activeStream.id]: _, ...rest } = prev;
           return rest;
@@ -99,14 +99,14 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
       console.error("EventSource failed:", err);
       eventSource.close();
       // Invalidate to fetch the final 'failed' state from the DB if an error occurs
-      utils.intention.getAllUtterancesInSpace.invalidate();
+      utils.intention.getAllUtterancesInBeing.invalidate();
     };
 
     // Cleanup on component unmount or when activeStream changes
     return () => {
       eventSource.close();
     };
-  }, [activeStream, utils.intention.getAllUtterancesInSpace]);
+  }, [activeStream, utils.intention.getAllUtterancesInBeing]);
 
   // IntersectionObserver to detect if the user is at the bottom
   useEffect(() => {
@@ -208,7 +208,7 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
           if (message.trim()) {
             createUtterance.mutate({
               content: message,
-              spaceId,
+              beingId: beingId,
             });
           }
         }}
