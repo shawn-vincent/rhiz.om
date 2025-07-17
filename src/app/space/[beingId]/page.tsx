@@ -3,9 +3,10 @@ import { Chat } from "~/app/_components/chat";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
 
-export default async function SpacePage({ params }: { params: { beingId: string } }) {
+export default async function SpacePage({ params }: { params: Promise<{ beingId: string }> }) {
   const session = await auth();
-  const beingId = decodeURIComponent(params.beingId);
+  const { beingId: encodedBeingId } = await params;
+  const beingId = decodeURIComponent(encodedBeingId);
 
   if (session?.user) {
     void api.intention.getAllUtterancesInSpace.prefetch({ spaceId: beingId });
