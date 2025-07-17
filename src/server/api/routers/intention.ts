@@ -1,7 +1,7 @@
 import { Readable } from "stream";
 import { observable } from "@trpc/server/observable";
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import { emitter } from "~/lib/events";
 import {
