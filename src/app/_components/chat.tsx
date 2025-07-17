@@ -8,16 +8,17 @@ import { RichContent } from "~/app/_components/rich-content";
 import { type ContentNode } from "~/server/db/content-types";
 import superjson from "superjson";
 
-const FAKE_SPACE_ID = "@my-personal-space";
+
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 
 type Utterance = RouterOutputs["intention"]["getAllUtterancesInSpace"][number];
 
 interface ChatProps {
   currentUserBeingId: string;
+  spaceId: string;
 }
 
-export function Chat({ currentUserBeingId }: ChatProps) {
+export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
   const [message, setMessage] = useState("");
   const [streamingResponses, setStreamingResponses] = useState<Record<string, string>>({});
   const [isAtBottom, setIsAtBottom] = useState(true); // State to track if user is at the bottom
@@ -27,7 +28,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
   
   const utils = api.useUtils();
   const [utterances] = api.intention.getAllUtterancesInSpace.useSuspenseQuery(
-    { spaceId: FAKE_SPACE_ID },
+    { spaceId },
     { staleTime: 0 }
   );
 
@@ -142,11 +143,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
 
   return (
     <div className="relative flex h-[calc(100vh-4rem)] w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/5 p-4 shadow-lg">
-      <div className="sticky top-0 z-10 mb-4 rounded-md bg-white/70 p-2 backdrop-blur dark:bg-gray-900/70">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          Chat Space: {FAKE_SPACE_ID}
-        </h2>
-      </div>
+      
       <ul ref={chatContainerRef} className="flex grow flex-col gap-3 overflow-y-auto">
         {groupedMessages.map((group, groupIndex) => {
             const isCurrentUser = group.ownerId === currentUserBeingId;
@@ -194,7 +191,7 @@ export function Chat({ currentUserBeingId }: ChatProps) {
           if (message.trim()) {
             createUtterance.mutate({
               content: message,
-              spaceId: FAKE_SPACE_ID,
+              spaceId,
             });
           }
         }}
