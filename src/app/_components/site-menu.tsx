@@ -27,9 +27,6 @@ function AllBeingsList() {
 export function SiteMenu() {
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4">
-         <h2 className="text-lg font-semibold">Site Menu</h2>
-      </div>
       <Separator className="bg-white/20" />
       <div className="p-4">
         <h3 className="mb-2 font-medium text-white/80">All Beings</h3>
