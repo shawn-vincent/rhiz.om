@@ -135,6 +135,23 @@ export function Chat({ currentUserBeingId, spaceId }: ChatProps) {
     }
   }, [groupedMessages, isAtBottom]); // Re-run when new messages arrive or bottom status changes
 
+  // Mount-time scroll to bottom to eliminate top-then-jump visual artifact
+  useLayoutEffect(() => {
+    if (chatContainerRef.current && typeof window !== 'undefined') {
+      const container = chatContainerRef.current;
+      const originalScrollBehavior = container.style.scrollBehavior; // Store original
+
+      // Temporarily set to 'auto' for instant scroll
+      container.style.scrollBehavior = 'auto';
+      container.scrollTop = container.scrollHeight;
+
+      // Restore original scroll-behavior after the first paint (or next tick)
+      setTimeout(() => {
+        container.style.scrollBehavior = originalScrollBehavior;
+      }, 0);
+    }
+  }, []); // Empty dependency array to run only once on mount
+
   const scrollToBottom = () => {
     if (bottomAnchorRef.current) {
       bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
