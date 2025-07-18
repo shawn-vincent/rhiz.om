@@ -28,7 +28,7 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${recursive.variable} dark`}>
-      <body>
+      <body className="fixed inset-0 h-full w-full overflow-hidden overscroll-none touch-none bg-background">
         <TRPCReactProvider>
           <AppShell>{children}</AppShell>
         </TRPCReactProvider>
