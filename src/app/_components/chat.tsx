@@ -159,7 +159,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-4rem)] w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/20 backdrop-blur-md shadow-lg ring-1 ring-white/25 p-4">
+    <div className="relative flex h-[calc(100vh-9rem)] w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/20 backdrop-blur-md shadow-lg ring-1 ring-white/25 p-4 pt-0">
       
       <ul ref={chatContainerRef} className="flex grow flex-col gap-3 overflow-y-auto">
         {groupedMessages.map((group, groupIndex) => {
