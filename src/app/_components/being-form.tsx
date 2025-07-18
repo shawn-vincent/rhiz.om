@@ -1,7 +1,8 @@
 /* ── src/app/_components/being-form.tsx ─────────────────────────── */
 "use client";
 
-import { z } from "zod/v4";
+import { useEffect } from "react"; // 1. Import useEffect
+import { z } from "zod";
 import {
   useForm,
   Controller,
@@ -27,31 +28,28 @@ import { Separator } from "~/components/ui/separator";
 import CodeMirror from "@uiw/react-codemirror";
 import { json as jsonLang } from "@codemirror/lang-json";
 
-import {
-  insertBeingSchema,
-} from "~/server/db/types";
+import { insertBeingSchema, type Being } from "~/server/db/types";
 
 /* ---------- Types ---------- */
-type BeingInput = z.infer<typeof insertBeingSchema>;
+// Use InsertBeing for form data type consistency
+type BeingFormData = z.infer<typeof insertBeingSchema>;
 
 interface BeingFormProps {
-  /** Pass defaults when editing an existing Being. */
-  initialData?: Partial<BeingInput>;
+  /** Pass the full Being object when editing. */
+  initialData?: Being; // Changed to Being to reflect fetched data type
   /** Called with parsed / validated data. */
-  onSubmit: (data: BeingInput) => void | Promise<void>;
+  onSubmit: (data: BeingFormData) => void | Promise<void>;
 }
 
 /* ── Component ─────────────────────────────────────────────────── */
 export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
   /* ---------- defaultValues (typed) ---------- */
-  const baseDefaults: DefaultValues<BeingInput> = {
+  const baseDefaults: DefaultValues<BeingFormData> = {
     id: "",
     name: "",
     type: "guest",
     ownerId: "",
     locationId: "",
-    createdAt: undefined,
-    modifiedAt: undefined,
     extIds: [],
     idHistory: [],
     metadata: {},
@@ -65,11 +63,21 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
     control,
     handleSubmit,
     setValue,
+    reset, // 2. Get the reset function from useForm
     formState: { errors, isSubmitting },
-  } = useForm<BeingInput>({
-    resolver: zodResolver(insertBeingSchema) as Resolver<BeingInput>,
-    defaultValues: { ...baseDefaults, ...initialData },
+  } = useForm<BeingFormData>({
+    resolver: zodResolver(insertBeingSchema) as Resolver<BeingFormData>,
+    defaultValues: initialData ?? baseDefaults,
   });
+
+  // 3. Add a useEffect to update the form when initialData changes.
+  // This is the standard practice for populating a form with async data.
+  useEffect(() => {
+    if (initialData) {
+      reset(initialData);
+    }
+  }, [initialData, reset]);
+
 
   /* ---------- FieldArray for extIds ---------- */
   const {
@@ -82,7 +90,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
   });
 
   /* ---------- submit ---------- */
-  const submit: SubmitHandler<BeingInput> = async (data) => {
+  const submit: SubmitHandler<BeingFormData> = async (data) => {
     await onSubmit(data);
   };
 
@@ -97,12 +105,12 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <Label htmlFor="id">ID (slug)</Label>
-          <Input id="id" placeholder="@new-being" {...register("id")} />
+          <Input id="id" placeholder="@new-being" {...register("id")} readOnly={!!initialData} />
           {errors.id && <p className="text-red-600 text-sm">{errors.id.message}</p>}
         </div>
 
         <div>
-          <Label htmlFor="name">Display Name</Label>
+          <Label htmlFor="name">Display Name</Label>
           <Input id="name" placeholder="Soulspace" {...register("name")} />
           {errors.name && (
             <p className="text-red-600 text-sm">{errors.name.message}</p>
@@ -111,30 +119,34 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
 
         <div>
           <Label htmlFor="type">Type</Label>
-          <Select
-            defaultValue={initialData?.type ?? "guest"}
-            onValueChange={(v) =>
-              setValue("type", v as BeingInput["type"], {
-                shouldValidate: true,
-              })
-            }
-          >
-            <SelectTrigger id="type">
-              <SelectValue placeholder="Choose" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="guest">guest</SelectItem>
-              <SelectItem value="space">space</SelectItem>
-              <SelectItem value="document">document</SelectItem>
-            </SelectContent>
-          </Select>
+          <Controller
+            control={control}
+            name="type"
+            render={({ field }) => (
+              <Select
+                value={field.value ?? "guest"}
+                onValueChange={(v) =>
+                  field.onChange(v as BeingFormData["type"])
+                }
+              >
+                <SelectTrigger id="type">
+                  <SelectValue placeholder="Choose" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="guest">guest</SelectItem>
+                  <SelectItem value="space">space</SelectItem>
+                  <SelectItem value="document">document</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
           {errors.type && (
             <p className="text-red-600 text-sm">{errors.type.message}</p>
           )}
         </div>
 
         <div>
-          <Label htmlFor="ownerId">Owner ID</Label>
+          <Label htmlFor="ownerId">Owner ID</Label>
           <Input id="ownerId" placeholder="@owner" {...register("ownerId")} />
           {errors.ownerId && (
             <p className="text-red-600 text-sm">{errors.ownerId.message}</p>
@@ -142,7 +154,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
         </div>
 
         <div>
-          <Label htmlFor="locationId">Location ID</Label>
+          <Label htmlFor="locationId">Location ID</Label>
           <Input id="locationId" placeholder="@space" {...register("locationId")} />
           {errors.locationId && (
             <p className="text-red-600 text-sm">{errors.locationId.message}</p>
@@ -184,7 +196,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
           variant="secondary"
           onClick={() => addExtId({ provider: "", id: "" })}
         >
-          + Add
+          + Add
         </Button>
 
         {errors.extIds && (
@@ -200,13 +212,13 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
           { name: "metadata", label: "Metadata (JSON)" },
           { name: "properties", label: "Properties (JSON)" },
           { name: "content", label: "Content (nested JSON)" },
-          { name: "idHistory", label: "ID History (array JSON)" },
+          { name: "idHistory", label: "ID History (array JSON)" },
         ] as const
       ).map(({ name, label }) => (
         <Controller
           key={name}
           control={control}
-          name={name}
+          name={name as keyof BeingFormData}
           render={({ field }) => (
             <div className="space-y-2">
               <Label>{label}</Label>
@@ -215,7 +227,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
                 extensions={[jsonLang()]}
                 height="200px"
                 value={
-                  field.value !== undefined
+                  field.value !== null && field.value !== undefined
                     ? JSON.stringify(field.value, null, 2)
                     : ""
                 }
@@ -224,7 +236,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
                     const parsed = JSON.parse(value);
                     field.onChange(parsed);
                   } catch {
-                    /* Let Zod surface parsing errors */
+                    // Invalid JSON will be caught by Zod validation on submit
                   }
                 }}
               />
@@ -247,3 +259,4 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
     </form>
   );
 }
+
