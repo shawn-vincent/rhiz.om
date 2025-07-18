@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { Chat } from "~/app/_components/chat";
+import { BeingBackground } from "~/app/_components/being-background";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
 
@@ -16,7 +17,8 @@ export default async function SpacePage({ params }: { params: Promise<{ beingId:
 
   return (
     <HydrateClient>
-      <div className="container flex flex-col items-center justify-center p-4">
+      <BeingBackground />
+      <div className="relative z-10 container flex flex-col items-center justify-center p-4">
         {session?.user?.beingId ? (
           <Suspense fallback={<ChatLoading />}>
             <Chat currentUserBeingId={session.user.beingId} beingId={beingId} />

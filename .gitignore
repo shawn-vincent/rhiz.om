@@ -44,5 +44,8 @@ yarn-error.log*
 
 # idea files
 .idea
-.vscode/settings.json
+
+# vscode
+.vscode/
+.VSCodeCounter/
 .env.off
