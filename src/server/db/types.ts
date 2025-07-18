@@ -26,9 +26,7 @@ const contentDataIslandSchema: z.ZodType<ContentDataIsland> = z.object({
   content: z.lazy(() => z.array(contentNodeSchema)).optional(),
 });
 
-export const contentNodeSchema: z.ZodType<ContentNode> = z.lazy(() =>
-  z.union([z.string(), contentDataIslandSchema]),
-);
+const contentNodeSchema = z.union([z.string(), contentDataIslandSchema]);
 
 // --- Main Table Schemas ---
 

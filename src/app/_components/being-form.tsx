@@ -1,189 +1,249 @@
-// src/app/_components/being-form.tsx
+/* ── src/app/_components/being-form.tsx ─────────────────────────── */
 "use client";
 
-// CORRECTED IMPORT: Aligned to v4 to match the schema source
 import { z } from "zod/v4";
-import { Field, Form } from "houseform";
+import {
+  useForm,
+  Controller,
+  useFieldArray,
+  type SubmitHandler,
+  type DefaultValues,
+  type Resolver,
+} from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~/components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectItem,
+  SelectContent,
+  SelectValue,
+} from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
-import { insertBeingSchema } from "~/server/db/types";
 
-import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
+import { json as jsonLang } from "@codemirror/lang-json";
 
-/**
- * Recursively unwraps a Zod type to get the innermost type using the public API.
- * This works for both Zod v3 and v4.
- * @param t The Zod type to unwrap.
- * @returns The base Zod type.
- */
-function unwrapZodType(t: z.ZodType): z.ZodType {
-  if ("unwrap" in t && typeof t.unwrap === "function") {
-    return unwrapZodType(t.unwrap());
-  }
-  return t;
+import {
+  insertBeingSchema,
+} from "~/server/db/types";
+
+/* ---------- Types ---------- */
+type BeingInput = z.infer<typeof insertBeingSchema>;
+
+interface BeingFormProps {
+  /** Pass defaults when editing an existing Being. */
+  initialData?: Partial<BeingInput>;
+  /** Called with parsed / validated data. */
+  onSubmit: (data: BeingInput) => void | Promise<void>;
 }
 
-/**
- * Determines the kind of form widget to render using version-safe `instanceof` checks.
- * This is the correct, public API-based approach.
- * @param t The Zod type for the form field.
- * @returns A string representing the widget kind.
- */
-function fieldKind(t: z.ZodType): string {
-  const unwrappedType = unwrapZodType(t);
+/* ── Component ─────────────────────────────────────────────────── */
+export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
+  /* ---------- defaultValues (typed) ---------- */
+  const baseDefaults: DefaultValues<BeingInput> = {
+    id: "",
+    name: "",
+    type: "guest",
+    ownerId: "",
+    locationId: "",
+    createdAt: undefined,
+    modifiedAt: undefined,
+    extIds: [],
+    idHistory: [],
+    metadata: {},
+    properties: {},
+    content: [],
+  };
 
-  // Using instanceof is the correct, version-agnostic way to check types
-  if (unwrappedType instanceof z.ZodEnum) return "enum";
-  if (unwrappedType instanceof z.ZodString) return "scalar";
-  if (unwrappedType instanceof z.ZodNumber) return "scalar";
-  if (unwrappedType instanceof z.ZodArray) return "array";
-  if (unwrappedType instanceof z.ZodObject) return "json";
-  if (unwrappedType instanceof z.ZodRecord) return "json";
-  if (unwrappedType instanceof z.ZodDate) return "json";
-  
-  // Default for any other complex or unknown types
-  return "json";
-}
+  /* ---------- useForm ---------- */
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<BeingInput>({
+    resolver: zodResolver(insertBeingSchema) as Resolver<BeingInput>,
+    defaultValues: { ...baseDefaults, ...initialData },
+  });
 
-export function BeingForm() {
-  const shape = insertBeingSchema.omit({ id: true, createdAt: true, modifiedAt: true }).shape;
+  /* ---------- FieldArray for extIds ---------- */
+  const {
+    fields: extIdFields,
+    append: addExtId,
+    remove: removeExtId,
+  } = useFieldArray({
+    control,
+    name: "extIds",
+  });
 
+  /* ---------- submit ---------- */
+  const submit: SubmitHandler<BeingInput> = async (data) => {
+    await onSubmit(data);
+  };
+
+  /* ---------- render ---------- */
   return (
-    <Form onSubmit={(values) => console.log("🔮 Being Form Preview", values)}>
-      {({ submit }) => (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-          className="grid gap-6"
-        >
-          {Object.entries(shape).map(([key, zodType]) => (
-            <DynamicField key={key} name={key} schema={zodType as unknown as z.ZodType} />
-          ))}
+    <form
+      onSubmit={handleSubmit(submit)}
+      className="space-y-6"
+      autoComplete="off"
+    >
+      {/* ----- Simple scalars ----- */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <Label htmlFor="id">ID (slug)</Label>
+          <Input id="id" placeholder="@new-being" {...register("id")} />
+          {errors.id && <p className="text-red-600 text-sm">{errors.id.message}</p>}
+        </div>
 
-          <Button type="submit">Preview JSON in Console</Button>
-        </form>
-      )}
-    </Form>
-  );
-}
+        <div>
+          <Label htmlFor="name">Display Name</Label>
+          <Input id="name" placeholder="Soulspace" {...register("name")} />
+          {errors.name && (
+            <p className="text-red-600 text-sm">{errors.name.message}</p>
+          )}
+        </div>
 
-type DynamicFieldProps = { name: string; schema: z.ZodType };
+        <div>
+          <Label htmlFor="type">Type</Label>
+          <Select
+            defaultValue={initialData?.type ?? "guest"}
+            onValueChange={(v) =>
+              setValue("type", v as BeingInput["type"], {
+                shouldValidate: true,
+              })
+            }
+          >
+            <SelectTrigger id="type">
+              <SelectValue placeholder="Choose" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="guest">guest</SelectItem>
+              <SelectItem value="space">space</SelectItem>
+              <SelectItem value="document">document</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.type && (
+            <p className="text-red-600 text-sm">{errors.type.message}</p>
+          )}
+        </div>
 
-function DynamicField({ name, schema }: DynamicFieldProps) {
-  const kind = fieldKind(schema);
-  const label = name.charAt(0).toUpperCase() + name.slice(1);
-  const unwrappedSchema = unwrapZodType(schema);
+        <div>
+          <Label htmlFor="ownerId">Owner ID</Label>
+          <Input id="ownerId" placeholder="@owner" {...register("ownerId")} />
+          {errors.ownerId && (
+            <p className="text-red-600 text-sm">{errors.ownerId.message}</p>
+          )}
+        </div>
 
-  if (kind === "array") {
-    return (
-      <Field<string[]> name={name} initialValue={[]}>
-        {({ value, setValue, errors }) => (
-          <div className="grid gap-2">
-            <Label>{label} (List of items)</Label>
-            {(value ?? []).map((_, index) => (
-              <div key={index} className="flex gap-2">
-                <Field<string> name={`${name}[${index}]`} initialValue="">
-                  {({ value: itemValue, setValue: setItemValue }) => (
-                    <Input
-                      value={itemValue}
-                      onChange={(e) => setItemValue(e.target.value)}
-                      placeholder="Enter value"
-                    />
-                  )}
-                </Field>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() =>
-                    setValue((prev) => (prev ?? []).filter((_, i) => i !== index))
-                  }
-                >
-                  −
-                </Button>
-              </div>
-            ))}
+        <div>
+          <Label htmlFor="locationId">Location ID</Label>
+          <Input id="locationId" placeholder="@space" {...register("locationId")} />
+          {errors.locationId && (
+            <p className="text-red-600 text-sm">{errors.locationId.message}</p>
+          )}
+        </div>
+      </div>
+
+      <Separator />
+
+      {/* ----- FieldArray: extIds ----- */}
+      <fieldset className="space-y-4">
+        <legend className="font-medium text-sm">External IDs</legend>
+
+        {extIdFields.map((field, idx) => (
+          <div
+            key={field.id}
+            className="grid grid-cols-[1fr_1fr_auto] gap-2"
+          >
+            <Input
+              placeholder="provider"
+              {...register(`extIds.${idx}.provider` as const)}
+            />
+            <Input
+              placeholder="id"
+              {...register(`extIds.${idx}.id` as const)}
+            />
             <Button
               type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setValue((prev) => [...(prev ?? []), ""])}
+              variant="destructive"
+              onClick={() => removeExtId(idx)}
             >
-              + Add Item
+              ✕
             </Button>
-            {errors.map((error) => (
-                <p key={error} className="text-sm text-destructive">{error}</p>
-            ))}
-            <Separator className="my-2 bg-white/20" />
           </div>
+        ))}
+
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => addExtId({ provider: "", id: "" })}
+        >
+          + Add
+        </Button>
+
+        {errors.extIds && (
+          <p className="text-red-600 text-sm">{errors.extIds.message}</p>
         )}
-      </Field>
-    );
-  }
+      </fieldset>
 
-  return (
-    <Field name={name} initialValue="">
-      {({ value, setValue, onBlur, errors }) => (
-        <div className="grid gap-1.5">
-          <Label htmlFor={name}>{label}</Label>
+      <Separator />
 
-          {kind === "scalar" && (
-            <Input
-              id={name}
-              value={(value as string) ?? ""}
-              onBlur={onBlur}
-              onChange={(e) => setValue(e.target.value)}
-            />
-          )}
-
-          {kind === "enum" && unwrappedSchema instanceof z.ZodEnum && (
-            <Select onValueChange={setValue} value={value as string}>
-              <SelectTrigger id={name} onBlur={onBlur}>
-                <SelectValue placeholder={`Select a ${name}`} />
-              </SelectTrigger>
-              <SelectContent>
-                {/* FINAL FIX: Explicitly convert enum option to a string */}
-                {unwrappedSchema.options.map((option) => (
-                  <SelectItem key={String(option)} value={String(option)}>
-                    {String(option)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          {kind === "json" && (
-             <CodeMirror
-              id={name}
-              value={typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2)}
-              height="120px"
-              theme="dark"
-              extensions={[json()]}
-              onBlur={onBlur}
-              onChange={(val: string) => {
-                try {
-                  setValue(JSON.parse(val));
-                } catch (e) {
-                  setValue(val);
+      {/* ----- JSON blobs via CodeMirror ----- */}
+      {(
+        [
+          { name: "metadata", label: "Metadata (JSON)" },
+          { name: "properties", label: "Properties (JSON)" },
+          { name: "content", label: "Content (nested JSON)" },
+          { name: "idHistory", label: "ID History (array JSON)" },
+        ] as const
+      ).map(({ name, label }) => (
+        <Controller
+          key={name}
+          control={control}
+          name={name}
+          render={({ field }) => (
+            <div className="space-y-2">
+              <Label>{label}</Label>
+              <CodeMirror
+                basicSetup={{ lineNumbers: true }}
+                extensions={[jsonLang()]}
+                height="200px"
+                value={
+                  field.value !== undefined
+                    ? JSON.stringify(field.value, null, 2)
+                    : ""
                 }
-              }}
-              className="rounded-md border border-input bg-background p-1 font-mono text-sm"
-            />
+                onChange={(value) => {
+                  try {
+                    const parsed = JSON.parse(value);
+                    field.onChange(parsed);
+                  } catch {
+                    /* Let Zod surface parsing errors */
+                  }
+                }}
+              />
+              {(errors as any)?.[name] && (
+                <p className="text-red-600 text-sm">
+                  {(errors as any)[name].message as string}
+                </p>
+              )}
+            </div>
           )}
+        />
+      ))}
 
-          {errors.map((error) => (
-            <p key={error} className="text-sm text-destructive">
-              {error}
-            </p>
-          ))}
-        </div>
-      )}
-    </Field>
+      <Separator />
+
+      {/* ----- Submit ----- */}
+      <Button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Saving…" : "Save Being"}
+      </Button>
+    </form>
   );
 }
