@@ -18,7 +18,7 @@ export default async function SpacePage({ params }: { params: Promise<{ beingId:
   return (
     <HydrateClient>
       <BeingBackground />
-      <div className="relative z-10 container flex flex-col items-center justify-center p-4">
+    <div className="relative z-10 container flex h-full flex-col items-center justify-center p-4">
         {session?.user?.beingId ? (
           <Suspense fallback={<ChatLoading />}>
             <Chat currentUserBeingId={session.user.beingId} beingId={beingId} />
