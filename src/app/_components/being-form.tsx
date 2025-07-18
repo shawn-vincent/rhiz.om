@@ -1,8 +1,9 @@
 // src/app/_components/being-form.tsx
 "use client";
 
+// CORRECTED IMPORT: Aligned to v4 to match the schema source
+import { z } from "zod/v4";
 import { Field, Form } from "houseform";
-import { z } from "zod";
 
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
@@ -14,36 +15,46 @@ import { insertBeingSchema } from "~/server/db/types";
 import { json } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
 
-// Small utility to map Zod type definitions to a widget "kind"
-function fieldKind(t: z.ZodTypeAny): string {
-  const def = t._def;
-  switch (def.typeName) {
-    case "ZodEnum":
-      return "enum";
-    case "ZodString":
-    case "ZodNumber":
-      return "scalar";
-    case "ZodArray":
-      return "array";
-    case "ZodObject":
-    case "ZodRecord":
-    case "ZodAny":
-    case "ZodDate": // Treat dates as JSON for now
-      return "json";
-    case "ZodNullable":
-    case "ZodOptional":
-      return fieldKind((t as z.ZodOptional<any> | z.ZodNullable<any>)._def.innerType);
-    default:
-      return "json";
+/**
+ * Recursively unwraps a Zod type to get the innermost type using the public API.
+ * This works for both Zod v3 and v4.
+ * @param t The Zod type to unwrap.
+ * @returns The base Zod type.
+ */
+function unwrapZodType(t: z.ZodType): z.ZodType {
+  if ("unwrap" in t && typeof t.unwrap === "function") {
+    return unwrapZodType(t.unwrap());
   }
+  return t;
+}
+
+/**
+ * Determines the kind of form widget to render using version-safe `instanceof` checks.
+ * This is the correct, public API-based approach.
+ * @param t The Zod type for the form field.
+ * @returns A string representing the widget kind.
+ */
+function fieldKind(t: z.ZodType): string {
+  const unwrappedType = unwrapZodType(t);
+
+  // Using instanceof is the correct, version-agnostic way to check types
+  if (unwrappedType instanceof z.ZodEnum) return "enum";
+  if (unwrappedType instanceof z.ZodString) return "scalar";
+  if (unwrappedType instanceof z.ZodNumber) return "scalar";
+  if (unwrappedType instanceof z.ZodArray) return "array";
+  if (unwrappedType instanceof z.ZodObject) return "json";
+  if (unwrappedType instanceof z.ZodRecord) return "json";
+  if (unwrappedType instanceof z.ZodDate) return "json";
+  
+  // Default for any other complex or unknown types
+  return "json";
 }
 
 export function BeingForm() {
-  // Use .omit() to hide fields that should not be user-editable
   const shape = insertBeingSchema.omit({ id: true, createdAt: true, modifiedAt: true }).shape;
 
   return (
-    <Form onSubmit={(values) => console.log(" Being Form Preview", values)}>
+    <Form onSubmit={(values) => console.log("🔮 Being Form Preview", values)}>
       {({ submit }) => (
         <form
           onSubmit={(e) => {
@@ -53,7 +64,7 @@ export function BeingForm() {
           className="grid gap-6"
         >
           {Object.entries(shape).map(([key, zodType]) => (
-            <DynamicField key={key} name={key} schema={zodType as unknown as z.ZodTypeAny} />
+            <DynamicField key={key} name={key} schema={zodType as unknown as z.ZodType} />
           ))}
 
           <Button type="submit">Preview JSON in Console</Button>
@@ -63,14 +74,13 @@ export function BeingForm() {
   );
 }
 
-type DynamicFieldProps = { name: string; schema: z.ZodTypeAny };
+type DynamicFieldProps = { name: string; schema: z.ZodType };
 
 function DynamicField({ name, schema }: DynamicFieldProps) {
   const kind = fieldKind(schema);
   const label = name.charAt(0).toUpperCase() + name.slice(1);
+  const unwrappedSchema = unwrapZodType(schema);
 
-  // HouseForm handles arrays using the standard <Field> component.
-  // We access array-specific methods like `add` and `remove` from the render prop.
   if (kind === "array") {
     return (
       <Field<string[]> name={name} initialValue={[]}>
@@ -92,7 +102,7 @@ function DynamicField({ name, schema }: DynamicFieldProps) {
                   type="button"
                   variant="secondary"
                   onClick={() =>
-                    setValue((prev) => prev.filter((_, i) => i !== index))
+                    setValue((prev) => (prev ?? []).filter((_, i) => i !== index))
                   }
                 >
                   −
@@ -103,7 +113,7 @@ function DynamicField({ name, schema }: DynamicFieldProps) {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setValue((prev) => [...prev, ""])}
+              onClick={() => setValue((prev) => [...(prev ?? []), ""])}
             >
               + Add Item
             </Button>
@@ -117,7 +127,6 @@ function DynamicField({ name, schema }: DynamicFieldProps) {
     );
   }
 
-  // Fallback for all other types
   return (
     <Field name={name} initialValue="">
       {({ value, setValue, onBlur, errors }) => (
@@ -127,21 +136,22 @@ function DynamicField({ name, schema }: DynamicFieldProps) {
           {kind === "scalar" && (
             <Input
               id={name}
-              value={value as string}
+              value={(value as string) ?? ""}
               onBlur={onBlur}
               onChange={(e) => setValue(e.target.value)}
             />
           )}
 
-          {kind === "enum" && (
+          {kind === "enum" && unwrappedSchema instanceof z.ZodEnum && (
             <Select onValueChange={setValue} value={value as string}>
               <SelectTrigger id={name} onBlur={onBlur}>
                 <SelectValue placeholder={`Select a ${name}`} />
               </SelectTrigger>
               <SelectContent>
-                {(schema as z.ZodEnum<[string, ...string[]]>).options.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
+                {/* FINAL FIX: Explicitly convert enum option to a string */}
+                {unwrappedSchema.options.map((option) => (
+                  <SelectItem key={String(option)} value={String(option)}>
+                    {String(option)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -149,14 +159,20 @@ function DynamicField({ name, schema }: DynamicFieldProps) {
           )}
 
           {kind === "json" && (
-            <CodeMirror
+             <CodeMirror
               id={name}
-              value={typeof value === 'string' ? value : JSON.stringify(value, null, 2)}
+              value={typeof value === 'string' ? value : JSON.stringify(value ?? '', null, 2)}
               height="120px"
               theme="dark"
               extensions={[json()]}
               onBlur={onBlur}
-              onChange={(val: string) => setValue(val)}
+              onChange={(val: string) => {
+                try {
+                  setValue(JSON.parse(val));
+                } catch (e) {
+                  setValue(val);
+                }
+              }}
               className="rounded-md border border-input bg-background p-1 font-mono text-sm"
             />
           )}
