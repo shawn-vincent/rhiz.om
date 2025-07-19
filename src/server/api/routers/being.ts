@@ -45,7 +45,7 @@ export const beingRouter = createTRPCRouter({
       if (!input.ownerId || input.ownerId !== sessionBeingId) {
         throw new TRPCError({
           code: "FORBIDDEN",
-          message: "You can only save beings that you own.",
+          message: `You can only save beings that you own [Tried to modify ${input.id} owned by ${input.ownerId||'UNDEFINED'}, you=${sessionBeingId || 'UNDEFINED'}.]`,
         });
       }
 
