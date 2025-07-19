@@ -1,6 +1,7 @@
 // src/app/_components/being-editor-modal.tsx
 "use client";
 
+import { Pencil } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -21,7 +22,9 @@ export function BeingEditorModal({ beingId, title }: BeingEditorModalProps) {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button variant="outline">{title}</Button>
+				<Button variant="ghost" size="icon" aria-label="Edit Being">
+					<Pencil className="size-5" />
+				</Button>
 			</DialogTrigger>
 			<DialogContent className="flex h-[90vh] max-w-[80vw] flex-col">
 				<ErrorBoundary>
