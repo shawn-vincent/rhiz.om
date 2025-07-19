@@ -98,7 +98,7 @@ async function streamAiResponse({
 
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
 	} catch (error) {
-		intentionLogger.error({ error }, "AI response generation failed");
+		intentionLogger.error(error, "AI response generation failed");
 		emitter.emit(`update.${aiIntentionId}`, {
 			type: "error",
 			data: "Failed to get response from AI.",

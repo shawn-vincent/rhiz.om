@@ -5,6 +5,7 @@ import { Recursive } from "next/font/google";
 
 import { AppShell } from "~/app/_components/app-shell";
 import { TRPCReactProvider } from "~/trpc/react";
+import { Toaster } from "~/components/ui/sonner";
 
 export const metadata: Metadata = {
 	viewport: {
@@ -32,6 +33,7 @@ export default function RootLayout({
 				<TRPCReactProvider>
 					<AppShell>{children}</AppShell>
 				</TRPCReactProvider>
+				<Toaster position="top-center" />
 			</body>
 		</html>
 	);

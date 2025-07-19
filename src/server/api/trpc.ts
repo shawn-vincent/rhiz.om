@@ -101,7 +101,7 @@ const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
 	if (result.ok) {
 		logger.info(meta, "tRPC OK");
 	} else {
-		logger.error({ ...meta, error: result.error }, "tRPC Error");
+		logger.error(result.error, "tRPC Error");
 	}
 
 	return result;

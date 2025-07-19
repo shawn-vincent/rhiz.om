@@ -44,7 +44,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 			await utils.being.getAll.invalidate();
 		},
 		onError: (err) => {
-			beingEditorLogger.error({ err }, "Failed to save being");
+			beingEditorLogger.error(err, "Failed to save being: "+err.message);
 		},
 	});
 
@@ -89,7 +89,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 	}, [being, reset]);
 
 	const submit: SubmitHandler<BeingFormData> = async (data) => {
-		await upsertBeing.mutateAsync(data);
+		await upsertBeing.mutate(data);
 	};
 
 	if (isLoading) {

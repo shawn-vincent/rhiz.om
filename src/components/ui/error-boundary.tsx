@@ -24,7 +24,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 	}
 
 	public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-		errorLogger.error({ error, errorInfo }, "Uncaught error");
+		errorLogger.error(error, "Uncaught error");
 		// You can also log the error to an error reporting service
 		// logErrorToMyService(error, errorInfo);
 	}

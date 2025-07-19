@@ -106,7 +106,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		};
 
 		eventSource.onerror = (err) => {
-			chatLogger.error({ err }, "EventSource failed");
+			chatLogger.error(err, "EventSource failed");
 			eventSource.close();
 			// Invalidate to fetch the final 'failed' state from the DB if an error occurs
 			utils.intention.getAllUtterancesInBeing.invalidate();

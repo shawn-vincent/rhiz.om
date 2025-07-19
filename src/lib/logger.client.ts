@@ -1,4 +1,6 @@
 import pino from "pino";
+import { toast } from "./toast";
+import type { ExternalToast } from "sonner";
 
 const DEBUG_LOGGING = false;
 
@@ -64,6 +66,20 @@ export const logger = pino({
 		transmit: {
 			level: "debug", // send everything you print
 			send(level, log) {
+				if (level === "error" || level === "fatal") {
+
+					if (log.messages[0] instanceof Error) {
+						// If the first message is an Error, use its message
+						log.messages[0] = log.messages[0].message;
+					}
+
+					toast.error(new String(log.messages), {
+						title: level+": "+new String(log.messages),
+						duration: 5000,
+						theme: "dark",
+					} as ExternalToast);
+				}
+
 				const meta = log.bindings.find((b) => "name" in b) ?? {};
 
 				const [first, ...restMsgs] = log.messages; // keep first element as-is
@@ -89,4 +105,3 @@ export const logger = pino({
 		},
 	},
 });
-
