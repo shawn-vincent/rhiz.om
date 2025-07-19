@@ -1,69 +1,92 @@
-// src/lib/logger.client.ts
-"use client";
+import pino from "pino";
 
-type LogLevel = "info" | "warn" | "error" | "debug";
+const DEBUG_LOGGING = false;
 
-type LogEntry = {
-	level: LogLevel;
-	msg: string;
-	[key: string]: unknown;
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function prettyBrowser(log: any) {
+	const colour = log.level >= 50
+		? "color:red"
+		: log.level >= 40
+		? "color:orange"
+		: log.level >= 30
+		? "color:cyan"
+		: log.level >= 20
+		? "color:gray"
+		: "color:purple";
 
-let logQueue: LogEntry[] = [];
-let flushTimeout: NodeJS.Timeout | null = null;
+	const text = {
+		10: "TRACE",
+		20: "DEBUG",
+		30: "INFO",
+		40: "WARN",
+		50: "ERROR",
+		60: "FATAL",
+	}[log.level as number] ?? "LVL?";
 
-async function flushLogs() {
-	if (logQueue.length === 0) {
-		return;
-	}
-
-	const logsToSend = [...logQueue];
-	logQueue = [];
-
-	try {
-		await fetch("/api/log", {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify(logsToSend), // Send as a single batch
-			keepalive: true, // Keep the request alive if the page is unloading
-		});
-	} catch (error) {
-		console.error("Failed to send logs:", error);
-	}
-
-	if (flushTimeout) {
-		clearTimeout(flushTimeout);
-		flushTimeout = null;
-	}
+	return [
+		`%c${text.padEnd(5)} %c${log.name ?? ""}%c ${log.msg}`,
+		colour,
+		"font-weight:bold",
+		"color:inherit",
+		log, // still clickable → expands full object
+	];
 }
 
-function enqueueLog(level: LogLevel, msg: string, context: object = {}) {
-	// Also log to console in development for immediate feedback
-	if (process.env.NODE_ENV === "development") {
-		const consoleMethod =
-			level === "error" ? "error" : level === "warn" ? "warn" : "info";
-		console[consoleMethod](msg, context);
-	}
-
-	logQueue.push({ level, msg, ...context });
-
-	if (!flushTimeout) {
-		flushTimeout = setTimeout(flushLogs, 1000); // Batch logs and send every 1 second
-	}
+// helper to post logs; beacon first, fetch fallback
+function postLog(payload: string) {
+	return (
+		navigator.sendBeacon?.("/api/log", payload) ??
+			fetch("/api/log", {
+				method: "POST",
+				body: payload,
+				headers: { "Content-Type": "application/json" },
+				keepalive: true, // so it still fires during unload
+			})
+	);
 }
 
-// Ensure logs are sent before the page unloads
-if (typeof window !== "undefined") {
-	window.addEventListener("beforeunload", flushLogs);
-}
+// Browser logger configured to debug level and output to the console.
+export const logger = pino({
+	level: "debug",
 
-export const log = {
-	info: (msg: string, context?: object) => enqueueLog("info", msg, context),
-	warn: (msg: string, context?: object) => enqueueLog("warn", msg, context),
-	error: (error: Error | string, context?: object) => {
-		const msg = error instanceof Error ? error.message : error;
-		const stack = error instanceof Error ? { stack: error.stack } : {};
-		enqueueLog("error", msg, { ...stack, ...context });
+	browser: {
+		serialize: true, // ⇢ log object is passed to both hooks
+
+		// A) pretty-print in your DevTools
+		write(raw) {
+			// raw is a POJO when serialize=true
+			// (if you prefer serialize:false, JSON.parse(raw) first)
+			// eslint-disable-next-line no-console
+			console.log(...prettyBrowser(raw));
+		},
+
+		// B) forward to the server
+		transmit: {
+			level: "debug", // send everything you print
+			send(level, log) {
+				const meta = log.bindings.find((b) => "name" in b) ?? {};
+
+				const [first, ...restMsgs] = log.messages; // keep first element as-is
+
+				const rec = {
+					level,
+					name: meta.name,
+					ts: log.ts,
+					...meta, // e.g.  { name:'<Guard>' }
+					...((typeof first === "object") ? first : {}), // merge extra fields like id
+					msg: [
+						(typeof first === "string") ? first : "", // readable message
+						...restMsgs,
+					].join(" "),
+				};
+
+				if (DEBUG_LOGGING) {
+					console.info("Sending to /api/_log", rec);
+				}
+
+				postLog(JSON.stringify(rec));
+			},
+		},
 	},
-	debug: (msg: string, context?: object) => enqueueLog("debug", msg, context),
-};
+});
+

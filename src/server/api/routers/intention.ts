@@ -13,6 +13,9 @@ import {
 } from "~/server/api/trpc";
 import type { DrizzleDB } from "~/server/db";
 import { intentions, users } from "~/server/db/schema";
+import { logger } from "~/server/lib/logger";
+
+const intentionLogger = logger.child({ name: "IntentionRouter" });
 
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 
@@ -95,7 +98,7 @@ async function streamAiResponse({
 
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
 	} catch (error) {
-		console.error("AI response generation failed:", error);
+		intentionLogger.error({ error }, "AI response generation failed");
 		emitter.emit(`update.${aiIntentionId}`, {
 			type: "error",
 			data: "Failed to get response from AI.",
@@ -156,7 +159,7 @@ export const intentionRouter = createTRPCRouter({
 				userContent: input.content,
 				beingId: input.beingId,
 				aiIntentionId,
-			}).catch(console.error);
+			}).catch((error) => intentionLogger.error({ error }, "Stream AI response failed"));
 
 			return { success: true, aiIntentionId };
 		}),

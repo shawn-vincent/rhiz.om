@@ -8,8 +8,10 @@ import ErrorBoundary from "~/components/ui/error-boundary";
 import type { ContentNode } from "~/server/db/content-types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
+import { logger } from "~/lib/logger.client";
 
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
+const chatLogger = logger.child({ name: "Chat" });
 
 type Utterance = RouterOutputs["intention"]["getAllUtterancesInBeing"][number];
 
@@ -104,7 +106,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		};
 
 		eventSource.onerror = (err) => {
-			console.error("EventSource failed:", err);
+			chatLogger.error({ err }, "EventSource failed");
 			eventSource.close();
 			// Invalidate to fetch the final 'failed' state from the DB if an error occurs
 			utils.intention.getAllUtterancesInBeing.invalidate();

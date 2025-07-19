@@ -1,5 +1,8 @@
 "use client";
 import React, { Component, type ErrorInfo, type ReactNode } from "react";
+import { logger } from "~/lib/logger.client";
+
+const errorLogger = logger.child({ name: "ErrorBoundary" });
 
 interface ErrorBoundaryProps {
 	children: ReactNode;
@@ -21,7 +24,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 	}
 
 	public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-		console.error("Uncaught error:", error, errorInfo);
+		errorLogger.error({ error, errorInfo }, "Uncaught error");
 		// You can also log the error to an error reporting service
 		// logErrorToMyService(error, errorInfo);
 	}

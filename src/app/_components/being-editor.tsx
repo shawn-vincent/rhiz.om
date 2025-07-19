@@ -19,6 +19,9 @@ import {
 } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { BeingForm } from "./being-form";
+import { logger } from "~/lib/logger.client";
+
+const beingEditorLogger = logger.child({ name: "BeingEditor" });
 
 interface BeingEditorProps {
 	beingId: string;
@@ -41,7 +44,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 			await utils.being.getAll.invalidate();
 		},
 		onError: (err) => {
-			console.error("Failed to save being:", err);
+			beingEditorLogger.error({ err }, "Failed to save being");
 		},
 	});
 
