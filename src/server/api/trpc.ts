@@ -13,6 +13,7 @@ import { ZodError } from "zod/v4";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { logger } from "~/server/lib/logger";
 
 /**
  * 1. CONTEXT
@@ -84,21 +85,26 @@ export const createTRPCRouter = t.router;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next, path }) => {
-	const start = Date.now();
+const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
+  const start = Date.now();
+  const result = await next();
+  const durationMs = Date.now() - start;
 
-	if (t._config.isDev) {
-		// artificial delay in dev
-		const waitMs = Math.floor(Math.random() * 400) + 100;
-		await new Promise((resolve) => setTimeout(resolve, waitMs));
-	}
+  const meta = {
+    path,
+    type,
+    durationMs,
+    userId: ctx.session?.user?.id,
+    ok: result.ok,
+  };
 
-	const result = await next();
+  if (result.ok) {
+    logger.info(meta, "tRPC OK");
+  } else {
+    logger.error({ ...meta, error: result.error }, "tRPC Error");
+  }
 
-	const end = Date.now();
-	console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
-
-	return result;
+  return result;
 });
 
 /**
@@ -108,7 +114,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * guarantee that a user querying is authorized, but you can still access user session data if they
  * are logged in.
  */
-export const publicProcedure = t.procedure.use(timingMiddleware);
+export const publicProcedure = t.procedure.use(loggingMiddleware);
 
 /**
  * Protected (authenticated) procedure
@@ -119,7 +125,7 @@ export const publicProcedure = t.procedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 export const protectedProcedure = t.procedure
-	.use(timingMiddleware)
+	.use(loggingMiddleware)
 	.use(({ ctx, next }) => {
 		if (!ctx.session?.user) {
 			throw new TRPCError({ code: "UNAUTHORIZED" });
