@@ -1,11 +1,11 @@
-// src/app/_components/page-config.tsx
+// src/app/_components/config.tsx
 "use client";
 
 import { useParams } from "next/navigation";
 import { Separator } from "~/components/ui/separator";
-import { BeingEditor } from "./being-editor";
+import { BeingEditorModal } from "./being-editor-modal";
 
-export function PageConfig() {
+export function Config() {
   const params = useParams();
   const beingId =
     params.beingId ? decodeURIComponent(params.beingId as string) : undefined;
@@ -21,7 +21,9 @@ export function PageConfig() {
   return (
     <>
       <Separator className="bg-white/20" />
-      <BeingEditor beingId={beingId} />
+      <div className="p-4">
+        <BeingEditorModal beingId={beingId} title="Edit Space" />
+      </div>
     </>
   );
 }

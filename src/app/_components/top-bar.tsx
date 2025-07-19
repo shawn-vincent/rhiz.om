@@ -8,7 +8,7 @@ import { useParams } from "next/navigation"; // Import useParams
 
 import { Button } from "~/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "~/components/ui/sheet";
-import { PageConfig } from "./page-config";
+import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
 export function TopBar({ session }: { session: Session | null }) {
@@ -54,7 +54,7 @@ export function TopBar({ session }: { session: Session | null }) {
                 Manage the settings for the current page.
               </SheetDescription>
             </SheetHeader>
-            <PageConfig />
+            <Config />
           </SheetContent>
         </Sheet>
       ) : (
