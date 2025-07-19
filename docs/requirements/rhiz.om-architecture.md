@@ -27,7 +27,7 @@ A larger corpus ⇒ more accurate code-completion, refactors, and error explanat
 | Real-time (opt-in) | **Socket.IO**                               | 4.8.1   | 2024-10-25   | `socket.io@4.8.1`     |
 | ORM                | **Prisma**                                  | 6.11.1  | 2025-07-04   | `prisma@6.11.1`       |
 | Database           | **PostgreSQL**                              | 17.3    | 2025-02-13   | server/RDS            |
-| Logging            | **Winston**                                 | 3.17.0  | 2024-11-10   | `winston@3.17.0`      |
+| Logging            | **pino**                                 | 3.17.0  | 2024-11-10   | `pino@3.17.0`      |
 | Unit tests         | **Jest**                                    | 30.0.3  | 2025-06-27   | `jest@30.0.3`         |
 | E2E tests          | **Playwright**                              | 1.54.1  | 2025-07-11   | `playwright@1.54.1`   |
 | Monorepo tooling   | **npm Workspaces** (Turbo cache optional)   | npm 10+ | —            | node-bundled          |
@@ -63,7 +63,7 @@ This pattern mirrors GitHub, Stripe, Google APIs—giving LLMs maximal prior art
 | **Socket.IO**      | 62 k★; most WebSocket tutorials.                | Pusher/Ably (closed SDK).                        |
 | **Prisma**         | 4 M downloads/wk; TS types.                     | Drizzle 1.4 M.                                   |
 | **PostgreSQL**     | #1 DB in SO 2024 (49 %).                        | MySQL 38 %.                                      |
-| **Winston**        | 15 M downloads/wk, 20 k★.                       | (No direct rival listed)                         |
+| **pino**        | 15 M downloads/wk, 20 k★.                       | (No direct rival listed)                         |
 | **Jest**           | 45 k★; default in older CRA/Next docs.          | Vitest 14 k★.                                    |
 | **Playwright**     | 74 k★; surpassed Cypress.                       | Cypress 49 k★.                                   |
 | **npm Workspaces** | Ships with Node; 55 % dev share.                | pnpm 32 %.                                       |
@@ -93,7 +93,7 @@ This pattern mirrors GitHub, Stripe, Google APIs—giving LLMs maximal prior art
 
 * **API** – Route Handlers + Server Actions only. Add Express + Socket.IO micro-service *if* we need long-lived sockets.
 * **Real-time** – Start with SSE; migrate to Socket.IO side-car container if collaboration load grows.
-* **Logging** – Winston JSON transport to stdout → Vercel Log Drains initially.
+* **Logging** – pino JSON transport to stdout → Vercel Log Drains initially.
 * **Testing** – `jest` + `@testing-library/react` (unit) & `playwright test` (E2E).
 * **CI** – Turbo (graph cache) + GitHub Actions → Vercel Preview & Production.
 * **Vercel Hobby limits** – 100 GB bandwidth / 1 M function invocations per month.

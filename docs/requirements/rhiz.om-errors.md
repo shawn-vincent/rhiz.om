@@ -9,9 +9,9 @@
 | # | Principle                                                                                                                                                                                                                                            |
 | - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **Make bugs loud.** If an exception would leave the system in an indeterminate state, let the boundary crash—never hide it.                                                                                                                          |
-| 2 | **Single, structured stream.** Every event—browser, API, worker—terminates in the same JSON-ND Winston log on the server.                                                                                                                               |
+| 2 | **Single, structured stream.** Every event—browser, API, worker—terminates in the same JSON-ND pino log on the server.                                                                                                                               |
 | 3 | **Zero-friction DX.** Pretty, colourised dev output; JSON in prod so containers can pipe straight to Loki, Datadog, CloudWatch, etc.                                                                                                                 |
-| 4 | **Context everywhere.** Use Winston **child loggers** by module/request/component; tags are automatic, overhead is negligible.                                                                                         |
+| 4 | **Context everywhere.** Use pino **child loggers** by module/request/component; tags are automatic, overhead is negligible.                                                                                         |
 | 5 | **User clarity.** Surface errors either (a) via `<ErrorBoundary>` fallbacks, or (b) by persisting a **“error intention”** that contains a JSON content-island describing the failure.  |
 
 ---
@@ -20,11 +20,11 @@
 
 | Runtime            | Package              | Min Version      | Notes                                                             |
 | ------------------ | -------------------- | ---------------- | ----------------------------------------------------------------- |
-| Node/Deno (server) | `winston`            | `^3.17`          | Current major → maintained & flexible                               |
-|                    | `winston-transport`  | `^1.0`           | Base class for custom transports                                    |
-| Browser            | `winston-browser`    | `^1.0`           | Browser-compatible Winston logger                                   |
+| Node/Deno (server) | `pino`            | `^3.17`          | Current major → maintained & flexible                               |
+|                    | `pino-transport`  | `^1.0`           | Base class for custom transports                                    |
+| Browser            | `pino-browser`    | `^1.0`           | Browser-compatible pino logger                                   |
 
-> **Transport threading.** All heavy log processing should be handled asynchronously via Winston transports.
+> **Transport threading.** All heavy log processing should be handled asynchronously via pino transports.
 
 ---
 
@@ -34,17 +34,17 @@
 
 ```ts
 // logger.ts
-import winston from 'winston';
+import pino from 'pino';
 
-export const logger = winston.createLogger({
+export const logger = pino.createLogger({
   level: process.env.NODE_ENV === 'development' ? 'debug' : 'info',
-  format: winston.format.combine(
-    winston.format.colorize(),
-    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-    winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
+  format: pino.format.combine(
+    pino.format.colorize(),
+    pino.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    pino.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
   ),
   transports: [
-    new winston.transports.Console()
+    new pino.transports.Console()
   ],
   redact: ['req.headers.authorization', 'password']
 });
@@ -60,17 +60,17 @@ export const logger = winston.createLogger({
 
 #### 3.2 HTTP & WebSocket
 
-For HTTP & WebSocket logging, integrate Winston with appropriate middleware (e.g., `express-winston` for Express).
+For HTTP & WebSocket logging, integrate pino with appropriate middleware (e.g., `express-pino` for Express).
 
 #### 3.3 Browser Logger
 
 ```ts
-import { createLogger } from 'winston';
-import { WinstonBrowserTransport } from 'winston-browser';
+import { createLogger } from 'pino';
+import { pinoBrowserTransport } from 'pino-browser';
 
 export const log = createLogger({
   transports: [
-    new WinstonBrowserTransport({
+    new pinoBrowserTransport({
       level: 'error', // ship only errors by default
       endpoint: '/api/log',
       interval: 1000, // Batch logs every 1 second
@@ -84,7 +84,7 @@ export const log = createLogger({
 | Field     | Type       | Notes                  |
 | --------- | ---------- | ---------------------- |
 | `ts`      | `number`   | Epoch ms               |
-| `level`   | Winston level | `'error'`, `'warn'`, … |
+| `level`   | pino level | `'error'`, `'warn'`, … |
 | `msg`     | `string`   | Human message          |
 | `browser` | `true`     | Fixed flag             |
 | `context` | `object`   | Arbitrary              |
@@ -124,7 +124,7 @@ Finally, if no better mechanism is available, the user should still be notified 
 | Rotation & retention | Leave to container/cluster log driver; harvest stdout/stderr.                                    |
 | Sampling             | If R2 egress grows, raise browser transmit level to `'fatal'` or sample `info` at 1 %.           |
 | Alerting             | Aggregator rules on `level >= error`; optionally wire OpenTelemetry IDs for cross-trace linking. |
-| Security             | Use Winston's `format.json` and custom formatters to redact PHI & secrets.                                                        |
+| Security             | Use pino's `format.json` and custom formatters to redact PHI & secrets.                                                        |
 
 ---
 
@@ -132,10 +132,10 @@ Finally, if no better mechanism is available, the user should still be notified 
 
 ```bash
 # Server
-npm install winston
+npm install pino
 
 # Client
-npm install winston winston-browser
+npm install pino pino-browser
 ```
 
 1. `import { logger }` on the server; derive child loggers per module.

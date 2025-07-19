@@ -237,6 +237,7 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
               <CodeMirror
                 basicSetup={{ lineNumbers: true }}
                 extensions={[jsonLang()]}
+                theme="dark"
                 height="200px"
                 value={
                   field.value !== null && field.value !== undefined

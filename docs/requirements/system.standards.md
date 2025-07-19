@@ -76,7 +76,7 @@ CI matrix: **Linux + macOS**, latest LTS Node & Deno. No red ❌ on `main`.
 ## 6 · Logging & Error Handling
 
 1. **Never swallow**: catch only to add context, log, and rethrow.
-2. **Winston** everywhere (JSON in prod, pretty in dev).
+2. **pino** everywhere (JSON in prod, pretty in dev).
 3. **Structured shape**:
 
 ```ts
