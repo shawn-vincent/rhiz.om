@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react"; // 1. Import useEffect
-import { z } from "zod";
+import { z } from "zod/v4";
 import {
   useForm,
   Controller,
@@ -48,8 +48,8 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
     id: "",
     name: "",
     type: "guest",
-    ownerId: "",
-    locationId: "",
+    ownerId: undefined,
+    locationId: undefined,
     extIds: [],
     idHistory: [],
     metadata: {},
@@ -67,14 +67,26 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
     formState: { errors, isSubmitting },
   } = useForm<BeingFormData>({
     resolver: zodResolver(insertBeingSchema) as Resolver<BeingFormData>,
-    defaultValues: initialData ?? baseDefaults,
+    defaultValues: baseDefaults,
   });
 
-  // 3. Add a useEffect to update the form when initialData changes.
-  // This is the standard practice for populating a form with async data.
+  // This useEffect correctly handles populating the form with fetched data
+  // and transforms it to be compatible with our form's schema.
   useEffect(() => {
     if (initialData) {
-      reset(initialData);
+      // Create a form-compatible version of the data from the database
+      const formValues: BeingFormData = {
+        ...initialData,
+        // Coalesce null values from the DB to undefined for the form
+        ownerId: initialData.ownerId ?? undefined,
+        locationId: initialData.locationId ?? undefined,
+        extIds: initialData.extIds ?? undefined,
+        idHistory: initialData.idHistory ?? undefined,
+        metadata: initialData.metadata ?? undefined,
+        properties: initialData.properties ?? undefined,
+        content: initialData.content ?? undefined,
+      };
+      reset(formValues);
     }
   }, [initialData, reset]);
 
@@ -233,6 +245,10 @@ export function BeingForm({ initialData, onSubmit }: BeingFormProps) {
                 }
                 onChange={(value) => {
                   try {
+                    if (value.trim() === "") {
+                        field.onChange(undefined);
+                        return;
+                    }
                     const parsed = JSON.parse(value);
                     field.onChange(parsed);
                   } catch {

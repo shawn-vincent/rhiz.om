@@ -13,7 +13,7 @@ export const extIdSchema = z.object({
 
 // Recursive schemas for nested ContentNode structure
 // We must explicitly type the base interfaces for z.lazy() to work correctly.
-interface ContentDataIsland {
+ interface ContentDataIsland {
   type: string;
   props?: Record<string, unknown>;
   content?: ContentNode[];
