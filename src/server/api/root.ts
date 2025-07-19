@@ -1,5 +1,5 @@
-import { intentionRouter } from "~/server/api/routers/intention";
 import { beingRouter } from "~/server/api/routers/being"; // 1. Import router
+import { intentionRouter } from "~/server/api/routers/intention";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -8,8 +8,8 @@ import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  intention: intentionRouter,
-  being: beingRouter, // 2. Add router
+	intention: intentionRouter,
+	being: beingRouter, // 2. Add router
 });
 
 // export type definition of API

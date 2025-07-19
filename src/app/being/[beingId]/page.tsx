@@ -1,44 +1,48 @@
 import { Suspense } from "react";
-import { Chat } from "~/app/_components/chat";
 import { BeingBackground } from "~/app/_components/being-background";
+import { Chat } from "~/app/_components/chat";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
 
-export default async function SpacePage({ params }: { params: Promise<{ beingId: string }> }) {
-  const session = await auth();
-  const { beingId: encodedBeingId } = await params;
-  const beingId = decodeURIComponent(encodedBeingId);
+export default async function SpacePage({
+	params,
+}: { params: Promise<{ beingId: string }> }) {
+	const session = await auth();
+	const { beingId: encodedBeingId } = await params;
+	const beingId = decodeURIComponent(encodedBeingId);
 
-  if (session?.user) {
-    void api.intention.getAllUtterancesInBeing.prefetch({ beingId: beingId });
-    // Prefetch beings for the site menu
-    void api.being.getAll.prefetch();
-  }
+	if (session?.user) {
+		void api.intention.getAllUtterancesInBeing.prefetch({ beingId: beingId });
+		// Prefetch beings for the site menu
+		void api.being.getAll.prefetch();
+	}
 
-  return (
-    <HydrateClient>
-      <BeingBackground />
-    <div className="relative z-10 container flex h-full flex-col items-center justify-center p-4">
-        {session?.user?.beingId ? (
-          <Suspense fallback={<ChatLoading />}>
-            <Chat currentUserBeingId={session.user.beingId} beingId={beingId} />
-          </Suspense>
-        ) : (
-          <div className="flex h-[calc(100vh-10rem)] items-center justify-center">
-            <p className="text-xl text-white/70">
-              {session?.user ? "Initializing your being..." : "Please sign in to join the being."}
-            </p>
-          </div>
-        )}
-      </div>
-    </HydrateClient>
-  );
+	return (
+		<HydrateClient>
+			<BeingBackground />
+			<div className="container relative z-10 flex h-full flex-col items-center justify-center p-4">
+				{session?.user?.beingId ? (
+					<Suspense fallback={<ChatLoading />}>
+						<Chat currentUserBeingId={session.user.beingId} beingId={beingId} />
+					</Suspense>
+				) : (
+					<div className="flex h-[calc(100vh-10rem)] items-center justify-center">
+						<p className="text-white/70 text-xl">
+							{session?.user
+								? "Initializing your being..."
+								: "Please sign in to join the being."}
+						</p>
+					</div>
+				)}
+			</div>
+		</HydrateClient>
+	);
 }
 
 function ChatLoading() {
-  return (
-    <div className="flex flex-col items-center justify-center w-full max-w-3xl h-full">
-        <p>Loading Chat...</p>
-    </div>
-  );
+	return (
+		<div className="flex h-full w-full max-w-3xl flex-col items-center justify-center">
+			<p>Loading Chat...</p>
+		</div>
+	);
 }

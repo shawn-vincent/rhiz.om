@@ -2,7 +2,7 @@
 export type ContentNode = string | ContentDataIsland;
 
 export interface ContentDataIsland {
-  type: string;
-  props?: Record<string, any>;
-  content?: ContentNode[];
+	type: string;
+	props?: Record<string, unknown>;
+	content?: ContentNode[];
 }

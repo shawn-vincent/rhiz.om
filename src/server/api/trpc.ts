@@ -86,25 +86,25 @@ export const createTRPCRouter = t.router;
  * network latency that would occur in production but not in local development.
  */
 const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
-  const start = Date.now();
-  const result = await next();
-  const durationMs = Date.now() - start;
+	const start = Date.now();
+	const result = await next();
+	const durationMs = Date.now() - start;
 
-  const meta = {
-    path,
-    type,
-    durationMs,
-    userId: ctx.session?.user?.id,
-    ok: result.ok,
-  };
+	const meta = {
+		path,
+		type,
+		durationMs,
+		userId: ctx.session?.user?.id,
+		ok: result.ok,
+	};
 
-  if (result.ok) {
-    logger.info(meta, "tRPC OK");
-  } else {
-    logger.error({ ...meta, error: result.error }, "tRPC Error");
-  }
+	if (result.ok) {
+		logger.info(meta, "tRPC OK");
+	} else {
+		logger.error({ ...meta, error: result.error }, "tRPC Error");
+	}
 
-  return result;
+	return result;
 });
 
 /**

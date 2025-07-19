@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function Home() {
-  redirect("/being/@intraliminal");
+	redirect("/being/@intraliminal");
 }
