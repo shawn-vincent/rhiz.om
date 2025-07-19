@@ -1,6 +1,6 @@
 // src/server/api/routers/being.ts
 import { eq } from "drizzle-orm";
-import { z } from "zod";
+import { z } from "zod/v4";
 
 import {
   createTRPCRouter,
@@ -8,7 +8,7 @@ import {
   publicProcedure,
 } from "~/server/api/trpc";
 import { beings } from "~/server/db/schema";
-import { insertBeingSchema } from "~/server/db/types";
+import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import { TRPCError } from "@trpc/server";
 
 export const beingRouter = createTRPCRouter({
@@ -17,6 +17,7 @@ export const beingRouter = createTRPCRouter({
    */
   getById: publicProcedure
     .input(z.object({ id: z.string() }))
+    .output(selectBeingSchema)
     .query(async ({ ctx, input }) => {
       const being = await ctx.db.query.beings.findFirst({
         where: eq(beings.id, input.id),
@@ -27,7 +28,7 @@ export const beingRouter = createTRPCRouter({
           message: `Being with ID "${input.id}" not found.`,
         });
       }
-      return being;
+      return selectBeingSchema.parse(being);
     }),
 
   /**
