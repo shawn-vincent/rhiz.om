@@ -7,7 +7,6 @@ import { EntitySelectPanel } from "../components/ui/EntitySelectPanel";
 import type { EntitySummary } from "../types";
 import { useState } from "react";
 import { api } from "~/trpc/react";
-import { BeingFiltersToolbar } from "~/app/_components/being-filters-toolbar";
 
 interface SelectProps {
   value?: string;
@@ -27,7 +26,7 @@ export function createSelectField(
     useHook,
   }: SelectProps) => {
     const [open, setOpen] = useState(false);
-    const { items, isLoading, isError, query, setQuery, fetchNextPage } = useHook();
+    const { items, isLoading, isError, query, setQuery } = useHook();
 
     const selectedEntity = items.find((item: EntitySummary) => item.id === value);
 
@@ -63,13 +62,11 @@ export function createSelectField(
           <EntitySelectPanel
             value={value}
             onSelect={handleSelect}
-            fetchPage={fetchNextPage}
             items={items}
             isLoading={isLoading}
             isError={isError}
             isEmpty={items.length === 0 && !isLoading && !isError}
             onSearchChange={setQuery}
-            filtersNode={<BeingFiltersToolbar />}
           />
         }
       />
