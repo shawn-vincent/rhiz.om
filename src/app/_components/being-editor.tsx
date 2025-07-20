@@ -2,6 +2,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 // src/app/_components/being-editor.tsx
 import { useEffect } from "react";
 import {
+	FormProvider,
 	type DefaultValues,
 	type Resolver,
 	type SubmitHandler,
@@ -61,13 +62,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 		content: [],
 	};
 
-	const {
-		control,
-		register,
-		handleSubmit,
-		reset,
-		formState: { errors, isSubmitting },
-	} = useForm<BeingFormData>({
+	const methods = useForm<BeingFormData>({
 		resolver: zodResolver(insertBeingSchema) as Resolver<BeingFormData>,
 		defaultValues: baseDefaults,
 	});
@@ -84,9 +79,9 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 				properties: being.properties ?? undefined,
 				content: being.content ?? undefined,
 			};
-			reset(formValues);
+			methods.reset(formValues);
 		}
-	}, [being, reset]);
+	}, [being, methods]);
 
 	const submit: SubmitHandler<BeingFormData> = async (data) => {
 		await upsertBeing.mutate(data);
@@ -104,16 +99,18 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 
 	return (
 		<ErrorBoundary>
-			<form onSubmit={handleSubmit(submit)} className="flex h-full flex-col">
-				<div className="flex-grow overflow-y-auto p-4">
-					<BeingForm control={control} register={register} errors={errors} />
-				</div>
-				<DialogFooter className="p-4">
-					<Button type="submit" disabled={isSubmitting}>
-						{isSubmitting ? "Saving…" : "Save Being"}
-					</Button>
-				</DialogFooter>
-			</form>
+			<FormProvider {...methods}>
+				<form onSubmit={methods.handleSubmit(submit)} className="flex h-full flex-col">
+					<div className="flex-grow overflow-y-auto p-4">
+						<BeingForm />
+					</div>
+					<DialogFooter className="p-4">
+						<Button type="submit" disabled={methods.formState.isSubmitting}>
+							{methods.formState.isSubmitting ? "Saving…" : "Save Being"}
+						</Button>
+					</DialogFooter>
+				</form>
+			</FormProvider>
 		</ErrorBoundary>
 	);
 }

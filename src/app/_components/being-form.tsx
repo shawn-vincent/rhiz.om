@@ -1,15 +1,12 @@
 import { useEffect } from "react";
 import { z } from "zod/v4";
-import {
-  Controller,
-  useFieldArray,
-  type Control,
-  type FieldErrors,
-  type UseFormRegister,
-} from "react-hook-form";
+import { useFormContext, useFieldArray, Controller } from "react-hook-form";
 
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { BeingSelectField } from "~/components/being-selector";
+import { useBeings } from "~/hooks/use-beings";
+import { EntityCard } from "packages/entity-kit/src/components/ui/EntityCard";
 import {
   Select,
   SelectTrigger,
@@ -28,14 +25,8 @@ import { insertBeingSchema } from "~/server/db/types";
 /* ---------- Types ---------- */
 type BeingFormData = z.infer<typeof insertBeingSchema>;
 
-interface BeingFormProps {
-  control: Control<BeingFormData>;
-  register: UseFormRegister<BeingFormData>;
-  errors: FieldErrors<BeingFormData>;
-}
-
-/* ── Component ─────────────────────────────────────────────────── */
-export function BeingForm({ control, register, errors }: BeingFormProps) {
+export function BeingForm() {
+  const { control, register, formState: { errors } } = useFormContext<BeingFormData>();
   /* ---------- FieldArray for extIds ---------- */
   const {
     fields: extIdFields,
@@ -97,7 +88,11 @@ export function BeingForm({ control, register, errors }: BeingFormProps) {
 
         <div>
           <Label htmlFor="ownerId">Owner ID</Label>
-          <Input id="ownerId" placeholder="@owner" {...register("ownerId")} />
+          <BeingSelectField
+            name="ownerId"
+            useHook={useBeings}
+            renderCard={(entity) => <EntityCard entity={entity} variant="compact" />}
+          />
           {errors.ownerId && (
             <p className="text-red-600 text-sm">{errors.ownerId.message}</p>
           )}
