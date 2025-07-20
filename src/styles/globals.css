@@ -47,6 +47,11 @@
 
 :root {
 	--radius: 0.625rem;
+	--entity-card-radius: 6px;
+	--entity-accent-space: oklch(0.646 0.222 41.116);
+	--entity-accent-guest: oklch(0.6 0.118 184.704);
+	--entity-accent-bot: oklch(0.398 0.07 227.392);
+	--entity-accent-doc: oklch(0.828 0.189 84.429);
 	--background: oklch(1 0 0);
 	--foreground: oklch(0.147 0.004 49.25);
 	--card: oklch(1 0 0);
@@ -120,5 +125,31 @@
 	}
 	body {
 		@apply bg-background text-foreground;
+	}
+
+	/* accent bar */
+	.entity-accent::before {
+		content: '';
+		width: 3px;
+		height: 100%;
+		inset-inline-start: 0;
+		position: absolute;
+		border-radius: 9999px;
+	}
+
+	[data-kind="space"] .entity-accent::before {
+		background-color: var(--entity-accent-space);
+	}
+
+	[data-kind="guest"] .entity-accent::before {
+		background-color: var(--entity-accent-guest);
+	}
+
+	[data-kind="bot"] .entity-accent::before {
+		background-color: var(--entity-accent-bot);
+	}
+
+	[data-kind="document"] .entity-accent::before {
+		background-color: var(--entity-accent-doc);
 	}
 }

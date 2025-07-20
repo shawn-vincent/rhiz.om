@@ -1,6 +1,7 @@
 // src/server/api/routers/being.ts
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
+import type { BeingKind, EntitySummary } from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
 import {
@@ -74,4 +75,62 @@ export const beingRouter = createTRPCRouter({
 			orderBy: (beings, { asc }) => [asc(beings.name)],
 		});
 	}),
+
+	/**
+	 * Searches for beings based on query, kind, and sort order.
+	 */
+	search: publicProcedure
+		.input(
+			z.object({
+				q: z.string().max(120).default(""),
+				kind: z.enum(["space", "guest", "bot", "document"]).optional(),
+				sort: z.enum(["name", "createdAt"]).default("name"),
+				limit: z.number().int().min(1).max(100).default(50),
+				cursor: z.string().uuid().nullish(),
+			}),
+		)
+		.query(async ({ input }): Promise<{ items: EntitySummary[]; nextCursor: string | null }> => {
+			// Mock implementation for now
+			const allBeings: EntitySummary[] = [
+				{ id: "1", name: "Alpha Space", kind: "space" },
+				{ id: "2", name: "Beta Guest", kind: "guest" },
+				{ id: "3", name: "Gamma Bot", kind: "bot" },
+				{ id: "4", name: "Delta Document", kind: "document" },
+				{ id: "5", name: "Echo Space", kind: "space" },
+				{ id: "6", name: "Foxtrot Guest", kind: "guest" },
+				{ id: "7", name: "Golf Bot", kind: "bot" },				
+				{ id: "8", name: "Hotel Document", kind: "document" },
+				{ id: "9", name: "India Space", kind: "space" },
+				{ id: "10", name: "Juliett Guest", kind: "guest" },
+			];
+
+			let filteredBeings = allBeings.filter((b) => {
+				const matchesQuery = input.q
+					? b.name.toLowerCase().includes(input.q.toLowerCase())
+					: true;
+				const matchesKind = input.kind ? b.kind === input.kind : true;
+				return matchesQuery && matchesKind;
+			});
+
+			if (input.sort === "name") {
+				filteredBeings.sort((a, b) => a.name.localeCompare(b.name));
+			} else if (input.sort === "createdAt") {
+				// For mock, we'll just reverse to simulate creation order
+				filteredBeings.reverse();
+			}
+
+			const limit = input.limit;
+			const cursorIndex = input.cursor
+				? filteredBeings.findIndex((b) => b.id === input.cursor)
+				: -1;
+			const startIndex = cursorIndex === -1 ? 0 : cursorIndex + 1;
+
+			const items = filteredBeings.slice(startIndex, startIndex + limit);
+			const nextCursor =
+				startIndex + limit < filteredBeings.length
+					? filteredBeings[startIndex + limit]?.id || null
+					: null;
+
+			return { items, nextCursor };
+		}),
 });
