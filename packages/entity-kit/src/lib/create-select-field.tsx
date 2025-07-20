@@ -6,6 +6,8 @@ import { ResponsiveShell } from "../components/ui/ResponsiveShell";
 import { EntitySelectPanel } from "../components/ui/EntitySelectPanel";
 import type { EntitySummary } from "../types";
 import { useState } from "react";
+import { api } from "~/trpc/react";
+import { BeingFiltersToolbar } from "~/app/_components/being-filters-toolbar";
 
 interface SelectProps {
   value?: string;
@@ -29,6 +31,15 @@ export function createSelectField(
 
     const selectedEntity = items.find((item: EntitySummary) => item.id === value);
 
+    const { data: fetchedEntity, isLoading: isFetchingEntity } = api.being.getById.useQuery(
+      { id: value! },
+      {
+        enabled: !!value && !selectedEntity,
+      },
+    );
+
+    const displayEntity = selectedEntity || fetchedEntity;
+
     const handleSelect = (id: string) => {
       onValueChange?.(id);
       setOpen(false);
@@ -45,7 +56,7 @@ export function createSelectField(
             aria-expanded={open}
             className="w-[200px] justify-between"
           >
-            {selectedEntity ? renderCard(selectedEntity) : "Select entity..."}
+            {displayEntity ? renderCard(displayEntity) : isFetchingEntity ? "Loading..." : "Select entity..."}
           </Button>
         }
         panel={
@@ -58,6 +69,7 @@ export function createSelectField(
             isError={isError}
             isEmpty={items.length === 0 && !isLoading && !isError}
             onSearchChange={setQuery}
+            filtersNode={<BeingFiltersToolbar />}
           />
         }
       />
