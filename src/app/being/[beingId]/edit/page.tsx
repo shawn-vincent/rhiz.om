@@ -73,6 +73,8 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 		metadata: {},
 		properties: {},
 		content: [],
+		botModel: "",
+		botPrompt: "",
 	};
 
 	const methods = useForm<BeingFormData>({

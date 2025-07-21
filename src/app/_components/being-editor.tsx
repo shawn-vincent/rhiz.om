@@ -60,6 +60,8 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 		metadata: {},
 		properties: {},
 		content: [],
+		botModel: "",
+		botPrompt: "",
 	};
 
 	const methods = useForm<BeingFormData>({

@@ -71,24 +71,28 @@ export function BeingForm() {
 					<Controller
 						control={control}
 						name="type"
-						render={({ field }) => (
-							<Select
-								value={field.value ?? "guest"}
-								onValueChange={(v) =>
-									field.onChange(v as BeingFormData["type"])
-								}
-							>
-								<SelectTrigger id="type">
-									<SelectValue placeholder="Choose" />
-								</SelectTrigger>
-								<SelectContent>
-									<SelectItem value="guest">guest</SelectItem>
-									<SelectItem value="space">space</SelectItem>
-									<SelectItem value="document">document</SelectItem>
-									<SelectItem value="bot">bot</SelectItem>
-								</SelectContent>
-							</Select>
-						)}
+							render={({ field }) => {
+							console.log('Type field value:', field.value); // Debug log
+							return (
+								<Select
+									value={field.value}
+									onValueChange={(value) => {
+										console.log('Changing type to:', value); // Debug log
+										field.onChange(value);
+									}}
+								>
+									<SelectTrigger id="type">
+										<SelectValue />
+									</SelectTrigger>
+									<SelectContent>
+										<SelectItem value="guest">guest</SelectItem>
+										<SelectItem value="space">space</SelectItem>
+										<SelectItem value="document">document</SelectItem>
+										<SelectItem value="bot">bot</SelectItem>
+									</SelectContent>
+								</Select>
+							);
+						}}
 					/>
 					{errors.type && (
 						<p className="text-red-600 text-sm">{errors.type.message}</p>
