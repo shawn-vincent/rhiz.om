@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { Avatar } from "~/components/ui/avatar";
 import type { ContentNode } from "~/server/db/content-types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
@@ -177,10 +178,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
-						const avatarSrc =
-							group.ownerId === AI_AGENT_BEING_ID
-								? `https://i.pravatar.cc/40?u=ai`
-								: `https://i.pravatar.cc/40?u=${group.ownerId}`;
+						// Special case for known AI agent, otherwise auto-detect
+						const knownBeingType = group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
 						const firstMessageTime = new Date(
 							group.messages[0]!.createdAt,
 						).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -190,10 +189,11 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 								key={groupIndex}
 								className={`group flex items-end gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 							>
-								<img
-									src={avatarSrc}
-									className="h-8 w-8 rounded-full"
-									alt={group.ownerId}
+								<Avatar
+									beingId={group.ownerId}
+									beingType={knownBeingType}
+									autoDetectType={!knownBeingType}
+									size="sm"
 								/>
 								<div
 									className={`flex w-full max-w-[75%] flex-col gap-0.5 ${isCurrentUser ? "items-end" : "items-start"}`}
