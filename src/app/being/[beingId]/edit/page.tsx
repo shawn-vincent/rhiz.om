@@ -131,7 +131,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 			<div className="min-h-screen bg-background">
 				{/* Mobile-first header with breadcrumb navigation */}
 				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-					<div className="container flex h-mobile-touch items-center gap-mobile-gap px-mobile-margin">
+					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
 						<Link href={`/being/${beingId}`}>
 							<Button
 								variant="ghost"
@@ -160,13 +160,13 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 				</header>
 
 				{/* Main content with mobile-optimized spacing */}
-				<main className="container px-mobile-margin py-4">
+				<main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
 					<FormProvider {...methods}>
 						<form onSubmit={methods.handleSubmit(submit)} className="space-y-6">
 							<BeingForm />
 
 							{/* Mobile-friendly action buttons */}
-							<div className="-mx-mobile-margin sticky bottom-0 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+							<div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 border-t bg-background/95 p-4 sm:p-6 lg:p-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 								<div className="flex gap-mobile-gap">
 									<Button
 										type="button"

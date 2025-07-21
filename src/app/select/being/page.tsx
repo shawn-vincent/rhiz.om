@@ -86,7 +86,7 @@ export default function BeingSelectPage() {
 			<div className="min-h-screen bg-background">
 				{/* Mobile-optimized header */}
 				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-					<div className="flex h-mobile-touch items-center gap-mobile-gap px-mobile-margin">
+					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
 						<Button
 							variant="ghost"
 							size="sm"
@@ -109,7 +109,7 @@ export default function BeingSelectPage() {
 				</header>
 
 				{/* Search-first interface */}
-				<div className="container space-y-4 px-mobile-margin py-4">
+				<div className="container mx-auto max-w-4xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
 					{/* Search input */}
 					<div className="relative">
 						<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />

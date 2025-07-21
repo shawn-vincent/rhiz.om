@@ -23,58 +23,65 @@ export function TopBar({ session }: { session: Session | null }) {
 	return (
 		<ErrorBoundary>
 			<header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-white/20 border-b bg-background/80 px-4 backdrop-blur">
-				{session && (
-					<Sheet>
-						<SheetTrigger asChild>
-							<Button variant="ghost" size="icon" aria-label="Open menu">
-								<Menu className="size-5" />
-							</Button>
-						</SheetTrigger>
-						<SheetContent
-							side="left"
-							className="w-72 border-r-white/20 bg-background/80 text-white"
-						>
-							<SheetHeader>
-								<SheetTitle>Site Menu</SheetTitle>
-								<SheetDescription>
-									Navigate to different parts of the site.
-								</SheetDescription>
-							</SheetHeader>
-							<SiteMenu />
-						</SheetContent>
-					</Sheet>
-				)}
+				{/* Left section - Menu */}
+				<div className="flex items-center">
+					{session && (
+						<Sheet>
+							<SheetTrigger asChild>
+								<Button variant="ghost" size="icon" aria-label="Open menu">
+									<Menu className="size-5" />
+								</Button>
+							</SheetTrigger>
+							<SheetContent
+								side="left"
+								className="w-72 border-r-white/20 bg-background/80 text-white"
+							>
+								<SheetHeader>
+									<SheetTitle>Site Menu</SheetTitle>
+									<SheetDescription>
+										Navigate to different parts of the site.
+									</SheetDescription>
+								</SheetHeader>
+								<SiteMenu />
+							</SheetContent>
+						</Sheet>
+					)}
+				</div>
 
+				{/* Center section - Title (flex-grow) */}
 				<InlineBeingName fallback="Rhiz.om" />
 
-				{session ? (
-					<Sheet>
-						<SheetTrigger asChild>
-							<Button variant="ghost" size="icon" aria-label="Page settings">
-								<Settings className="size-5" />
-							</Button>
-						</SheetTrigger>
-						<SheetContent
-							side="right"
-							className="w-72 border-l-white/20 bg-background/80 text-white"
+				{/* Right section - Settings */}
+				<div className="flex items-center">
+					{session ? (
+						<Sheet>
+							<SheetTrigger asChild>
+								<Button variant="ghost" size="icon" aria-label="Page settings">
+									<Settings className="size-5" />
+								</Button>
+							</SheetTrigger>
+							<SheetContent
+								side="right"
+								className="w-72 border-l-white/20 bg-background/80 text-white"
+							>
+								<SheetHeader>
+									<SheetTitle>Page Configuration</SheetTitle>
+									<SheetDescription>
+										Manage the settings for the current page.
+									</SheetDescription>
+								</SheetHeader>
+								<Config />
+							</SheetContent>
+						</Sheet>
+					) : (
+						<Link
+							href="/api/auth/signin"
+							className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
 						>
-							<SheetHeader>
-								<SheetTitle>Page Configuration</SheetTitle>
-								<SheetDescription>
-									Manage the settings for the current page.
-								</SheetDescription>
-							</SheetHeader>
-							<Config />
-						</SheetContent>
-					</Sheet>
-				) : (
-					<Link
-						href="/api/auth/signin"
-						className="rounded-full bg-white/10 px-10 py-3 font-semibold no-underline transition hover:bg-white/20"
-					>
-						Sign in
-					</Link>
-				)}
+							Sign in
+						</Link>
+					)}
+				</div>
 			</header>
 		</ErrorBoundary>
 	);
