@@ -43,6 +43,8 @@ export const selectBeingSchema = baseSelectBeingSchema.extend({
 	metadata: z.record(z.string(), z.unknown()).nullable(),
 	properties: z.record(z.string(), z.unknown()).nullable(),
 	content: z.array(contentNodeSchema).nullable(),
+	botModel: z.string().nullable(),
+	botPrompt: z.string().nullable(),
 });
 
 export const insertBeingSchema = baseInsertBeingSchema.extend({
@@ -51,6 +53,8 @@ export const insertBeingSchema = baseInsertBeingSchema.extend({
 	metadata: z.record(z.string(), z.unknown()).optional(),
 	properties: z.record(z.string(), z.unknown()).optional(),
 	content: z.array(contentNodeSchema).optional(),
+	botModel: z.string().optional(),
+	botPrompt: z.string().optional(),
 });
 
 // Intentions - extend base schemas with proper JSONB column types

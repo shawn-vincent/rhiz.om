@@ -59,6 +59,8 @@ export function InlineBeingName({
 			metadata: being.metadata ?? undefined,
 			properties: being.properties ?? undefined,
 			content: being.content ?? undefined,
+			botModel: being.botModel ?? undefined,
+			botPrompt: being.botPrompt ?? undefined,
 		});
 	};
 

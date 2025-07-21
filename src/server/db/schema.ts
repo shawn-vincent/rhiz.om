@@ -38,6 +38,9 @@ export const beings = createTable("being", {
 	metadata: jsonb("metadata"),
 	properties: jsonb("properties"),
 	content: jsonb("content"),
+	// Bot-specific fields
+	botModel: varchar("botModel", { length: 255 }), // AI model identifier for bots
+	botPrompt: text("botPrompt"), // System prompt for bots (can be very long)
 });
 
 // "Intention" entity table. Represents actions, like utterances (chat messages).

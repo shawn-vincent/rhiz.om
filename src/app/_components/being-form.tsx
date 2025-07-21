@@ -16,6 +16,8 @@ import {
 import { Separator } from "~/components/ui/separator";
 
 import { json as jsonLang } from "@codemirror/lang-json";
+import { markdown } from "@codemirror/lang-markdown";
+import { oneDark } from "@codemirror/theme-one-dark";
 import CodeMirror from "@uiw/react-codemirror";
 
 import type { insertBeingSchema } from "~/server/db/types";
@@ -27,8 +29,12 @@ export function BeingForm() {
 	const {
 		control,
 		register,
+		watch,
 		formState: { errors },
 	} = useFormContext<BeingFormData>();
+
+	// Watch the type field to conditionally show bot fields
+	const currentType = watch("type");
 	/* ---------- FieldArray for extIds ---------- */
 	const {
 		fields: extIdFields,
@@ -79,6 +85,7 @@ export function BeingForm() {
 									<SelectItem value="guest">guest</SelectItem>
 									<SelectItem value="space">space</SelectItem>
 									<SelectItem value="document">document</SelectItem>
+									<SelectItem value="bot">bot</SelectItem>
 								</SelectContent>
 							</Select>
 						)}
@@ -112,6 +119,64 @@ export function BeingForm() {
 					)}
 				</div>
 			</div>
+
+			{/* Bot-specific fields - only show for bot type */}
+			{currentType === "bot" && (
+				<>
+					<Separator />
+					<div className="space-y-4">
+						<h3 className="font-medium text-lg">Bot Configuration</h3>
+						
+						<div>
+							<Label htmlFor="botModel">Bot Model</Label>
+							<Input 
+								id="botModel" 
+								placeholder="e.g., gpt-4, claude-3-sonnet, etc." 
+								{...register("botModel")} 
+							/>
+							{errors.botModel && (
+								<p className="text-red-600 text-sm">{errors.botModel.message}</p>
+							)}
+						</div>
+
+						<div>
+							<Label htmlFor="botPrompt">Bot System Prompt</Label>
+							<p className="text-muted-foreground text-sm mb-2">
+								Define the bot's personality, instructions, and behavior. Supports Markdown formatting.
+							</p>
+							<Controller
+								control={control}
+								name="botPrompt"
+								render={({ field }) => (
+									<CodeMirror
+										basicSetup={{ 
+											lineNumbers: true, 
+											foldGutter: true,
+											dropCursor: false,
+											allowMultipleSelections: false,
+											indentOnInput: true,
+											bracketMatching: true,
+											closeBrackets: true,
+											autocompletion: true,
+											highlightSelectionMatches: true,
+										}}
+										extensions={[markdown()]}
+										theme={oneDark}
+										minHeight="200px"
+										maxHeight="600px"
+										value={field.value ?? ""}
+										onChange={(value) => field.onChange(value)}
+										placeholder="You are a helpful assistant. Your role is to..."
+									/>
+								)}
+							/>
+							{errors.botPrompt && (
+								<p className="text-red-600 text-sm">{errors.botPrompt.message}</p>
+							)}
+						</div>
+					</div>
+				</>
+			)}
 
 			<Separator />
 
