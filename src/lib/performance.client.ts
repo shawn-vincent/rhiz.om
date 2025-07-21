@@ -28,10 +28,9 @@ class PerformanceMonitor {
 			try {
 				const paintObserver = new PerformanceObserver((list) => {
 					for (const entry of list.getEntries()) {
-						perfLogger.info(
-							`${entry.name}: ${Math.round(entry.startTime)}ms`,
-							{ entry: entry.toJSON() }
-						);
+						perfLogger.info(`${entry.name}: ${Math.round(entry.startTime)}ms`, {
+							entry: entry.toJSON(),
+						});
 					}
 				});
 				paintObserver.observe({ entryTypes: ["paint"] });
@@ -47,7 +46,7 @@ class PerformanceMonitor {
 						if (entry.duration > 50) {
 							perfLogger.warn(
 								`Long task detected: ${Math.round(entry.duration)}ms`,
-								{ entry: entry.toJSON() }
+								{ entry: entry.toJSON() },
 							);
 						}
 					}
@@ -64,14 +63,14 @@ class PerformanceMonitor {
 	measureComponent<T>(name: string, fn: () => T): T {
 		const start = performance.now();
 		const startMemory = this.getMemoryUsage();
-		
+
 		try {
 			const result = fn();
 			return result;
 		} finally {
 			const duration = performance.now() - start;
 			const endMemory = this.getMemoryUsage();
-			
+
 			this.recordMetric({
 				component: name,
 				duration,
@@ -79,7 +78,8 @@ class PerformanceMonitor {
 				timestamp: Date.now(),
 			});
 
-			if (duration > 16) { // More than one frame at 60fps
+			if (duration > 16) {
+				// More than one frame at 60fps
 				perfLogger.warn(`Slow render in ${name}: ${Math.round(duration)}ms`);
 			}
 		}
@@ -89,14 +89,14 @@ class PerformanceMonitor {
 	async measureAsync<T>(name: string, fn: () => Promise<T>): Promise<T> {
 		const start = performance.now();
 		const startMemory = this.getMemoryUsage();
-		
+
 		try {
 			const result = await fn();
 			return result;
 		} finally {
 			const duration = performance.now() - start;
 			const endMemory = this.getMemoryUsage();
-			
+
 			this.recordMetric({
 				component: name,
 				duration,
@@ -104,8 +104,11 @@ class PerformanceMonitor {
 				timestamp: Date.now(),
 			});
 
-			if (duration > 100) { // Warn for slow async operations
-				perfLogger.warn(`Slow async operation in ${name}: ${Math.round(duration)}ms`);
+			if (duration > 100) {
+				// Warn for slow async operations
+				perfLogger.warn(
+					`Slow async operation in ${name}: ${Math.round(duration)}ms`,
+				);
 			}
 		}
 	}
@@ -119,7 +122,7 @@ class PerformanceMonitor {
 
 	private recordMetric(metric: PerformanceMetrics) {
 		this.metrics.push(metric);
-		
+
 		// Keep only last 100 metrics to prevent memory bloat
 		if (this.metrics.length > 100) {
 			this.metrics = this.metrics.slice(-100);
@@ -131,12 +134,17 @@ class PerformanceMonitor {
 	}
 
 	// Get performance summary
-	getSummary(): { avgDuration: number; totalComponents: number; slowestComponents: Array<{ component: string; duration: number }> } {
-		if (this.metrics.length === 0) return { avgDuration: 0, totalComponents: 0, slowestComponents: [] };
+	getSummary(): {
+		avgDuration: number;
+		totalComponents: number;
+		slowestComponents: Array<{ component: string; duration: number }>;
+	} {
+		if (this.metrics.length === 0)
+			return { avgDuration: 0, totalComponents: 0, slowestComponents: [] };
 
 		const totalDuration = this.metrics.reduce((sum, m) => sum + m.duration, 0);
 		const avgDuration = totalDuration / this.metrics.length;
-		
+
 		const slowestComponents = [...this.metrics]
 			.sort((a, b) => b.duration - a.duration)
 			.slice(0, 5)

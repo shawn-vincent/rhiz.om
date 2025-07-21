@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import { BeingBackground } from "~/app/_components/being-background";
 import { BottomBar } from "~/app/_components/bottom-bar";
 import { Chat } from "~/app/_components/chat";
-import { TopBar } from "~/app/_components/top-bar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { auth } from "~/server/auth";
 import { HydrateClient, api } from "~/trpc/server";
@@ -22,32 +21,33 @@ export default async function SpacePage({
 
 	return (
 		<HydrateClient>
-			<div className="grid h-dvh grid-rows-[auto_1fr_auto] bg-black text-white">
-				<TopBar session={session} />
+			<div className="grid h-dvh grid-rows-[1fr_auto] bg-black text-white">
 				<ErrorBoundary>
-					<main className="relative overflow-y-auto">
+					<main className="relative overflow-hidden">
 						<BeingBackground />
-						<div className="container relative z-10 flex h-full flex-col items-center justify-center p-4">
-							{session?.user?.beingId ? (
-								<Suspense fallback={<ChatLoading />}>
-									<Chat
-										currentUserBeingId={session.user.beingId}
-										beingId={beingId}
-									/>
-								</Suspense>
-							) : (
-								<div className="flex h-[calc(100vh-10rem)] items-center justify-center">
-									<p className="text-white/70 text-xl">
-										{session?.user
-											? "Initializing your being..."
-											: "Please sign in to join the being."}
-									</p>
-								</div>
-							)}
+						<div className="relative z-10 h-full flex justify-center">
+							<div className="w-full max-w-2xl">
+								{session?.user?.beingId ? (
+									<Suspense fallback={<ChatLoading />}>
+										<Chat
+											currentUserBeingId={session.user.beingId}
+											beingId={beingId}
+										/>
+									</Suspense>
+								) : (
+									<div className="flex h-full items-center justify-center">
+										<p className="text-white/70 text-xl">
+											{session?.user
+												? "Initializing your being..."
+												: "Please sign in to join the being."}
+										</p>
+									</div>
+								)}
+							</div>
 						</div>
 					</main>
 				</ErrorBoundary>
-				{session && <BottomBar />}
+				<BottomBar session={session} />
 			</div>
 		</HydrateClient>
 	);
@@ -55,7 +55,7 @@ export default async function SpacePage({
 
 function ChatLoading() {
 	return (
-		<div className="flex h-full w-full max-w-3xl flex-col items-center justify-center">
+		<div className="flex h-full w-full flex-col items-center justify-center">
 			<p>Loading Chat...</p>
 		</div>
 	);

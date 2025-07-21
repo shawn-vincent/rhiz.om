@@ -1,6 +1,7 @@
 // src/app/_components/chat.tsx
 "use client";
 
+import { Send } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
@@ -183,10 +184,12 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	return (
 		<ErrorBoundary>
-			<div className="relative flex h-full w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/20 p-4 pt-0 shadow-lg ring-1 ring-white/25">
+			<div className="relative flex h-full w-full flex-col bg-white/20">
+				{/* Top shadow overlay */}
+				<div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/30 to-transparent pointer-events-none z-10" />
 				<ul
 					ref={chatContainerRef}
-					className="flex grow flex-col gap-3 overflow-y-auto"
+					className="flex grow flex-col gap-3 overflow-y-auto px-4 sm:px-6 pt-4 pb-0"
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
@@ -194,8 +197,11 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						const knownBeingType =
 							group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
 						const firstMessage = group.messages[0];
-						const firstMessageTime = firstMessage 
-							? new Date(firstMessage.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+						const firstMessageTime = firstMessage
+							? new Date(firstMessage.createdAt).toLocaleTimeString([], {
+									hour: "2-digit",
+									minute: "2-digit",
+								})
 							: "";
 
 						return (
@@ -266,6 +272,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						</svg>
 					</button>
 				)}
+				{/* Bottom shadow overlay */}
+				<div className="absolute bottom-20 left-0 right-0 h-4 bg-gradient-to-t from-white/20 to-transparent pointer-events-none z-10" />
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
@@ -276,7 +284,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 							});
 						}
 					}}
-					className="sticky bottom-0 mt-4 flex w-full items-center gap-2 rounded-md border-gray-200 border-t bg-white p-2 dark:border-gray-800 dark:bg-gray-900"
+					className="sticky bottom-0 flex w-full items-center gap-2 border-gray-200 border-t bg-white px-4 sm:px-6 py-4 dark:border-gray-800 dark:bg-gray-900"
 				>
 					<input
 						type="text"
@@ -287,10 +295,13 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 					/>
 					<button
 						type="submit"
-						className="rounded-full bg-blue-500 px-6 py-2 font-semibold text-white transition hover:bg-blue-600"
+						className="rounded-full bg-blue-500 p-2.5 text-white transition hover:bg-blue-600 disabled:opacity-50"
 						disabled={createUtterance.isPending}
+						aria-label={
+							createUtterance.isPending ? "Sending..." : "Send message"
+						}
 					>
-						{createUtterance.isPending ? "Sending..." : "Send"}
+						<Send className="size-5" />
 					</button>
 				</form>
 			</div>
