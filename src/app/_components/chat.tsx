@@ -254,7 +254,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 									<header
 										className={`flex items-baseline gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 									>
-										<span className="font-medium text-gray-900 dark:text-gray-50">
+										<span className="font-medium text-white text-outline">
 											{beingNames[group.ownerId] || group.ownerId}
 										</span>
 										<time className="text-gray-500 text-xs dark:text-gray-400">
