@@ -1,8 +1,8 @@
-export type BeingKind = 'space' | 'guest' | 'bot' | 'document';
+export type BeingType = 'space' | 'guest' | 'bot' | 'document';
 
 export interface EntitySummary {
   id: string;
   name: string;
-  kind: BeingKind;
+  type: BeingType;
   avatarUrl?: string;
 }

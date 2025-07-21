@@ -1,8 +1,8 @@
 
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from "~/components/ui/command";
-import { EntityCard } from "./EntityCard";
 import { EntitySkeleton } from "./EntitySkeleton";
 import type { EntitySummary } from "../../types";
+import { SelectedEntityDisplay } from "./SelectedEntityDisplay";
 
 interface EntitySelectPanelProps {
   value?: string;
@@ -50,7 +50,7 @@ export function EntitySelectPanel({
               onSelect={() => onSelect(item.id)}
               className="aria-selected:bg-accent aria-selected:text-accent-foreground"
             >
-              <EntityCard entity={item} accent={item.id === value} />
+              <SelectedEntityDisplay entity={item} />
             </CommandItem>
           ))
         )}

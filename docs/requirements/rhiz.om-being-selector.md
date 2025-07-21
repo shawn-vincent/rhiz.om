@@ -54,10 +54,10 @@ output = { items: BeingSummary[]; nextCursor: string|null }
 ### 2.2 Hook `useBeings()`
 
 ```ts
-export function useBeings(initialKind?: BeingKind) {
+export function useBeings(initialType?: BeingType) {
   // local state
   const [query, setQuery]   = useState('');
-  const [kind,  setKind]    = useState<BeingKind|undefined>(initialKind);
+  const [kind,  setKind]    = useState<BeingType|undefined>(initialType);
   const [sort,  setSort]    = useState<'name'|'createdAt'>('name');
 
   const qDeferred = useDeferredValue(query);          // avoids instant refetch

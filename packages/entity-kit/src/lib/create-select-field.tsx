@@ -1,12 +1,13 @@
 
 import { Controller, useFormContext } from "react-hook-form";
-import { Button } from "~/components/ui/button";
-import { EntityCard } from "../components/ui/EntityCard";
 import { ResponsiveShell } from "../components/ui/ResponsiveShell";
 import { EntitySelectPanel } from "../components/ui/EntitySelectPanel";
 import type { EntitySummary } from "../types";
 import { useState } from "react";
 import { api } from "~/trpc/react";
+import { SelectedEntityDisplay } from "../components/ui/SelectedEntityDisplay";
+import { cn } from "~/lib/utils";
+import { ChevronDown } from "lucide-react";
 
 interface SelectProps {
   value?: string;
@@ -49,14 +50,23 @@ export function createSelectField(
         open={open}
         onOpenChange={setOpen}
         trigger={
-          <Button
-            variant="outline"
+          <div
+            className={cn(
+              "flex h-16 w-[200px] cursor-pointer items-center justify-between gap-3 rounded-md border bg-transparent p-2 text-left text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+              !value && "text-muted-foreground",
+            )}
             role="combobox"
             aria-expanded={open}
-            className="w-[200px] justify-between"
           >
-            {displayEntity ? renderCard(displayEntity) : isFetchingEntity ? "Loading..." : "Select entity..."}
-          </Button>
+            {displayEntity ? (
+              <SelectedEntityDisplay entity={displayEntity} />
+            ) : isFetchingEntity ? (
+              "Loading..."
+            ) : (
+              "Select entity..."
+            )}
+            <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </div>
         }
         panel={
           <EntitySelectPanel
@@ -99,3 +109,4 @@ export function createSelectField(
 
   return { Select, SelectField };
 }
+

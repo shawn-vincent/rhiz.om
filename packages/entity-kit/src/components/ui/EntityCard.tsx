@@ -1,6 +1,7 @@
 
 import { cn } from "~/lib/utils";
-import type { BeingKind, EntitySummary } from "../../types";
+import type { EntitySummary } from "../../types";
+import { SelectedEntityDisplay } from "./SelectedEntityDisplay";
 
 interface EntityCardProps {
   entity: EntitySummary;
@@ -15,29 +16,17 @@ export function EntityCard({ entity, variant, accent, onClick }: EntityCardProps
   return (
     <div
       className={cn(
-        "relative flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground",
+        "relative rounded-md p-2 transition-colors hover:bg-accent hover:text-accent-foreground",
         onClick && "cursor-pointer",
         isCompact ? "h-12" : "h-16",
       )}
       onClick={onClick}
-      data-kind={entity.kind}
+      data-type={entity.type}
     >
       {accent && (
         <div className="entity-accent absolute inset-y-0 left-0 w-1 rounded-l-md" />
       )}
-      {/* Avatar - Placeholder for now */}
-      <div className="size-10 shrink-0 rounded-full bg-muted" />
-
-      <div className="flex flex-col overflow-hidden">
-        <span className="truncate font-medium text-foreground">
-          {entity.name}
-        </span>
-        {!isCompact && (
-          <span className="truncate text-sm text-muted-foreground">
-            {entity.kind}
-          </span>
-        )}
-      </div>
+      <SelectedEntityDisplay entity={entity} isCompact={isCompact} />
     </div>
   );
 }

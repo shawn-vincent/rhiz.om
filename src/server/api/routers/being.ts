@@ -1,7 +1,7 @@
 // src/server/api/routers/being.ts
 import { and, eq, ilike, asc, desc, gt } from "drizzle-orm";
 import { z } from "zod/v4";
-import type { BeingKind, EntitySummary } from "../../../../packages/entity-kit/src/types";
+import type { BeingType, EntitySummary } from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
 import {
@@ -73,6 +73,11 @@ export const beingRouter = createTRPCRouter({
 	getAll: publicProcedure.query(({ ctx }) => {
 		return ctx.db.query.beings.findMany({
 			orderBy: (beings, { asc }) => [asc(beings.name)],
+			columns: {
+				id: true,
+				name: true,
+				type: true,
+			},
 		});
 	}),
 
@@ -116,7 +121,7 @@ export const beingRouter = createTRPCRouter({
 			const items: EntitySummary[] = fetchedBeings.map((b) => ({
 				id: b.id,
 				name: b.name,
-				kind: b.type as BeingKind,
+				type: b.type as BeingType,
 			}));
 
 			return { items, nextCursor };

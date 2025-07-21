@@ -100,10 +100,10 @@ export function BeingForm() {
 
         <div>
           <Label htmlFor="locationId">Location ID</Label>
-          <Input
-            id="locationId"
-            placeholder="@space"
-            {...register("locationId")}
+          <BeingSelectField
+            name="locationId"
+            useHook={useBeings}
+            renderCard={(entity) => <EntityCard entity={entity} variant="compact" />}
           />
           {errors.locationId && (
             <p className="text-red-600 text-sm">{errors.locationId.message}</p>

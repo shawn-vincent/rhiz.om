@@ -1,10 +1,10 @@
 
 import { useState, useMemo, useDeferredValue } from "react";
 import { api } from "~/trpc/react";
-import type { BeingKind, EntitySummary } from "../../packages/entity-kit/src/types";
+import type { BeingType, EntitySummary } from "../../packages/entity-kit/src/types";
 import { useRecents } from "../../packages/entity-kit/src/hooks/use-recents";
 
-export function useBeings(initialKind?: BeingKind) {
+export function useBeings(initialType?: BeingType) {
   // local state
   const [query, setQuery] = useState("");
   const qDeferred = useDeferredValue(query); // avoids instant refetch
