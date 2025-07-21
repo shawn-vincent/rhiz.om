@@ -38,9 +38,9 @@ export function BottomBar({ session }: { session?: Session | null }) {
 		"size-10 rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
 	return (
 		<ErrorBoundary>
-			<nav className="sticky bottom-0 z-50 flex items-center justify-between gap-4 border-white/20 border-t bg-background/95 px-4 py-2">
+			<nav className="sticky bottom-0 z-50 flex items-center gap-2 border-white/20 border-t bg-background/95 px-2 py-2 min-w-0">
 				{/* Left section - Menu */}
-				<div className="flex items-center">
+				<div className="flex items-center shrink-0">
 					{session && (
 						<Sheet>
 							<SheetTrigger asChild>
@@ -65,7 +65,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 				</div>
 
 				{/* Center section - Controls and Title */}
-				<div className="flex items-center gap-2">
+				<div className="flex items-center gap-1 flex-1 min-w-0 justify-center">
 					<Toggle
 						pressed={videoOn}
 						onPressedChange={setVideoOn}
@@ -107,16 +107,16 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						)}
 					</Toggle>
 
-					<div className="mx-4">
+					<div className="mx-2 min-w-0 flex-1 text-center">
 						<InlineBeingName
 							fallback="Rhiz.om"
-							className="font-medium text-base text-white"
+							className="font-medium text-sm text-white truncate block"
 						/>
 					</div>
 				</div>
 
 				{/* Right section - Settings */}
-				<div className="flex items-center">
+				<div className="flex items-center shrink-0">
 					{session ? (
 						<Sheet>
 							<SheetTrigger asChild>

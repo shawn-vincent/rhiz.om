@@ -21,7 +21,7 @@ export default async function SpacePage({
 
 	return (
 		<HydrateClient>
-			<div className="grid h-dvh grid-rows-[1fr_auto] bg-black text-white">
+			<div className="grid h-dvh grid-rows-[1fr_auto] bg-black text-white overflow-hidden">
 				<ErrorBoundary>
 					<main className="relative overflow-hidden">
 						<BeingBackground />

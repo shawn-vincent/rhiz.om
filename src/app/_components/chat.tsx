@@ -284,24 +284,24 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 							});
 						}
 					}}
-					className="sticky bottom-0 flex w-full items-center gap-2 border-gray-200 border-t bg-white px-4 sm:px-6 py-4 dark:border-gray-800 dark:bg-gray-900"
+					className="sticky bottom-0 flex w-full items-center gap-2 border-gray-200 border-t bg-white px-3 sm:px-4 py-3 dark:border-gray-800 dark:bg-gray-900 min-w-0"
 				>
 					<input
 						type="text"
 						placeholder="Say something..."
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
-						className="w-full flex-grow rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+						className="flex-1 min-w-0 rounded-full border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
 					/>
 					<button
 						type="submit"
-						className="rounded-full bg-blue-500 p-2.5 text-white transition hover:bg-blue-600 disabled:opacity-50"
+						className="shrink-0 rounded-full bg-blue-500 p-2 text-white transition hover:bg-blue-600 disabled:opacity-50"
 						disabled={createUtterance.isPending}
 						aria-label={
 							createUtterance.isPending ? "Sending..." : "Send message"
 						}
 					>
-						<Send className="size-5" />
+						<Send className="size-4" />
 					</button>
 				</form>
 			</div>
