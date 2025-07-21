@@ -159,7 +159,9 @@ export const intentionRouter = createTRPCRouter({
 				userContent: input.content,
 				beingId: input.beingId,
 				aiIntentionId,
-			}).catch((error) => intentionLogger.error({ error }, "Stream AI response failed"));
+			}).catch((error) =>
+				intentionLogger.error({ error }, "Stream AI response failed"),
+			);
 
 			return { success: true, aiIntentionId };
 		}),

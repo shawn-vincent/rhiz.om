@@ -129,7 +129,7 @@
 
 	/* accent bar */
 	.entity-accent::before {
-		content: '';
+		content: "";
 		width: 3px;
 		height: 100%;
 		inset-inline-start: 0;

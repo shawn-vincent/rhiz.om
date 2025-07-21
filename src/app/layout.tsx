@@ -4,8 +4,8 @@ import type { Metadata } from "next";
 import { Recursive } from "next/font/google";
 
 import { AppShell } from "~/app/_components/app-shell";
-import { TRPCReactProvider } from "~/trpc/react";
 import { Toaster } from "~/components/ui/sonner";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export const viewport = {
 	width: "device-width",

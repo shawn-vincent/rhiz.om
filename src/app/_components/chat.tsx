@@ -4,12 +4,12 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
-import ErrorBoundary from "~/components/ui/error-boundary";
 import { Avatar } from "~/components/ui/avatar";
+import ErrorBoundary from "~/components/ui/error-boundary";
+import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
-import { logger } from "~/lib/logger.client";
 
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 const chatLogger = logger.child({ name: "Chat" });
@@ -179,7 +179,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
 						// Special case for known AI agent, otherwise auto-detect
-						const knownBeingType = group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
+						const knownBeingType =
+							group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
 						const firstMessageTime = new Date(
 							group.messages[0]!.createdAt,
 						).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });

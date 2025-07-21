@@ -2,8 +2,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 // src/app/_components/being-editor.tsx
 import { useEffect } from "react";
 import {
-	FormProvider,
 	type DefaultValues,
+	FormProvider,
 	type Resolver,
 	type SubmitHandler,
 	useForm,
@@ -13,6 +13,7 @@ import type { z } from "zod/v4";
 import { Button } from "~/components/ui/button";
 import { DialogFooter } from "~/components/ui/dialog";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { logger } from "~/lib/logger.client";
 import {
 	type Being,
 	type InsertBeing,
@@ -20,7 +21,6 @@ import {
 } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { BeingForm } from "./being-form";
-import { logger } from "~/lib/logger.client";
 
 const beingEditorLogger = logger.child({ name: "BeingEditor" });
 
@@ -45,7 +45,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 			await utils.being.getAll.invalidate();
 		},
 		onError: (err) => {
-			beingEditorLogger.error(err, "Failed to save being: "+err.message);
+			beingEditorLogger.error(err, "Failed to save being: " + err.message);
 		},
 	});
 
@@ -100,7 +100,10 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 	return (
 		<ErrorBoundary>
 			<FormProvider {...methods}>
-				<form onSubmit={methods.handleSubmit(submit)} className="flex h-full flex-col">
+				<form
+					onSubmit={methods.handleSubmit(submit)}
+					className="flex h-full flex-col"
+				>
 					<div className="flex-grow overflow-y-auto p-4">
 						<BeingForm />
 					</div>

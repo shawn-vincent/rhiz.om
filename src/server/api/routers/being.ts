@@ -1,7 +1,10 @@
 // src/server/api/routers/being.ts
-import { and, eq, ilike, asc, desc, gt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, ilike } from "drizzle-orm";
 import { z } from "zod/v4";
-import type { BeingType, EntitySummary } from "../../../../packages/entity-kit/src/types";
+import type {
+	BeingType,
+	EntitySummary,
+} from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
 import {
@@ -94,36 +97,53 @@ export const beingRouter = createTRPCRouter({
 				cursor: z.string().nullish(),
 			}),
 		)
-		.query(async ({ ctx, input }): Promise<{ items: EntitySummary[]; nextCursor: string | null }> => {
-			const limit = input.limit;
-			const orderBy = input.sort === "name" ? asc(beings.name) : desc(beings.createdAt);
+		.query(
+			async ({
+				ctx,
+				input,
+			}): Promise<{ items: EntitySummary[]; nextCursor: string | null }> => {
+				const limit = input.limit;
+				const orderBy =
+					input.sort === "name" ? asc(beings.name) : desc(beings.createdAt);
 
-			const whereClause = and(
-				input.q ? ilike(beings.name, `%${input.q}%`) : undefined,
-				input.kind ? eq(beings.type, input.kind) : undefined,
-							input.cursor ? (input.sort === "name" ? gt(beings.name, input.cursor) : gt(beings.createdAt, (await ctx.db.query.beings.findFirst({ where: eq(beings.id, input.cursor) }))?.createdAt || new Date(0))) : undefined,
-			);
+				const whereClause = and(
+					input.q ? ilike(beings.name, `%${input.q}%`) : undefined,
+					input.kind ? eq(beings.type, input.kind) : undefined,
+					input.cursor
+						? input.sort === "name"
+							? gt(beings.name, input.cursor)
+							: gt(
+									beings.createdAt,
+									(
+										await ctx.db.query.beings.findFirst({
+											where: eq(beings.id, input.cursor),
+										})
+									)?.createdAt || new Date(0),
+								)
+						: undefined,
+				);
 
-			const fetchedBeings = await ctx.db.query.beings.findMany({
-				where: whereClause,
-				orderBy: [orderBy],
-				limit: limit + 1,
-			});
+				const fetchedBeings = await ctx.db.query.beings.findMany({
+					where: whereClause,
+					orderBy: [orderBy],
+					limit: limit + 1,
+				});
 
-			let nextCursor: string | null = null;
-			if (fetchedBeings.length > limit) {
-				const nextItem = fetchedBeings.pop();
-				if (nextItem) {
-					nextCursor = nextItem.id;
+				let nextCursor: string | null = null;
+				if (fetchedBeings.length > limit) {
+					const nextItem = fetchedBeings.pop();
+					if (nextItem) {
+						nextCursor = nextItem.id;
+					}
 				}
-			}
 
-			const items: EntitySummary[] = fetchedBeings.map((b) => ({
-				id: b.id,
-				name: b.name,
-				type: b.type as BeingType,
-			}));
+				const items: EntitySummary[] = fetchedBeings.map((b) => ({
+					id: b.id,
+					name: b.name,
+					type: b.type as BeingType,
+				}));
 
-			return { items, nextCursor };
-		}),
+				return { items, nextCursor };
+			},
+		),
 });
