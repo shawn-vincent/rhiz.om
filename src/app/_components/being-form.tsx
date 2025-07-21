@@ -2,8 +2,7 @@ import { useEffect } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import type { z } from "zod/v4";
 
-import { EntityCard } from "packages/entity-kit/src/components/ui/EntityCard";
-import { BeingSelectField } from "~/components/being-selector";
+import { MobileEntitySelectField } from "packages/entity-kit/src/components/ui/MobileEntitySelector";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -15,7 +14,6 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
-import { useBeings } from "~/hooks/use-beings";
 
 import { json as jsonLang } from "@codemirror/lang-json";
 import CodeMirror from "@uiw/react-codemirror";
@@ -92,12 +90,10 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="ownerId">Owner ID</Label>
-					<BeingSelectField
+					<MobileEntitySelectField
 						name="ownerId"
-						useHook={useBeings}
-						renderCard={(entity) => (
-							<EntityCard entity={entity} variant="compact" />
-						)}
+						selectUrl="/select/being"
+						placeholder="Select owner..."
 					/>
 					{errors.ownerId && (
 						<p className="text-red-600 text-sm">{errors.ownerId.message}</p>
@@ -106,12 +102,10 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="locationId">Location ID</Label>
-					<BeingSelectField
+					<MobileEntitySelectField
 						name="locationId"
-						useHook={useBeings}
-						renderCard={(entity) => (
-							<EntityCard entity={entity} variant="compact" />
-						)}
+						selectUrl="/select/being"
+						placeholder="Select location..."
 					/>
 					{errors.locationId && (
 						<p className="text-red-600 text-sm">{errors.locationId.message}</p>

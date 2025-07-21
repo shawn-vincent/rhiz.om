@@ -4,8 +4,8 @@
 import { Menu, Settings } from "lucide-react";
 import type { Session } from "next-auth";
 import Link from "next/link";
-import { useParams } from "next/navigation"; // Import useParams
 
+import { InlineBeingName } from "~/components/inline-being-name";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import {
@@ -20,11 +20,6 @@ import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
 export function TopBar({ session }: { session: Session | null }) {
-	const params = useParams();
-	const beingId = params.beingId
-		? decodeURIComponent(params.beingId as string)
-		: undefined;
-
 	return (
 		<ErrorBoundary>
 			<header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-white/20 border-b bg-background/80 px-4 backdrop-blur">
@@ -50,9 +45,7 @@ export function TopBar({ session }: { session: Session | null }) {
 					</Sheet>
 				)}
 
-				<h1 className="flex-1 font-extrabold text-2xl text-white tracking-tight sm:text-[2rem]">
-					{beingId || "Rhiz.om"}
-				</h1>
+				<InlineBeingName fallback="Rhiz.om" />
 
 				{session ? (
 					<Sheet>

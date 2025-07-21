@@ -1,11 +1,13 @@
 // src/app/_components/config.tsx
 "use client";
 
+import { Pencil } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
+import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
 import { api } from "~/trpc/react";
-import { BeingEditorModal } from "./being-editor-modal";
 
 export function Config() {
 	const params = useParams();
@@ -36,7 +38,11 @@ export function Config() {
 					<h3 className="font-semibold text-lg text-white">
 						Current Space: {beingId}
 					</h3>
-					<BeingEditorModal beingId={beingId} title="Edit Space" />
+					<Link href={`/being/${beingId}/edit`}>
+						<Button variant="ghost" size="icon" aria-label="Edit Space">
+							<Pencil className="size-5" />
+						</Button>
+					</Link>
 				</div>
 				<Separator className="my-4" />
 				{otherBeings.length > 0 && (
@@ -53,7 +59,15 @@ export function Config() {
 									<span className="text-white/80">
 										{being.name || being.id}
 									</span>
-									<BeingEditorModal beingId={being.id} title="Edit Being" />
+									<Link href={`/being/${being.id}/edit`}>
+										<Button
+											variant="ghost"
+											size="icon"
+											aria-label={`Edit ${being.name || being.id}`}
+										>
+											<Pencil className="size-5" />
+										</Button>
+									</Link>
 								</li>
 							))}
 						</ul>
