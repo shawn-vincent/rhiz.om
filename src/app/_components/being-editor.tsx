@@ -45,7 +45,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 			await utils.being.getAll.invalidate();
 		},
 		onError: (err) => {
-			beingEditorLogger.error(err, "Failed to save being: " + err.message);
+			beingEditorLogger.error(err, `Failed to save being: ${err.message}`);
 		},
 	});
 

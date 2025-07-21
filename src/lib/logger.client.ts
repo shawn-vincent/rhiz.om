@@ -75,7 +75,7 @@ export const logger = pino({
 					}
 
 					toast.error(new String(log.messages), {
-						title: level + ": " + new String(log.messages),
+						title: `${level}: ${new String(log.messages)}`,
 						duration: 5000,
 						theme: "dark",
 					} as ExternalToast);

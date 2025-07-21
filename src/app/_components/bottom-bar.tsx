@@ -22,7 +22,7 @@ export function BottomBar() {
 		"size-12 rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
 	return (
 		<ErrorBoundary>
-			<nav className="sticky bottom-0 z-50 flex justify-center gap-4 border-white/20 border-t bg-background/80 py-2 backdrop-blur">
+			<nav className="sticky bottom-0 z-50 flex justify-center gap-4 border-white/20 border-t bg-background/95 py-2">
 				<Toggle
 					pressed={videoOn}
 					onPressedChange={setVideoOn}

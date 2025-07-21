@@ -43,11 +43,11 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 		isLoading,
 		error,
 	} = api.being.getById.useQuery(
-		{ id: beingId }, 
-		{ 
+		{ id: beingId },
+		{
 			enabled: !!beingId,
 			retry: false, // Don't retry if being doesn't exist
-		}
+		},
 	);
 
 	const upsertBeing = api.being.upsert.useMutation({
@@ -58,7 +58,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 			router.push(`/being/${beingId}`);
 		},
 		onError: (err) => {
-			beingEditorLogger.error(err, "Failed to save being: " + err.message);
+			beingEditorLogger.error(err, `Failed to save being: ${err.message}`);
 		},
 	});
 
@@ -111,7 +111,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 	if (error) {
 		return (
 			<div className="flex min-h-screen items-center justify-center">
-				<div className="text-center space-y-4">
+				<div className="space-y-4 text-center">
 					<div className="text-destructive">Error: {error.message}</div>
 					{error.data?.code === "NOT_FOUND" && (
 						<div className="text-muted-foreground">
@@ -129,64 +129,64 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 	return (
 		<div className="h-full">
 			{/* Mobile-first header with breadcrumb navigation */}
-				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
-						<Link href={`/being/${beingId}`}>
-							<Button
-								variant="ghost"
-								size="sm"
-								className="shrink-0 p-2"
-								aria-label="Back to being view"
-							>
-								<ArrowLeft className="size-4" />
-								<span className="sr-only">Back</span>
-							</Button>
-						</Link>
-						<MobileBreadcrumb
-							items={[
-								{
-									label: being?.name || beingId,
-									href: `/being/${beingId}`,
-								},
-								{
-									label: "Edit",
-									current: true,
-								},
-							]}
-							className="flex-1 overflow-hidden"
-						/>
-					</div>
-				</header>
+			<header className="sticky top-0 z-40 border-b bg-background/95">
+				<div className="container mx-auto flex h-mobile-touch max-w-4xl items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
+					<Link href={`/being/${beingId}`}>
+						<Button
+							variant="ghost"
+							size="sm"
+							className="shrink-0 p-2"
+							aria-label="Back to being view"
+						>
+							<ArrowLeft className="size-4" />
+							<span className="sr-only">Back</span>
+						</Button>
+					</Link>
+					<MobileBreadcrumb
+						items={[
+							{
+								label: being?.name || beingId,
+								href: `/being/${beingId}`,
+							},
+							{
+								label: "Edit",
+								current: true,
+							},
+						]}
+						className="flex-1 overflow-hidden"
+					/>
+				</div>
+			</header>
 
-				{/* Main content with mobile-optimized spacing */}
-				<main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
-					<FormProvider {...methods}>
-						<form onSubmit={methods.handleSubmit(submit)} className="space-y-6">
-							<BeingForm />
+			{/* Main content with mobile-optimized spacing */}
+			<main className="container mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
+				<FormProvider {...methods}>
+					<form onSubmit={methods.handleSubmit(submit)} className="space-y-6">
+						<BeingForm />
 
-							{/* Mobile-friendly action buttons */}
-							<div className="sticky bottom-0 -mx-4 sm:-mx-6 lg:-mx-8 border-t bg-background/95 p-4 sm:p-6 lg:p-8 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-								<div className="flex gap-mobile-gap">
-									<Button
-										type="button"
-										variant="outline"
-										className="flex-1"
-										onClick={() => router.push(`/being/${beingId}`)}
-									>
-										Cancel
-									</Button>
-									<Button
-										type="submit"
-										className="flex-1"
-										disabled={methods.formState.isSubmitting}
-									>
-										{methods.formState.isSubmitting ? "Saving…" : "Save"}
-									</Button>
-								</div>
+						{/* Mobile-friendly action buttons */}
+						<div className="-mx-4 sm:-mx-6 lg:-mx-8 sticky bottom-0 border-t bg-background/95 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:p-6 lg:p-8">
+							<div className="flex gap-mobile-gap">
+								<Button
+									type="button"
+									variant="outline"
+									className="flex-1"
+									onClick={() => router.push(`/being/${beingId}`)}
+								>
+									Cancel
+								</Button>
+								<Button
+									type="submit"
+									className="flex-1"
+									disabled={methods.formState.isSubmitting}
+								>
+									{methods.formState.isSubmitting ? "Saving…" : "Save"}
+								</Button>
 							</div>
-						</form>
-					</FormProvider>
-				</main>
+						</div>
+					</form>
+				</FormProvider>
+			</main>
 		</div>
 	);
 }

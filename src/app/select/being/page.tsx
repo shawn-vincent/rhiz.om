@@ -4,7 +4,7 @@
 import { ArrowLeft, Search } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useState, useEffect } from "react";
+import React, { Suspense, useState, useEffect } from "react";
 
 import { EntityCard } from "packages/entity-kit/src/components/ui/EntityCard";
 import { EntitySkeleton } from "packages/entity-kit/src/components/ui/EntitySkeleton";
@@ -13,7 +13,7 @@ import ErrorBoundary from "~/components/ui/error-boundary";
 import { Input } from "~/components/ui/input";
 import { useBeings } from "~/hooks/use-beings";
 
-export default function BeingSelectPage() {
+function BeingSelectPageComponent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
@@ -83,119 +83,167 @@ export default function BeingSelectPage() {
 
 	return (
 		<div className="h-full">
-				{/* Mobile-optimized header */}
-				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
-						<Button
-							variant="ghost"
-							size="sm"
-							className="shrink-0 p-2"
-							onClick={() => {
-								if (window.opener) {
-									window.close();
-								} else {
-									router.push(returnUrl);
-								}
-							}}
-							aria-label="Cancel selection"
-						>
-							<ArrowLeft className="size-4" />
-						</Button>
-						<h1 className="font-semibold text-base text-foreground">
-							Select Being
-						</h1>
-					</div>
-				</header>
+			{/* Mobile-optimized header */}
+			<header className="sticky top-0 z-40 border-b bg-background/95">
+				<div className="container mx-auto flex h-mobile-touch max-w-4xl items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
+					<Button
+						variant="ghost"
+						size="sm"
+						className="shrink-0 p-2"
+						onClick={() => {
+							if (window.opener) {
+								window.close();
+							} else {
+								router.push(returnUrl);
+							}
+						}}
+						aria-label="Cancel selection"
+					>
+						<ArrowLeft className="size-4" />
+					</Button>
+					<h1 className="font-semibold text-base text-foreground">
+						Select Being
+					</h1>
+				</div>
+			</header>
 
-				{/* Search-first interface */}
-				<div className="container mx-auto max-w-4xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
-					{/* Search input */}
-					<div className="relative">
-						<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
-						<Input
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							placeholder="Search beings..."
-							className="h-mobile-touch pl-9"
-							autoFocus
-						/>
-					</div>
+			{/* Search-first interface */}
+			<div className="container mx-auto max-w-4xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+				{/* Search input */}
+				<div className="relative">
+					<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+					<Input
+						value={searchQuery}
+						onChange={(e) => setSearchQuery(e.target.value)}
+						placeholder="Search beings..."
+						className="h-mobile-touch pl-9"
+						autoFocus
+					/>
+				</div>
 
-					{/* Recent selections */}
-					{!searchQuery && recentBeings.length > 0 && (
+				{/* Recent selections */}
+				{!searchQuery && recentBeings.length > 0 && (
+					<div className="space-y-2">
+						<h2 className="font-medium text-foreground text-sm">
+							Recent selections
+						</h2>
 						<div className="space-y-2">
-							<h2 className="font-medium text-foreground text-sm">
-								Recent selections
-							</h2>
-							<div className="space-y-2">
-								{recentBeings.map((being) => (
-									<button
-										key={being.id}
-										onClick={() => handleSelect(being.id)}
-										className="w-full rounded-md border p-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
-									>
-										<EntityCard
-											entity={{
-												id: being.id,
-												name: being.name,
-												type: being.type as any,
-											}}
-											variant="compact"
-										/>
-									</button>
-								))}
-							</div>
+							{recentBeings.map((being) => (
+								<button
+									key={being.id}
+									onClick={() => handleSelect(being.id)}
+									className="w-full rounded-md border p-2 text-left transition-colors hover:bg-accent hover:text-accent-foreground"
+								>
+									<EntityCard
+										entity={{
+											id: being.id,
+											name: being.name,
+											type: being.type as any,
+										}}
+										variant="compact"
+									/>
+								</button>
+							))}
 						</div>
+					</div>
+				)}
+
+				{/* Search results or all beings */}
+				<div className="space-y-2">
+					{!searchQuery && recentBeings.length > 0 && (
+						<h2 className="font-medium text-foreground text-sm">All beings</h2>
 					)}
 
-					{/* Search results or all beings */}
-					<div className="space-y-2">
-						{!searchQuery && recentBeings.length > 0 && (
-							<h2 className="font-medium text-foreground text-sm">
-								All beings
-							</h2>
-						)}
-
-						{isLoading ? (
-							<div className="space-y-2">
-								<EntitySkeleton />
-								<EntitySkeleton />
-								<EntitySkeleton />
-							</div>
-						) : isError ? (
-							<div className="py-8 text-center text-muted-foreground">
-								Error loading beings
-							</div>
-						) : filteredBeings.length === 0 ? (
-							<div className="py-8 text-center text-muted-foreground">
-								No beings found
-							</div>
-						) : (
-							<div className="space-y-2">
-								{filteredBeings.map((being) => (
-									<button
-										key={being.id}
-										onClick={() => handleSelect(being.id)}
-										className={`w-full rounded-md border p-2 text-left transition-colors ${
-											being.id === currentValue
-												? "border-accent-foreground/20 bg-accent text-accent-foreground"
-												: "hover:bg-accent hover:text-accent-foreground"
-										}`}
-									>
-										<EntityCard
-											entity={{
-												id: being.id,
-												name: being.name,
-												type: being.type as any,
-											}}
-											variant="compact"
-										/>
-									</button>
-								))}
-							</div>
-						)}
-					</div>
+					{isLoading ? (
+						<div className="space-y-2">
+							<EntitySkeleton />
+							<EntitySkeleton />
+							<EntitySkeleton />
+						</div>
+					) : isError ? (
+						<div className="py-8 text-center text-muted-foreground">
+							Error loading beings
+						</div>
+					) : filteredBeings.length === 0 ? (
+						<div className="py-8 text-center text-muted-foreground">
+							No beings found
+						</div>
+					) : (
+						<div className="space-y-2">
+							{filteredBeings.map((being) => (
+								<button
+									key={being.id}
+									onClick={() => handleSelect(being.id)}
+									className={`w-full rounded-md border p-2 text-left transition-colors ${
+										being.id === currentValue
+											? "border-accent-foreground/20 bg-accent text-accent-foreground"
+											: "hover:bg-accent hover:text-accent-foreground"
+									}`}
+								>
+									<EntityCard
+										entity={{
+											id: being.id,
+											name: being.name,
+											type: being.type as any,
+										}}
+										variant="compact"
+									/>
+								</button>
+							))}
+						</div>
+					)}
 				</div>
+			</div>
 		</div>
+	);
+}
+
+function BeingSelectPageSkeleton() {
+	return (
+		<div className="h-full">
+			{/* Mobile-optimized header */}
+			<header className="sticky top-0 z-40 border-b bg-background/95">
+				<div className="container mx-auto flex h-mobile-touch max-w-4xl items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
+					<Button
+						variant="ghost"
+						size="sm"
+						className="shrink-0 p-2"
+						disabled
+						aria-label="Cancel selection"
+					>
+						<ArrowLeft className="size-4" />
+					</Button>
+					<h1 className="font-semibold text-base text-foreground">
+						Select Being
+					</h1>
+				</div>
+			</header>
+
+			{/* Search-first interface */}
+			<div className="container mx-auto max-w-4xl space-y-4 px-4 py-6 sm:px-6 lg:px-8">
+				{/* Search input */}
+				<div className="relative">
+					<Search className="-translate-y-1/2 absolute top-1/2 left-3 size-4 text-muted-foreground" />
+					<Input
+						placeholder="Search beings..."
+						className="h-mobile-touch pl-9"
+						disabled
+					/>
+				</div>
+				<div className="space-y-2 pt-8">
+					<EntitySkeleton />
+					<EntitySkeleton />
+					<EntitySkeleton />
+				</div>
+			</div>
+		</div>
+	);
+}
+
+export default function BeingSelectPage() {
+	return (
+		<Suspense fallback={<BeingSelectPageSkeleton />}>
+			<BeingSelectPageComponent />
+		</Suspense>
 	);
 }

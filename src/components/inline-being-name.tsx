@@ -27,7 +27,7 @@ export function InlineBeingName({
 
 	const { data: being, error: beingError } = api.being.getById.useQuery(
 		{ id: beingId! },
-		{ 
+		{
 			enabled: !!beingId,
 			retry: false, // Don't retry if being doesn't exist
 		},
@@ -41,7 +41,7 @@ export function InlineBeingName({
 		onError: (err) => {
 			inlineBeingLogger.error(
 				err,
-				"Failed to update being name: " + err.message,
+				`Failed to update being name: ${err.message}`,
 			);
 		},
 	});

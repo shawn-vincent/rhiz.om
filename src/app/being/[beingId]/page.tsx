@@ -25,12 +25,15 @@ export default async function SpacePage({
 			<div className="grid h-dvh grid-rows-[auto_1fr_auto] bg-black text-white">
 				<TopBar session={session} />
 				<ErrorBoundary>
-					<main className="overflow-y-auto relative">
+					<main className="relative overflow-y-auto">
 						<BeingBackground />
 						<div className="container relative z-10 flex h-full flex-col items-center justify-center p-4">
 							{session?.user?.beingId ? (
 								<Suspense fallback={<ChatLoading />}>
-									<Chat currentUserBeingId={session.user.beingId} beingId={beingId} />
+									<Chat
+										currentUserBeingId={session.user.beingId}
+										beingId={beingId}
+									/>
 								</Suspense>
 							) : (
 								<div className="flex h-[calc(100vh-10rem)] items-center justify-center">

@@ -54,7 +54,7 @@ export function createSelectField(
 				trigger={
 					<div
 						className={cn(
-							"flex h-16 w-[200px] cursor-pointer items-center justify-between gap-3 rounded-md border bg-transparent p-2 text-left text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+							"flex h-16 w-full min-w-0 max-w-[200px] cursor-pointer items-center justify-between gap-3 rounded-md border bg-transparent p-2 text-left text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 							!value && "text-muted-foreground",
 						)}
 						role="combobox"

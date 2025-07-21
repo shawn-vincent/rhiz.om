@@ -7,6 +7,7 @@ import { RichContent } from "~/app/_components/rich-content";
 import { Avatar } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { logger } from "~/lib/logger.client";
+import { usePerformanceTracking } from "~/lib/performance.client";
 import type { ContentNode } from "~/server/db/content-types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
@@ -22,6 +23,7 @@ interface ChatProps {
 }
 
 export function Chat({ currentUserBeingId, beingId }: ChatProps) {
+	const { trackAsync } = usePerformanceTracking("Chat");
 	const [message, setMessage] = useState("");
 	const [streamingResponses, setStreamingResponses] = useState<
 		Record<string, string>
@@ -62,30 +64,35 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	const createUtterance = api.intention.createUtterance.useMutation({
 		onSuccess: async (data) => {
-			setMessage("");
-			await utils.intention.getAllUtterancesInBeing.invalidate();
+			await trackAsync(async () => {
+				setMessage("");
+				await utils.intention.getAllUtterancesInBeing.invalidate();
 
-			if (data.aiIntentionId) {
-				setStreamingResponses((prev) => ({
-					...prev,
-					[data.aiIntentionId]: "",
-				}));
-			}
+				if (data.aiIntentionId) {
+					setStreamingResponses((prev) => ({
+						...prev,
+						[data.aiIntentionId]: "",
+					}));
+				}
+			});
 		},
 		onError: (err) => alert(`Error: ${err.message}`),
 	});
 
 	const activeStream = utterances.find((u) => u.state === "active");
 
-	// useEffect for handling SSE
+	// useEffect for handling SSE with proper cleanup
 	useEffect(() => {
 		if (!activeStream) return;
 
 		// Construct the URL to our new, dedicated SSE endpoint
 		const url = `/api/chat-stream?intentionId=${activeStream.id}` as const;
 		const eventSource = new EventSource(url);
+		let isActive = true; // Flag to prevent state updates after cleanup
 
 		eventSource.onmessage = (event) => {
+			if (!isActive) return; // Prevent updates after cleanup
+
 			const { type, data } = JSON.parse(event.data) as {
 				type: "token" | "end" | "error";
 				data?: string;
@@ -97,16 +104,19 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 					[activeStream.id]: (prev[activeStream.id] ?? "") + data,
 				}));
 			} else if (type === "end" || type === "error") {
-				utils.intention.getAllUtterancesInBeing.invalidate();
-				setStreamingResponses((prev) => {
-					const { [activeStream.id]: _, ...rest } = prev;
-					return rest;
-				});
+				if (isActive) {
+					utils.intention.getAllUtterancesInBeing.invalidate();
+					setStreamingResponses((prev) => {
+						const { [activeStream.id]: _, ...rest } = prev;
+						return rest;
+					});
+				}
 				eventSource.close();
 			}
 		};
 
 		eventSource.onerror = (err) => {
+			if (!isActive) return;
 			chatLogger.error(err, "EventSource failed");
 			eventSource.close();
 			// Invalidate to fetch the final 'failed' state from the DB if an error occurs
@@ -115,29 +125,31 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 		// Cleanup on component unmount or when activeStream changes
 		return () => {
+			isActive = false; // Prevent any further state updates
 			eventSource.close();
 		};
 	}, [activeStream, utils.intention.getAllUtterancesInBeing]);
 
 	// IntersectionObserver to detect if the user is at the bottom
 	useEffect(() => {
+		const chatContainer = chatContainerRef.current;
+		const bottomAnchor = bottomAnchorRef.current;
+
+		if (!chatContainer || !bottomAnchor) return;
+
 		const observer = new IntersectionObserver(
 			([entry]) => {
 				setIsAtBottom(!!entry && entry.isIntersecting);
 			},
-			{ root: chatContainerRef.current, threshold: 0.1 }, // Observe within the chat container
+			{ root: chatContainer, threshold: 0.1 }, // Observe within the chat container
 		);
 
-		if (bottomAnchorRef.current) {
-			observer.observe(bottomAnchorRef.current);
-		}
+		observer.observe(bottomAnchor);
 
 		return () => {
-			if (bottomAnchorRef.current) {
-				observer.unobserve(bottomAnchorRef.current);
-			}
+			observer.disconnect(); // Disconnect all observers to prevent memory leaks
 		};
-	}, [chatContainerRef, bottomAnchorRef]);
+	}, []); // Remove deps to prevent recreation on every render
 
 	// Auto-scroll to bottom if user is already at the bottom
 	useLayoutEffect(() => {
@@ -171,7 +183,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	return (
 		<ErrorBoundary>
-			<div className="relative flex h-full w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/20 p-4 pt-0 shadow-lg ring-1 ring-white/25 backdrop-blur-md">
+			<div className="relative flex h-full w-full max-w-3xl flex-col rounded-lg border border-white/20 bg-white/20 p-4 pt-0 shadow-lg ring-1 ring-white/25">
 				<ul
 					ref={chatContainerRef}
 					className="flex grow flex-col gap-3 overflow-y-auto"
@@ -181,9 +193,10 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						// Special case for known AI agent, otherwise auto-detect
 						const knownBeingType =
 							group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
-						const firstMessageTime = new Date(
-							group.messages[0]!.createdAt,
-						).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+						const firstMessage = group.messages[0];
+						const firstMessageTime = firstMessage 
+							? new Date(firstMessage.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+							: "";
 
 						return (
 							<li
@@ -219,7 +232,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 											>
 												<RichContent nodes={utt.content as ContentNode[]} />
 												{utt.state === "active" && (
-													<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current"></span>
+													<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current" />
 												)}
 											</div>
 										))}
@@ -228,7 +241,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 							</li>
 						);
 					})}
-					<li ref={bottomAnchorRef} className="h-px w-full"></li>{" "}
+					<li ref={bottomAnchorRef} className="h-px w-full" />{" "}
 					{/* Invisible anchor */}
 				</ul>
 				{!isAtBottom && (

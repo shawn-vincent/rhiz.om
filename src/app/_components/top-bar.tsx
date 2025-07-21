@@ -22,7 +22,7 @@ import { SiteMenu } from "./site-menu";
 export function TopBar({ session }: { session: Session | null }) {
 	return (
 		<ErrorBoundary>
-			<header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-white/20 border-b bg-background/80 px-4 backdrop-blur">
+			<header className="sticky top-0 z-50 flex h-14 items-center gap-2 border-white/20 border-b bg-background/95 px-4">
 				{/* Left section - Menu */}
 				<div className="flex items-center">
 					{session && (
@@ -34,7 +34,7 @@ export function TopBar({ session }: { session: Session | null }) {
 							</SheetTrigger>
 							<SheetContent
 								side="left"
-								className="w-72 border-r-white/20 bg-background/80 text-white"
+								className="w-72 border-r-white/20 bg-background/95 text-white"
 							>
 								<SheetHeader>
 									<SheetTitle>Site Menu</SheetTitle>
@@ -62,7 +62,7 @@ export function TopBar({ session }: { session: Session | null }) {
 							</SheetTrigger>
 							<SheetContent
 								side="right"
-								className="w-72 border-l-white/20 bg-background/80 text-white"
+								className="w-72 border-l-white/20 bg-background/95 text-white"
 							>
 								<SheetHeader>
 									<SheetTitle>Page Configuration</SheetTitle>

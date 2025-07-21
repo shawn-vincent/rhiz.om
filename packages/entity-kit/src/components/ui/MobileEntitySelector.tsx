@@ -33,9 +33,13 @@ export function MobileEntitySelector({
 	);
 
 	// Fetch the selected entity for display
-	const { data: fetchedEntity, isLoading, error } = api.being.getById.useQuery(
+	const {
+		data: fetchedEntity,
+		isLoading,
+		error,
+	} = api.being.getById.useQuery(
 		{ id: value! },
-		{ 
+		{
 			enabled: !!value,
 			retry: false, // Don't retry if entity doesn't exist
 		},
@@ -106,7 +110,9 @@ export function MobileEntitySelector({
 				) : isLoading ? (
 					<span className="text-muted-foreground">Loading...</span>
 				) : error?.data?.code === "NOT_FOUND" && value ? (
-					<span className="text-muted-foreground">Entity not found: {value}</span>
+					<span className="text-muted-foreground">
+						Entity not found: {value}
+					</span>
 				) : (
 					<span className="text-muted-foreground">{placeholder}</span>
 				)}
