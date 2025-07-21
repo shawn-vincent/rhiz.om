@@ -82,8 +82,7 @@ export default function BeingSelectPage() {
 		.filter((being): being is NonNullable<typeof being> => Boolean(being));
 
 	return (
-		<ErrorBoundary>
-			<div className="min-h-screen bg-background">
+		<div className="h-full">
 				{/* Mobile-optimized header */}
 				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
@@ -197,7 +196,6 @@ export default function BeingSelectPage() {
 						)}
 					</div>
 				</div>
-			</div>
-		</ErrorBoundary>
+		</div>
 	);
 }

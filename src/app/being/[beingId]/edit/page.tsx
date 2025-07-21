@@ -127,9 +127,8 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 	}
 
 	return (
-		<ErrorBoundary>
-			<div className="min-h-screen bg-background">
-				{/* Mobile-first header with breadcrumb navigation */}
+		<div className="h-full">
+			{/* Mobile-first header with breadcrumb navigation */}
 				<header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
 					<div className="container mx-auto max-w-4xl flex h-mobile-touch items-center gap-mobile-gap px-4 sm:px-6 lg:px-8">
 						<Link href={`/being/${beingId}`}>
@@ -188,7 +187,6 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 						</form>
 					</FormProvider>
 				</main>
-			</div>
-		</ErrorBoundary>
+		</div>
 	);
 }

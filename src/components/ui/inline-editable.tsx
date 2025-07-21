@@ -173,7 +173,7 @@ export function InlineText({
 		<InlineEditable
 			value={value}
 			onSave={onSave}
-			className={className}
+			displayClassName={className}
 			placeholder={placeholder}
 			disabled={disabled}
 			validation={(val) => {
