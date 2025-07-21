@@ -35,7 +35,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 	const [sharing, setSharing] = useState(false);
 
 	const base =
-		"size-10 rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
+		"rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
 	return (
 		<ErrorBoundary>
 			<nav className="sticky bottom-0 z-50 flex items-center gap-2 border-white/20 border-t bg-background/95 px-2 py-2 min-w-0">
@@ -64,18 +64,26 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					)}
 				</div>
 
-				{/* Center section - Controls and Title */}
-				<div className="flex items-center gap-1 flex-1 min-w-0 justify-center">
+				{/* Center section - Being Name */}
+				<div className="flex-1 min-w-0 text-center">
+					<InlineBeingName
+						fallback="Rhiz.om"
+						className="font-medium text-sm text-white truncate block"
+					/>
+				</div>
+
+				{/* Right section - Controls and Settings */}
+				<div className="flex items-center gap-1 shrink-0">
 					<Toggle
 						pressed={videoOn}
 						onPressedChange={setVideoOn}
 						aria-label={videoOn ? "Turn camera off" : "Turn camera on"}
-						className={base}
+						className={`${base} h-8 w-8`}
 					>
 						{videoOn ? (
-							<Video className="size-5" />
+							<Video className="size-4" />
 						) : (
-							<VideoOff className="size-5" />
+							<VideoOff className="size-4" />
 						)}
 					</Toggle>
 
@@ -83,12 +91,12 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						pressed={audioOn}
 						onPressedChange={setAudioOn}
 						aria-label={audioOn ? "Mute microphone" : "Unmute microphone"}
-						className={base}
+						className={`${base} h-8 w-8`}
 					>
 						{audioOn ? (
-							<Mic className="size-5" />
+							<Mic className="size-4" />
 						) : (
-							<MicOff className="size-5" />
+							<MicOff className="size-4" />
 						)}
 					</Toggle>
 
@@ -98,30 +106,20 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						aria-label={
 							sharing ? "Stop screen sharing" : "Start screen sharing"
 						}
-						className={base}
+						className={`${base} h-8 w-8`}
 					>
 						{sharing ? (
-							<MonitorX className="size-5" />
+							<MonitorX className="size-4" />
 						) : (
-							<MonitorUp className="size-5" />
+							<MonitorUp className="size-4" />
 						)}
 					</Toggle>
 
-					<div className="mx-2 min-w-0 flex-1 text-center">
-						<InlineBeingName
-							fallback="Rhiz.om"
-							className="font-medium text-sm text-white truncate block"
-						/>
-					</div>
-				</div>
-
-				{/* Right section - Settings */}
-				<div className="flex items-center shrink-0">
 					{session ? (
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button variant="ghost" size="icon" aria-label="Page settings">
-									<Settings className="size-5" />
+								<Button variant="ghost" size="icon" aria-label="Page settings" className="h-8 w-8 ml-2">
+									<Settings className="size-4" />
 								</Button>
 							</SheetTrigger>
 							<SheetContent
@@ -140,7 +138,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					) : (
 						<Link
 							href="/api/auth/signin"
-							className="rounded-full bg-white/10 px-6 py-2 font-semibold text-sm no-underline transition hover:bg-white/20"
+							className="rounded-full bg-white/10 px-3 py-1 font-semibold text-xs no-underline transition hover:bg-white/20 whitespace-nowrap ml-2"
 						>
 							Sign in
 						</Link>

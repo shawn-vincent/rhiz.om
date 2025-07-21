@@ -40,6 +40,39 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		{ staleTime: 0 },
 	);
 
+	// Get all unique being IDs from utterances to fetch their names
+	const uniqueBeingIds = useMemo(() => {
+		const ids = new Set<string>();
+		for (const utterance of utterances) {
+			ids.add(utterance.ownerId);
+		}
+		return Array.from(ids);
+	}, [utterances]);
+
+	// Fetch being data for all unique being IDs
+	const beingQueries = uniqueBeingIds.map(id => 
+		api.being.getById.useQuery({ id }, {
+			enabled: !!id,
+			retry: false,
+		})
+	);
+
+	// Create a map of being ID to being name
+	const beingNames = useMemo(() => {
+		const nameMap: Record<string, string> = {};
+		for (let i = 0; i < uniqueBeingIds.length; i++) {
+			const beingId = uniqueBeingIds[i];
+			const query = beingQueries[i];
+			if (beingId && query?.data?.name) {
+				nameMap[beingId] = query.data.name;
+			} else if (beingId) {
+				// Fallback to ID if name not available
+				nameMap[beingId] = beingId;
+			}
+		}
+		return nameMap;
+	}, [uniqueBeingIds, beingQueries]);
+
 	const groupedMessages = useMemo(() => {
 		// This logic remains the same and will work with the streaming updates
 		const combinedUtterances = utterances.map((utt) => {
@@ -222,7 +255,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 										className={`flex items-baseline gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 									>
 										<span className="font-medium text-gray-900 dark:text-gray-50">
-											{group.ownerId}
+											{beingNames[group.ownerId] || group.ownerId}
 										</span>
 										<time className="text-gray-500 text-xs dark:text-gray-400">
 											{firstMessageTime}
