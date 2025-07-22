@@ -4,6 +4,8 @@ import type { NextRequest } from "next/server";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { beings } from "~/server/db/schema";
+import type { BeingId } from "~/server/db/types";
+import { triggerPresenceUpdate } from "~/server/lib/state-sync";
 
 // Connection tracking
 interface ConnectionInfo {
@@ -60,6 +62,22 @@ function cleanupConnection(connectionId: string, broadcast = false) {
 					beingId,
 					isOnline: false,
 				});
+
+				// Also trigger new state sync system - find which spaces this being is in
+				db.select()
+					.from(beings)
+					.where(eq(beings.id, beingId))
+					.limit(1)
+					.then((being) => {
+						if (being[0]?.locationId) {
+							triggerPresenceUpdate(being[0].locationId as BeingId, {
+								type: "update",
+								entityId: beingId,
+								causedBy: beingId as BeingId,
+							});
+						}
+					})
+					.catch(console.error);
 			}
 		}
 	}
@@ -99,12 +117,28 @@ export async function GET(request: NextRequest) {
 			// Update being index
 			if (!beingConnections.has(beingId)) {
 				beingConnections.set(beingId, new Set());
-				// Being came online, broadcast
+				// Being came online, broadcast to old system
 				broadcastPresenceUpdate({
 					type: "presence_change",
 					beingId,
 					isOnline: true,
 				});
+
+				// Also trigger new state sync system - find which spaces this being is in
+				db.select()
+					.from(beings)
+					.where(eq(beings.id, beingId))
+					.limit(1)
+					.then((being) => {
+						if (being[0]?.locationId) {
+							triggerPresenceUpdate(being[0].locationId as BeingId, {
+								type: "update",
+								entityId: beingId,
+								causedBy: beingId as BeingId,
+							});
+						}
+					})
+					.catch(console.error);
 			}
 			beingConnections.get(beingId)!.add(connectionId);
 
@@ -145,7 +179,7 @@ export async function GET(request: NextRequest) {
 		headers: {
 			"Content-Type": "text/event-stream",
 			"Cache-Control": "no-cache",
-			"Connection": "keep-alive",
+			Connection: "keep-alive",
 			"X-Accel-Buffering": "no", // Disable Nginx buffering
 			"Access-Control-Allow-Origin": "*",
 			"Access-Control-Allow-Methods": "GET, POST, OPTIONS",

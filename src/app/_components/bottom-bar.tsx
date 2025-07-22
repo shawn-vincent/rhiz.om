@@ -43,7 +43,9 @@ export function BottomBar({ session }: { session?: Session | null }) {
 	const [audioOn, setAudioOn] = useState(false);
 	const [sharing, setSharing] = useState(false);
 	const params = useParams();
-	const currentSpaceId = params?.beingId ? decodeURIComponent(params.beingId as string) : undefined;
+	const currentSpaceId = params?.beingId
+		? decodeURIComponent(params.beingId as string)
+		: undefined;
 
 	const base =
 		"rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";

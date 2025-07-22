@@ -7,8 +7,10 @@ import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
 import { Avatar } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { useSpaceIntentions } from "~/hooks/use-state-sync";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
+import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
 
@@ -33,19 +35,36 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const bottomAnchorRef = useRef<HTMLLIElement>(null); // Ref for the invisible anchor at the bottom
 
 	const utils = api.useUtils();
-	const [utterances] = api.intention.getAllUtterancesInBeing.useSuspenseQuery(
-		{ beingId },
-		{ staleTime: 0 },
-	);
+
+	// Use the new state sync system instead of manual tRPC query
+	const {
+		utterances,
+		error: intentionsError,
+		retry,
+	} = useSpaceIntentions(beingId as BeingId);
+
+	// Keep fallback for now during migration
+	const [fallbackUtterances] =
+		api.intention.getAllUtterancesInBeing.useSuspenseQuery(
+			{ beingId },
+			{
+				staleTime: 0,
+			},
+		);
+
+	// Use synced utterances if available, otherwise fallback
+	const displayUtterances =
+		utterances.length > 0 ? utterances : (fallbackUtterances ?? []);
 
 	// Get all unique being IDs from utterances to fetch their names
 	const uniqueBeingIds = useMemo(() => {
 		const ids = new Set<string>();
-		for (const utterance of utterances) {
+		for (const utterance of displayUtterances) {
+			// All utterances should have ownerId
 			ids.add(utterance.ownerId);
 		}
 		return Array.from(ids);
-	}, [utterances]);
+	}, [displayUtterances]);
 
 	// Fetch all beings at once instead of individual queries
 	const { data: allBeings } = api.being.getAll.useQuery();
@@ -69,7 +88,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	const groupedMessages = useMemo(() => {
 		// This logic remains the same and will work with the streaming updates
-		const combinedUtterances = utterances.map((utt) => {
+		const combinedUtterances = displayUtterances.map((utt) => {
 			if (streamingResponses[utt.id]) {
 				return { ...utt, content: [streamingResponses[utt.id]] };
 			}
@@ -88,12 +107,12 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 			}
 		}
 		return groups;
-	}, [utterances, streamingResponses]);
+	}, [displayUtterances, streamingResponses]);
 
 	const createUtterance = api.intention.createUtterance.useMutation({
 		onSuccess: async (data) => {
 			setMessage("");
-			await utils.intention.getAllUtterancesInBeing.invalidate();
+			// No need to manually invalidate - the new state sync system handles this automatically!
 
 			if (data.aiIntentionId) {
 				setStreamingResponses((prev) => ({
@@ -105,7 +124,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		onError: (err) => alert(`Error: ${err.message}`),
 	});
 
-	const activeStream = utterances.find((u) => u.state === "active");
+	const activeStream = displayUtterances.find((u) => u.state === "active");
 
 	// useEffect for handling SSE with proper cleanup
 	useEffect(() => {
@@ -145,8 +164,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 			if (!isActive) return;
 			chatLogger.error(err, "EventSource failed");
 			eventSource.close();
-			// Invalidate to fetch the final 'failed' state from the DB if an error occurs
-			utils.intention.getAllUtterancesInBeing.invalidate();
+			// No need to manually invalidate - the new state sync system handles this automatically!
 		};
 
 		// Cleanup on component unmount or when activeStream changes

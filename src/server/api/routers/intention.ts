@@ -13,7 +13,9 @@ import {
 } from "~/server/api/trpc";
 import type { DrizzleDB } from "~/server/db";
 import { intentions, users } from "~/server/db/schema";
+import type { BeingId } from "~/server/db/types";
 import { logger } from "~/server/lib/logger";
+import { triggerIntentionsUpdate } from "~/server/lib/state-sync";
 
 const intentionLogger = logger.child({ name: "IntentionRouter" });
 
@@ -96,6 +98,13 @@ async function streamAiResponse({
 			})
 			.where(eq(intentions.id, aiIntentionId));
 
+		// Trigger state sync update for the space
+		await triggerIntentionsUpdate(beingId as BeingId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: AI_AGENT_BEING_ID as BeingId,
+		});
+
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
 	} catch (error) {
 		intentionLogger.error(error, "AI response generation failed");
@@ -107,6 +116,13 @@ async function streamAiResponse({
 			.update(intentions)
 			.set({ state: "failed", content: ["AI failed to respond."] })
 			.where(eq(intentions.id, aiIntentionId));
+
+		// Trigger state sync update for failed AI response
+		await triggerIntentionsUpdate(beingId as BeingId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: AI_AGENT_BEING_ID as BeingId,
+		});
 	}
 }
 
@@ -142,6 +158,13 @@ export const intentionRouter = createTRPCRouter({
 				content: [input.content],
 			});
 
+			// Trigger state sync update for user message
+			await triggerIntentionsUpdate(input.beingId as BeingId, {
+				type: "add",
+				entityId: userIntentionId,
+				causedBy: userRecord.beingId as BeingId,
+			});
+
 			const aiIntentionId = `/utterance-ai-${crypto.randomUUID()}`;
 			await ctx.db.insert(intentions).values({
 				id: aiIntentionId,
@@ -151,6 +174,13 @@ export const intentionRouter = createTRPCRouter({
 				ownerId: AI_AGENT_BEING_ID,
 				locationId: input.beingId,
 				content: [""],
+			});
+
+			// Trigger state sync update for AI message (initial state)
+			await triggerIntentionsUpdate(input.beingId as BeingId, {
+				type: "add",
+				entityId: aiIntentionId,
+				causedBy: AI_AGENT_BEING_ID as BeingId,
 			});
 
 			// We don't await this, it runs in the background

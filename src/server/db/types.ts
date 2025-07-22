@@ -70,6 +70,14 @@ export const insertIntentionSchema = baseInsertIntentionSchema.extend({
 export const selectUserSchema = createSelectSchema(schema.users);
 export const insertUserSchema = createInsertSchema(schema.users);
 
+// --- ID Types (from data model spec) ---
+
+/** A Being's canonical identifier */
+export type BeingId = `@${string}` | `/${string}`;
+
+/** An Intention's identifier – **always** begins with `/` */
+export type IntentionId = `/${string}`;
+
 // --- Inferred TypeScript Types ---
 
 // Select Types (for reading from the DB)

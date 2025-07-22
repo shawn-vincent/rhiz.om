@@ -18,20 +18,24 @@ export const presenceRouter = createTRPCRouter({
 	 * Get beings in a specific location/space with their connection status
 	 */
 	getByLocation: publicProcedure
-		.input(z.object({ 
-			locationId: z.string().optional()
-		}))
+		.input(
+			z.object({
+				locationId: z.string().optional(),
+			}),
+		)
 		.query(async ({ input }) => {
 			const allPresence = await getCurrentPresence();
-			
+
 			// Filter by location and always include spaces/bots
-			const beingsInLocation = allPresence.filter(being => 
-				// Always show spaces and bots
-				being.type === "space" || being.type === "bot" ||
-				// Show guests that are in this location
-				(being.type === "guest" && being.locationId === input.locationId)
+			const beingsInLocation = allPresence.filter(
+				(being) =>
+					// Always show spaces and bots
+					being.type === "space" ||
+					being.type === "bot" ||
+					// Show guests that are in this location
+					(being.type === "guest" && being.locationId === input.locationId),
 			);
-			
+
 			return beingsInLocation;
 		}),
 

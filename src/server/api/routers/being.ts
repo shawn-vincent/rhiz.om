@@ -15,6 +15,8 @@ import {
 } from "~/server/api/trpc";
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
+import type { BeingId } from "~/server/db/types";
+import { triggerPresenceUpdate } from "~/server/lib/state-sync";
 
 export const beingRouter = createTRPCRouter({
 	/**
@@ -77,11 +79,29 @@ export const beingRouter = createTRPCRouter({
 
 			// Broadcast presence update if location changed
 			if (existingBeing?.locationId !== input.locationId) {
+				// Legacy presence system
 				broadcastPresenceUpdate({
 					type: "location_change",
 					beingId: input.id,
 					locationId: input.locationId,
 				});
+
+				// New state sync system - trigger updates for both old and new spaces
+				if (existingBeing?.locationId) {
+					triggerPresenceUpdate(existingBeing.locationId as BeingId, {
+						type: "remove",
+						entityId: input.id,
+						causedBy: input.id as BeingId,
+					});
+				}
+
+				if (input.locationId) {
+					triggerPresenceUpdate(input.locationId as BeingId, {
+						type: "add",
+						entityId: input.id,
+						causedBy: input.id as BeingId,
+					});
+				}
 			}
 
 			return result;
@@ -100,6 +120,18 @@ export const beingRouter = createTRPCRouter({
 			},
 		});
 	}),
+
+	/**
+	 * Fetches all beings in a specific location (space).
+	 */
+	getByLocation: publicProcedure
+		.input(z.object({ locationId: z.string() }))
+		.query(async ({ ctx, input }) => {
+			return ctx.db.query.beings.findMany({
+				where: eq(beings.locationId, input.locationId),
+				orderBy: (beings, { asc }) => [asc(beings.name)],
+			});
+		}),
 
 	/**
 	 * Searches for beings based on query, kind, and sort order.
