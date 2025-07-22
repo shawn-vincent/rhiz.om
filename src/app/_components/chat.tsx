@@ -260,7 +260,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 										<span className="font-medium text-outline text-white">
 											{beingNames[group.ownerId] || group.ownerId}
 										</span>
-										<time className="text-gray-500 text-xs dark:text-gray-400">
+										<time className="text-outline text-gray-500 text-xs dark:text-gray-400">
 											{firstMessageTime}
 										</time>
 									</header>

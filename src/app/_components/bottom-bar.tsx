@@ -7,6 +7,7 @@ import {
 	MicOff,
 	MonitorUp,
 	MonitorX,
+	MoreHorizontal,
 	Settings,
 	Video,
 	VideoOff,
@@ -17,6 +18,13 @@ import { useState } from "react";
 import { InlineBeingName } from "~/components/inline-being-name";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { BeingPresence } from "./being-presence";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "~/components/ui/dropdown-menu";
 import {
 	Sheet,
 	SheetContent,
@@ -39,8 +47,8 @@ export function BottomBar({ session }: { session?: Session | null }) {
 	return (
 		<ErrorBoundary>
 			<nav className="sticky bottom-0 z-50 flex min-w-0 items-center gap-2 border-white/20 border-t bg-background/95 px-2 py-2">
-				{/* Left section - Menu */}
-				<div className="flex shrink-0 items-center">
+				{/* Left section - Menu + Compact Presence */}
+				<div className="flex shrink-0 items-center gap-4">
 					{session && (
 						<Sheet>
 							<SheetTrigger asChild>
@@ -62,6 +70,10 @@ export function BottomBar({ session }: { session?: Session | null }) {
 							</SheetContent>
 						</Sheet>
 					)}
+					{/* Compact presence indicator for mobile */}
+					<div className="sm:hidden">
+						<BeingPresence compact />
+					</div>
 				</div>
 
 				{/* Center section - Being Name */}
@@ -69,10 +81,11 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					<InlineBeingName
 						fallback="Rhiz.om"
 						className="block truncate font-medium text-sm text-white"
+						readOnly
 					/>
 				</div>
 
-				{/* Right section - Controls and Settings */}
+				{/* Right section - Controls and Overflow Menu */}
 				<div className="flex shrink-0 items-center gap-1">
 					<Toggle
 						pressed={videoOn}
@@ -100,46 +113,55 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						)}
 					</Toggle>
 
-					<Toggle
-						pressed={sharing}
-						onPressedChange={setSharing}
-						aria-label={
-							sharing ? "Stop screen sharing" : "Start screen sharing"
-						}
-						className={`${base} h-8 w-8`}
-					>
-						{sharing ? (
-							<MonitorX className="size-4" />
-						) : (
-							<MonitorUp className="size-4" />
-						)}
-					</Toggle>
-
 					{session ? (
-						<Sheet>
-							<SheetTrigger asChild>
+						<DropdownMenu>
+							<DropdownMenuTrigger asChild>
 								<Button
 									variant="ghost"
 									size="icon"
-									aria-label="Page settings"
+									aria-label="More options"
 									className="ml-2 h-8 w-8"
 								>
-									<Settings className="size-4" />
+									<MoreHorizontal className="size-4" />
 								</Button>
-							</SheetTrigger>
-							<SheetContent
-								side="right"
-								className="w-72 border-l-white/20 bg-background/95 text-white"
-							>
-								<SheetHeader>
-									<SheetTitle>Page Configuration</SheetTitle>
-									<SheetDescription>
-										Manage the settings for the current page.
-									</SheetDescription>
-								</SheetHeader>
-								<Config />
-							</SheetContent>
-						</Sheet>
+							</DropdownMenuTrigger>
+							<DropdownMenuContent align="end" className="w-48">
+								<DropdownMenuItem
+									onClick={() => setSharing(!sharing)}
+									className="flex items-center gap-2"
+								>
+									{sharing ? (
+										<MonitorX className="size-4" />
+									) : (
+										<MonitorUp className="size-4" />
+									)}
+									{sharing ? "Stop screen sharing" : "Start screen sharing"}
+								</DropdownMenuItem>
+								<Sheet>
+									<SheetTrigger asChild>
+										<DropdownMenuItem
+											onSelect={(e) => e.preventDefault()}
+											className="flex items-center gap-2"
+										>
+											<Settings className="size-4" />
+											Space config
+										</DropdownMenuItem>
+									</SheetTrigger>
+									<SheetContent
+										side="right"
+										className="w-72 border-l-white/20 bg-background/95 text-white"
+									>
+										<SheetHeader>
+											<SheetTitle>Space Configuration</SheetTitle>
+											<SheetDescription>
+												Manage the settings for the current space.
+											</SheetDescription>
+										</SheetHeader>
+										<Config />
+									</SheetContent>
+								</Sheet>
+							</DropdownMenuContent>
+						</DropdownMenu>
 					) : (
 						<Link
 							href="/api/auth/signin"

@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { BeingBackground } from "~/app/_components/being-background";
+import { BeingPresence } from "~/app/_components/being-presence";
 import { BottomBar } from "~/app/_components/bottom-bar";
 import { Chat } from "~/app/_components/chat";
 import ErrorBoundary from "~/components/ui/error-boundary";
@@ -25,24 +26,32 @@ export default async function SpacePage({
 				<ErrorBoundary>
 					<main className="relative overflow-hidden">
 						<BeingBackground />
-						<div className="relative z-10 flex h-full justify-center">
-							<div className="w-full max-w-2xl">
-								{session?.user?.beingId ? (
-									<Suspense fallback={<ChatLoading />}>
-										<Chat
-											currentUserBeingId={session.user.beingId}
-											beingId={beingId}
-										/>
-									</Suspense>
-								) : (
-									<div className="flex h-full items-center justify-center">
-										<p className="text-white/70 text-xl">
-											{session?.user
-												? "Initializing your being..."
-												: "Please sign in to join the being."}
-										</p>
-									</div>
-								)}
+						<div className="relative z-10 flex h-full">
+							{/* Left sidebar - Being presence (desktop only) */}
+							<div className="hidden sm:block">
+								<BeingPresence />
+							</div>
+							
+							{/* Main chat area */}
+							<div className="flex flex-1 justify-center">
+								<div className="w-full max-w-2xl">
+									{session?.user?.beingId ? (
+										<Suspense fallback={<ChatLoading />}>
+											<Chat
+												currentUserBeingId={session.user.beingId}
+												beingId={beingId}
+											/>
+										</Suspense>
+									) : (
+										<div className="flex h-full items-center justify-center">
+											<p className="text-white/70 text-xl">
+												{session?.user
+													? "Initializing your being..."
+													: "Please sign in to join the being."}
+											</p>
+										</div>
+									)}
+								</div>
 							</div>
 						</div>
 					</main>

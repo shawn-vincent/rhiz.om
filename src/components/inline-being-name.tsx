@@ -12,11 +12,13 @@ const inlineBeingLogger = logger.child({ name: "InlineBeingName" });
 interface InlineBeingNameProps {
 	fallback?: string;
 	className?: string;
+	readOnly?: boolean;
 }
 
 export function InlineBeingName({
 	fallback = "Rhiz.om",
 	className,
+	readOnly = false,
 }: InlineBeingNameProps) {
 	const params = useParams();
 	const beingId = params.beingId
@@ -92,8 +94,22 @@ export function InlineBeingName({
 		);
 	}
 
-	// If being found, show editable name
+	// If being found, show editable or read-only name
 	const displayName = being?.name || beingId;
+
+	// If read-only mode, just show the text
+	if (readOnly) {
+		return (
+			<span
+				className={cn(
+					"flex-1 font-extrabold text-white tracking-tight",
+					className,
+				)}
+			>
+				{displayName}
+			</span>
+		);
+	}
 
 	return (
 		<InlineText
