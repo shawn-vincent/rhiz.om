@@ -14,17 +14,17 @@ import {
 } from "lucide-react";
 import type { Session } from "next-auth";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useState } from "react";
 import { InlineBeingName } from "~/components/inline-being-name";
 import { Button } from "~/components/ui/button";
-import ErrorBoundary from "~/components/ui/error-boundary";
-import { BeingPresence } from "./being-presence";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import ErrorBoundary from "~/components/ui/error-boundary";
 import {
 	Sheet,
 	SheetContent,
@@ -34,6 +34,7 @@ import {
 	SheetTrigger,
 } from "~/components/ui/sheet";
 import { Toggle } from "~/components/ui/toggle";
+import { BeingPresence } from "./being-presence";
 import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
@@ -41,6 +42,8 @@ export function BottomBar({ session }: { session?: Session | null }) {
 	const [videoOn, setVideoOn] = useState(false);
 	const [audioOn, setAudioOn] = useState(false);
 	const [sharing, setSharing] = useState(false);
+	const params = useParams();
+	const currentSpaceId = params?.beingId ? decodeURIComponent(params.beingId as string) : undefined;
 
 	const base =
 		"rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
@@ -72,7 +75,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					)}
 					{/* Compact presence indicator for mobile */}
 					<div className="sm:hidden">
-						<BeingPresence compact />
+						<BeingPresence compact currentSpaceId={currentSpaceId} />
 					</div>
 				</div>
 

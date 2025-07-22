@@ -8,7 +8,6 @@ import { RichContent } from "~/app/_components/rich-content";
 import { Avatar } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { logger } from "~/lib/logger.client";
-import { usePerformanceTracking } from "~/lib/performance.client";
 import type { ContentNode } from "~/server/db/content-types";
 import { api } from "~/trpc/react";
 import type { RouterOutputs } from "~/trpc/react";
@@ -24,7 +23,6 @@ interface ChatProps {
 }
 
 export function Chat({ currentUserBeingId, beingId }: ChatProps) {
-	const { trackAsync } = usePerformanceTracking("Chat");
 	const [message, setMessage] = useState("");
 	const [streamingResponses, setStreamingResponses] = useState<
 		Record<string, string>
@@ -49,32 +47,25 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		return Array.from(ids);
 	}, [utterances]);
 
-	// Fetch being data for all unique being IDs
-	const beingQueries = uniqueBeingIds.map((id) =>
-		api.being.getById.useQuery(
-			{ id },
-			{
-				enabled: !!id,
-				retry: false,
-			},
-		),
-	);
+	// Fetch all beings at once instead of individual queries
+	const { data: allBeings } = api.being.getAll.useQuery();
 
 	// Create a map of being ID to being name
 	const beingNames = useMemo(() => {
 		const nameMap: Record<string, string> = {};
-		for (let i = 0; i < uniqueBeingIds.length; i++) {
-			const beingId = uniqueBeingIds[i];
-			const query = beingQueries[i];
-			if (beingId && query?.data?.name) {
-				nameMap[beingId] = query.data.name;
-			} else if (beingId) {
-				// Fallback to ID if name not available
-				nameMap[beingId] = beingId;
+		if (allBeings) {
+			for (const being of allBeings) {
+				nameMap[being.id] = being.name;
+			}
+		}
+		// Add fallbacks for any beings not found
+		for (const beingId of uniqueBeingIds) {
+			if (!nameMap[beingId]) {
+				nameMap[beingId] = beingId; // Fallback to ID
 			}
 		}
 		return nameMap;
-	}, [uniqueBeingIds, beingQueries]);
+	}, [allBeings, uniqueBeingIds]);
 
 	const groupedMessages = useMemo(() => {
 		// This logic remains the same and will work with the streaming updates
@@ -101,17 +92,15 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	const createUtterance = api.intention.createUtterance.useMutation({
 		onSuccess: async (data) => {
-			await trackAsync(async () => {
-				setMessage("");
-				await utils.intention.getAllUtterancesInBeing.invalidate();
+			setMessage("");
+			await utils.intention.getAllUtterancesInBeing.invalidate();
 
-				if (data.aiIntentionId) {
-					setStreamingResponses((prev) => ({
-						...prev,
-						[data.aiIntentionId]: "",
-					}));
-				}
-			});
+			if (data.aiIntentionId) {
+				setStreamingResponses((prev) => ({
+					...prev,
+					[data.aiIntentionId]: "",
+				}));
+			}
 		},
 		onError: (err) => alert(`Error: ${err.message}`),
 	});
@@ -260,7 +249,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 										<span className="font-medium text-outline text-white">
 											{beingNames[group.ownerId] || group.ownerId}
 										</span>
-										<time className="text-outline text-gray-500 text-xs dark:text-gray-400">
+										<time className="text-gray-500 text-outline text-xs dark:text-gray-400">
 											{firstMessageTime}
 										</time>
 									</header>

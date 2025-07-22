@@ -89,16 +89,16 @@ export const authConfig = {
 				userBeingId = newBeingId;
 			} else {
 				// If user already has a beingId, ensure extId is present
-				const existingBeing = await db.query.beings.findFirst({
+				const currentBeing = await db.query.beings.findFirst({
 					where: eq(beings.id, userBeingId),
 				});
 
-				if (existingBeing && account) {
+				if (currentBeing && account) {
 					const currentExtId = {
 						provider: account.provider,
 						id: account.providerAccountId,
 					};
-					const existingExtIds = (existingBeing.extIds || []) as {
+					const existingExtIds = (currentBeing.extIds || []) as {
 						provider: string;
 						id: string;
 					}[];

@@ -7,6 +7,7 @@ import type {
 } from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
+import { broadcastPresenceUpdate } from "~/app/api/presence/events/route";
 import {
 	createTRPCRouter,
 	protectedProcedure,
@@ -53,9 +54,14 @@ export const beingRouter = createTRPCRouter({
 				});
 			}
 
+			// Check if locationId changed to broadcast presence update
+			const existingBeing = await ctx.db.query.beings.findFirst({
+				where: eq(beings.id, input.id),
+			});
+
 			// Use Drizzle's ON CONFLICT for an atomic upsert operation.
 			// This is the best practice for create-or-update logic.
-			return ctx.db
+			const result = await ctx.db
 				.insert(beings)
 				.values({
 					...input,
@@ -68,6 +74,17 @@ export const beingRouter = createTRPCRouter({
 						modifiedAt: new Date(),
 					},
 				});
+
+			// Broadcast presence update if location changed
+			if (existingBeing?.locationId !== input.locationId) {
+				broadcastPresenceUpdate({
+					type: "location_change",
+					beingId: input.id,
+					locationId: input.locationId,
+				});
+			}
+
+			return result;
 		}),
 
 	/**

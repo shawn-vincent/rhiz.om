@@ -29,9 +29,9 @@ export default async function SpacePage({
 						<div className="relative z-10 flex h-full">
 							{/* Left sidebar - Being presence (desktop only) */}
 							<div className="hidden sm:block">
-								<BeingPresence />
+								<BeingPresence currentSpaceId={beingId} />
 							</div>
-							
+
 							{/* Main chat area */}
 							<div className="flex flex-1 justify-center">
 								<div className="w-full max-w-2xl">
