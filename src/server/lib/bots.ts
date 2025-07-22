@@ -1,0 +1,234 @@
+import { and, eq } from "drizzle-orm";
+import { env } from "~/env";
+import { emitter } from "~/lib/events";
+import { db } from "~/server/db";
+import { beings, intentions } from "~/server/db/schema";
+import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
+import { logger } from "~/server/lib/logger";
+import { triggerIntentionsUpdate } from "~/server/lib/state-sync";
+
+const botLogger = logger.child({ name: "Bots" });
+
+export async function activateBots(
+	spaceId: BeingId,
+	activatingIntentionId: IntentionId,
+): Promise<void> {
+	botLogger.info(
+		{ spaceId, activatingIntentionId },
+		"Activating bots in space",
+	);
+
+	// Find all bots in the space
+	const botsInSpace = await db
+		.select({ id: beings.id })
+		.from(beings)
+		.where(and(eq(beings.locationId, spaceId), eq(beings.type, "bot")));
+
+	botLogger.info(
+		{ spaceId, botCount: botsInSpace.length },
+		"Found bots to activate",
+	);
+
+	// Activate each bot
+	for (const bot of botsInSpace) {
+		activateBot(bot.id as BeingId, spaceId, activatingIntentionId).catch(
+			(error) =>
+				botLogger.error(
+					{ error, botId: bot.id, spaceId },
+					"Bot activation failed",
+				),
+		);
+	}
+}
+
+export async function activateBot(
+	botId: BeingId,
+	spaceId: BeingId,
+	triggeringIntentionId: IntentionId,
+): Promise<void> {
+	try {
+		botLogger.info({ botId, spaceId, triggeringIntentionId }, "Activating bot");
+
+		// Create AI intention for this bot
+		const aiIntentionId = `/utterance-ai-${crypto.randomUUID()}`;
+		await db.insert(intentions).values({
+			id: aiIntentionId,
+			name: `AI Response from ${botId}`,
+			type: "utterance",
+			state: "active",
+			ownerId: botId,
+			locationId: spaceId,
+			content: [""],
+		});
+
+		// Trigger state sync update for AI message (initial state)
+		await triggerIntentionsUpdate(spaceId, {
+			type: "add",
+			entityId: aiIntentionId,
+			causedBy: botId,
+		});
+
+		// Stream the bot's response
+		await streamBotResponse(
+			botId,
+			triggeringIntentionId,
+			aiIntentionId,
+			spaceId,
+		);
+
+		botLogger.info({ botId, aiIntentionId }, "Bot activation completed");
+	} catch (error) {
+		botLogger.error({ error, botId, spaceId }, "Bot activation failed");
+	}
+}
+
+async function streamBotResponse(
+	botId: BeingId,
+	triggeringIntentionId: IntentionId,
+	aiIntentionId: string,
+	spaceId: BeingId,
+): Promise<void> {
+	try {
+		// Load the bot being
+		const bot = await db.query.beings.findFirst({
+			where: eq(beings.id, botId),
+		});
+
+		if (!bot) {
+			botLogger.error({ botId }, "Bot not found");
+			return;
+		}
+
+		// Load the triggering intention
+		const triggeringIntention = await db.query.intentions.findFirst({
+			where: eq(intentions.id, triggeringIntentionId),
+		});
+
+		if (!triggeringIntention) {
+			botLogger.error(
+				{ triggeringIntentionId },
+				"Triggering intention not found",
+			);
+			return;
+		}
+
+		botLogger.info(
+			{ botId: bot.id, aiIntentionId },
+			"Starting bot response stream",
+		);
+
+		// Use bot's model or default to GPT-3.5-turbo
+		const model = bot.botModel ?? "openai/gpt-3.5-turbo";
+
+		// Build messages array with bot's system prompt if available
+		const messages: Array<{ role: string; content: string }> = [];
+		if (bot.botPrompt) {
+			messages.push({ role: "system", content: bot.botPrompt });
+		}
+		const userContent = Array.isArray(triggeringIntention.content)
+			? triggeringIntention.content[0]
+			: triggeringIntention.content;
+		messages.push({ role: "user", content: String(userContent ?? "") });
+
+		const response = await fetch(
+			"https://openrouter.ai/api/v1/chat/completions",
+			{
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+					"Content-Type": "application/json",
+					"HTTP-Referer": "http://localhost:3000",
+					"X-Title": "Rhiz.om",
+				},
+				body: JSON.stringify({
+					model,
+					messages,
+					stream: true,
+				}),
+			},
+		);
+
+		if (!response.body) {
+			throw new Error("Response body is null");
+		}
+
+		botLogger.info(
+			{ aiIntentionId },
+			"Got response body, starting stream processing",
+		);
+
+		const reader = response.body.getReader();
+		const decoder = new TextDecoder();
+		let fullResponse = "";
+
+		while (true) {
+			const { done, value } = await reader.read();
+			if (done) break;
+
+			const chunk = decoder.decode(value, { stream: true });
+			const lines = chunk
+				.split("\n\n")
+				.filter((line) => line.startsWith("data: "));
+
+			for (const line of lines) {
+				const jsonStr = line.replace("data: ", "");
+				if (jsonStr === "[DONE]") break;
+
+				try {
+					const parsed = JSON.parse(jsonStr);
+					const token = parsed.choices[0]?.delta?.content;
+					if (token) {
+						fullResponse += token;
+						emitter.emit(`update.${aiIntentionId}`, {
+							type: "token",
+							data: token,
+						});
+					}
+				} catch (error) {
+					// Ignore parsing errors for non-json parts of the stream
+				}
+			}
+		}
+
+		botLogger.info(
+			{ aiIntentionId, responseLength: fullResponse.length },
+			"Bot streaming completed, updating database",
+		);
+
+		await db
+			.update(intentions)
+			.set({
+				content: [fullResponse],
+				state: "complete",
+				modifiedAt: new Date(),
+			})
+			.where(eq(intentions.id, aiIntentionId));
+
+		// Trigger state sync update for the space
+		await triggerIntentionsUpdate(spaceId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: bot.id as BeingId,
+		});
+
+		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
+		botLogger.info({ aiIntentionId }, "Bot response stream fully completed");
+	} catch (error) {
+		botLogger.error(error, "Bot response generation failed");
+		emitter.emit(`update.${aiIntentionId}`, {
+			type: "error",
+			data: "Failed to get response from AI.",
+		});
+		await db
+			.update(intentions)
+			.set({ state: "failed", content: ["AI failed to respond."] })
+			.where(eq(intentions.id, aiIntentionId));
+
+		// Trigger state sync update for failed AI response
+		await triggerIntentionsUpdate(spaceId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: botId,
+		});
+	}
+}

@@ -1,11 +1,11 @@
 import { EventEmitter } from "node:events";
 import { eq } from "drizzle-orm";
+import { emitter } from "~/lib/events";
 import type {
 	SpaceIntentions,
 	SpacePresence,
 	VersionedState,
 } from "~/lib/state-sync-types";
-import { emitter } from "~/lib/events";
 import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
@@ -78,7 +78,7 @@ export class StateManager<T> {
 		};
 
 		// Emit for server-side listeners
-		this.emitter.emit('change', versionedState);
+		this.emitter.emit("change", versionedState);
 
 		// Broadcast to all subscribers for this model+space
 		this.broadcast(versionedState);
@@ -93,8 +93,8 @@ export class StateManager<T> {
 	}
 
 	subscribe(listener: (data: VersionedState<T>) => void): () => void {
-		this.emitter.on('change', listener);
-		return () => this.emitter.off('change', listener);
+		this.emitter.on("change", listener);
+		return () => this.emitter.off("change", listener);
 	}
 
 	getCurrentState(): T {
@@ -137,7 +137,9 @@ export class StateManager<T> {
 					connection.lastHeartbeat = Date.now();
 				} catch (error) {
 					// Connection closed, schedule for cleanup
-					console.log(`Error enqueuing data for ${connectionId}, scheduling cleanup.`);
+					console.log(
+						`Error enqueuing data for ${connectionId}, scheduling cleanup.`,
+					);
 					cleanupConnection(connectionId);
 				}
 			}
@@ -267,13 +269,23 @@ export async function triggerIntentionsUpdate(
 }
 
 // Global bot event listener
-export function onBotLocationChange(callback: (beingId: string, spaceId: string | null, oldSpaceId: string | null) => void): () => void {
-	const handler = (data: { beingId: string, spaceId: string | null, oldSpaceId: string | null }) => {
+export function onBotLocationChange(
+	callback: (
+		beingId: string,
+		spaceId: string | null,
+		oldSpaceId: string | null,
+	) => void,
+): () => void {
+	const handler = (data: {
+		beingId: string;
+		spaceId: string | null;
+		oldSpaceId: string | null;
+	}) => {
 		callback(data.beingId, data.spaceId, data.oldSpaceId);
 	};
-	
-	emitter.on('bot-location-change', handler);
-	return () => emitter.off('bot-location-change', handler);
+
+	emitter.on("bot-location-change", handler);
+	return () => emitter.off("bot-location-change", handler);
 }
 
 // Cleanup function

@@ -106,10 +106,10 @@ export const beingRouter = createTRPCRouter({
 
 				// Emit bot location change event for server-side agents
 				if (input.type === "bot") {
-					emitter.emit('bot-location-change', {
+					emitter.emit("bot-location-change", {
 						beingId: input.id,
 						spaceId: input.locationId,
-						oldSpaceId: existingBeing?.locationId || null
+						oldSpaceId: existingBeing?.locationId || null,
 					});
 				}
 			}

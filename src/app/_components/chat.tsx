@@ -113,13 +113,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		onSuccess: async (data) => {
 			setMessage("");
 			// No need to manually invalidate - the new state sync system handles this automatically!
-
-			if (data.aiIntentionId) {
-				setStreamingResponses((prev) => ({
-					...prev,
-					[data.aiIntentionId]: "",
-				}));
-			}
 		},
 		onError: (err) => alert(`Error: ${err.message}`),
 	});
