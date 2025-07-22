@@ -15,6 +15,7 @@ interface SSEConnection {
 	beingId: string;
 	spaceId: string;
 	model: string;
+	lastHeartbeat: number;
 }
 
 // Global connection tracking
@@ -23,6 +24,26 @@ const beingConnections = new Map<string, Set<string>>();
 
 // State managers by model and space
 const stateManagers = new Map<string, StateManager<unknown>>();
+
+const HEARTBEAT_INTERVAL = 15000; // 15 seconds
+const CONNECTION_TIMEOUT = 35000; // 35 seconds
+
+// Global cleanup interval for stale connections
+setInterval(() => {
+	const now = Date.now();
+	const staleConnections: string[] = [];
+
+	for (const [connectionId, info] of connections) {
+		if (now - info.lastHeartbeat > CONNECTION_TIMEOUT) {
+			staleConnections.push(connectionId);
+		}
+	}
+
+	for (const connectionId of staleConnections) {
+		console.log(`Cleaning up stale connection: ${connectionId}`);
+		cleanupConnection(connectionId);
+	}
+}, HEARTBEAT_INTERVAL);
 
 function getManagerKey(model: string, spaceId: string): string {
 	return `${model}:${spaceId}`;
@@ -34,12 +55,14 @@ export class StateManager<T> {
 	private readonly emitter = new EventEmitter();
 	private readonly model: string;
 	private readonly spaceId: string;
+	private heartbeatTimer?: NodeJS.Timeout;
 
 	constructor(model: string, spaceId: string, initialState: T) {
 		this.model = model;
 		this.spaceId = spaceId;
 		this.currentState = initialState;
 		this.currentVersion = 1; // Start at version 1
+		this.startHeartbeat();
 	}
 
 	updateState(newState: T, changeInfo?: VersionedState<T>["changeInfo"]): void {
@@ -65,10 +88,29 @@ export class StateManager<T> {
 		};
 	}
 
-	private broadcast(versionedState: VersionedState<T>): void {
+	private startHeartbeat() {
+		this.heartbeatTimer = setInterval(() => {
+			this.broadcast({ type: "heartbeat" });
+		}, HEARTBEAT_INTERVAL);
+	}
+
+	private stopHeartbeat() {
+		if (this.heartbeatTimer) {
+			clearInterval(this.heartbeatTimer);
+		}
+	}
+
+	private broadcast(payload: VersionedState<T> | { type: "heartbeat" }): void {
 		const encoder = new TextEncoder();
-		const data = `data: ${JSON.stringify(versionedState)}\n\n`;
-		const encodedData = encoder.encode(data);
+		let encodedData: Uint8Array;
+
+		if ("type" in payload && payload.type === "heartbeat") {
+			// This is a comment, it will keep the connection alive but won't trigger onmessage
+			encodedData = encoder.encode(`: heartbeat\n\n`);
+		} else {
+			const data = `data: ${JSON.stringify(payload)}\n\n`;
+			encodedData = encoder.encode(data);
+		}
 
 		// Send to all connections subscribed to this model+space
 		for (const [connectionId, connection] of connections) {
@@ -78,15 +120,19 @@ export class StateManager<T> {
 			) {
 				try {
 					connection.controller.enqueue(encodedData);
+					// If we successfully send data, update the heartbeat
+					connection.lastHeartbeat = Date.now();
 				} catch (error) {
-					// Connection closed, will be cleaned up
-					connections.delete(connectionId);
+					// Connection closed, schedule for cleanup
+					console.log(`Error enqueuing data for ${connectionId}, scheduling cleanup.`);
+					cleanupConnection(connectionId);
 				}
 			}
 		}
 	}
 
 	addSubscriber(connectionId: string, connection: SSEConnection): void {
+		connection.lastHeartbeat = Date.now();
 		connections.set(connectionId, connection);
 
 		// Update being connections index for presence tracking
@@ -110,6 +156,10 @@ export class StateManager<T> {
 				}
 			}
 		}
+	}
+
+	destroy() {
+		this.stopHeartbeat();
 	}
 }
 
@@ -208,19 +258,31 @@ export function cleanupConnection(connectionId: string) {
 	const connection = connections.get(connectionId);
 	if (!connection) return;
 
+	try {
+		connection.controller.close();
+	} catch (e) {
+		// May already be closed
+	}
+
 	// Find the appropriate manager and remove subscriber
 	const key = getManagerKey(connection.model, connection.spaceId);
 	const manager = stateManagers.get(key);
 	if (manager) {
 		manager.removeSubscriber(connectionId);
+	} else {
+		// If manager doesn't exist, remove from connections manually
+		connections.delete(connectionId);
 	}
 
 	// If this was a presence connection, trigger presence update
 	if (connection.model === "presence") {
-		triggerPresenceUpdate(connection.spaceId as BeingId, {
-			type: "update",
-			entityId: connection.beingId,
-			causedBy: connection.beingId as BeingId,
-		});
+		// Use a timeout to allow the connection to be fully removed before updating presence
+		setTimeout(() => {
+			triggerPresenceUpdate(connection.spaceId as BeingId, {
+				type: "update",
+				entityId: connection.beingId,
+				causedBy: connection.beingId as BeingId,
+			});
+		}, 100);
 	}
 }

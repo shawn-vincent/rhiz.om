@@ -34,7 +34,7 @@ export class StateSyncClient<T> {
 		}
 
 		try {
-			// Start SSE stream (follows existing pattern like /api/chat-stream)
+			// Start SSE stream immediately
 			this.eventSource = new EventSource(
 				`/api/sync/stream?model=${this.model}&spaceId=${encodeURIComponent(this.spaceId)}`,
 			);
@@ -73,6 +73,15 @@ export class StateSyncClient<T> {
 				this.isConnected = false;
 				this.attemptReconnect();
 			};
+
+			// Request initial snapshot in parallel, but don't block the connection
+			this.requestSnapshot().catch((error) => {
+				console.error("Initial snapshot failed:", error);
+				this.handleError({
+					type: "connection_error",
+					message: "Failed to fetch initial state",
+				});
+			});
 		} catch (error) {
 			console.error("Failed to create EventSource:", error);
 			this.handleError({
@@ -83,13 +92,23 @@ export class StateSyncClient<T> {
 	}
 
 	private handleUpdate(update: VersionedState<T>) {
-		// Check for missed versions
+		// Ignore old or duplicate messages
+		if (update.version <= this.currentVersion) {
+			console.debug(
+				`Ignoring old/duplicate message: ${update.version} (current: ${this.currentVersion})`,
+			);
+			return;
+		}
+
+		// Check for missed versions (gap in sequence)
 		if (this.currentVersion > 0 && update.version !== this.currentVersion + 1) {
 			console.warn(
 				`Version gap detected: ${this.currentVersion} → ${update.version}`,
 			);
-			this.requestSnapshot(); // Re-sync from snapshot
-			return;
+			// Request snapshot to re-sync, but still process this update
+			this.requestSnapshot().catch((error) => {
+				console.error("Failed to request snapshot after version gap:", error);
+			});
 		}
 
 		this.currentVersion = update.version;

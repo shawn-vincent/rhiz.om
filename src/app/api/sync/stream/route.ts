@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
 					beingId: session.user.beingId ?? "",
 					spaceId,
 					model,
+					lastHeartbeat: Date.now(),
 				});
 
 				// Send initial snapshot
