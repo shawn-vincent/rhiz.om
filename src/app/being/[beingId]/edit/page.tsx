@@ -84,6 +84,9 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 
 	useEffect(() => {
 		if (being) {
+			console.log("🐛 Raw being data:", being);
+			console.log("🐛 being.type:", being.type);
+			
 			const formValues: BeingFormData = {
 				...being,
 				ownerId: being.ownerId ?? undefined,
@@ -96,7 +99,16 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 				botModel: being.botModel ?? undefined,
 				botPrompt: being.botPrompt ?? undefined,
 			};
+			
+			console.log("🐛 formValues.type:", formValues.type);
+			console.log("🐛 Full formValues:", formValues);
+			
 			methods.reset(formValues);
+			
+			// Check what the form thinks the type is after reset
+			setTimeout(() => {
+				console.log("🐛 After reset - form type value:", methods.getValues("type"));
+			}, 100);
 		}
 	}, [being, methods]);
 

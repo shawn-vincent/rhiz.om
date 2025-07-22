@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Core Development
 - `npm run dev` - Start Next.js development server with Turbo
-- `npm run build` - Build the application for production
+- `npm run test-vercel-build` - Run a simulated production build as though it were running on Vercel.  Really helpful to do pre-commit.
 - `npm run start` - Start production server
 - `npm run preview` - Build and start production server
 

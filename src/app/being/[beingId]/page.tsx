@@ -21,11 +21,11 @@ export default async function SpacePage({
 
 	return (
 		<HydrateClient>
-			<div className="grid h-dvh grid-rows-[1fr_auto] bg-black text-white overflow-hidden">
+			<div className="grid h-dvh grid-rows-[1fr_auto] overflow-hidden bg-black text-white">
 				<ErrorBoundary>
 					<main className="relative overflow-hidden">
 						<BeingBackground />
-						<div className="relative z-10 h-full flex justify-center">
+						<div className="relative z-10 flex h-full justify-center">
 							<div className="w-full max-w-2xl">
 								{session?.user?.beingId ? (
 									<Suspense fallback={<ChatLoading />}>

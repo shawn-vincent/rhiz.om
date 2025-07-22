@@ -156,7 +156,7 @@
 
 /* Custom text outline utility for better visibility against varying backgrounds */
 .text-outline {
-	text-shadow: 
+	text-shadow:
 		1px 1px 2px rgba(0, 0, 0, 0.8),
 		-1px -1px 2px rgba(0, 0, 0, 0.8),
 		1px -1px 2px rgba(0, 0, 0, 0.8),
@@ -165,7 +165,7 @@
 }
 
 .text-outline-thin {
-	text-shadow: 
+	text-shadow:
 		1px 1px 1px rgba(0, 0, 0, 0.9),
 		-1px -1px 1px rgba(0, 0, 0, 0.9),
 		1px -1px 1px rgba(0, 0, 0, 0.9),

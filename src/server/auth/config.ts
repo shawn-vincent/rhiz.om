@@ -76,7 +76,7 @@ export const authConfig = {
 				await db.insert(beings).values({
 					id: newBeingId,
 					name: user.name || "Unnamed Being",
-					type: "user", // Default type for user-associated beings
+					type: "guest", // Default type for user-associated beings
 					extIds: extIds,
 				});
 

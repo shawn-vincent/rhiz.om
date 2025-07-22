@@ -50,11 +50,14 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	}, [utterances]);
 
 	// Fetch being data for all unique being IDs
-	const beingQueries = uniqueBeingIds.map(id => 
-		api.being.getById.useQuery({ id }, {
-			enabled: !!id,
-			retry: false,
-		})
+	const beingQueries = uniqueBeingIds.map((id) =>
+		api.being.getById.useQuery(
+			{ id },
+			{
+				enabled: !!id,
+				retry: false,
+			},
+		),
 	);
 
 	// Create a map of being ID to being name
@@ -219,10 +222,10 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		<ErrorBoundary>
 			<div className="relative flex h-full w-full flex-col bg-white/20">
 				{/* Top shadow overlay */}
-				<div className="absolute top-0 left-0 right-0 h-4 bg-gradient-to-b from-black/30 to-transparent pointer-events-none z-10" />
+				<div className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 bg-gradient-to-b from-black/30 to-transparent" />
 				<ul
 					ref={chatContainerRef}
-					className="flex grow flex-col gap-3 overflow-y-auto px-4 sm:px-6 pt-4 pb-0"
+					className="flex grow flex-col gap-3 overflow-y-auto px-4 pt-4 pb-0 sm:px-6"
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
@@ -254,7 +257,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 									<header
 										className={`flex items-baseline gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 									>
-										<span className="font-medium text-white text-outline">
+										<span className="font-medium text-outline text-white">
 											{beingNames[group.ownerId] || group.ownerId}
 										</span>
 										<time className="text-gray-500 text-xs dark:text-gray-400">
@@ -306,7 +309,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 					</button>
 				)}
 				{/* Bottom shadow overlay */}
-				<div className="absolute bottom-20 left-0 right-0 h-4 bg-gradient-to-t from-white/20 to-transparent pointer-events-none z-10" />
+				<div className="pointer-events-none absolute right-0 bottom-20 left-0 z-10 h-4 bg-gradient-to-t from-white/20 to-transparent" />
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
@@ -317,14 +320,14 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 							});
 						}
 					}}
-					className="sticky bottom-0 flex w-full items-center gap-2 border-gray-200 border-t bg-white px-3 sm:px-4 py-3 dark:border-gray-800 dark:bg-gray-900 min-w-0"
+					className="sticky bottom-0 flex w-full min-w-0 items-center gap-2 border-gray-200 border-t bg-white px-3 py-3 sm:px-4 dark:border-gray-800 dark:bg-gray-900"
 				>
 					<input
 						type="text"
 						placeholder="Say something..."
 						value={message}
 						onChange={(e) => setMessage(e.target.value)}
-						className="flex-1 min-w-0 rounded-full border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+						className="min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-white"
 					/>
 					<button
 						type="submit"

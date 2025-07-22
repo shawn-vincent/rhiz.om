@@ -38,9 +38,9 @@ export function BottomBar({ session }: { session?: Session | null }) {
 		"rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
 	return (
 		<ErrorBoundary>
-			<nav className="sticky bottom-0 z-50 flex items-center gap-2 border-white/20 border-t bg-background/95 px-2 py-2 min-w-0">
+			<nav className="sticky bottom-0 z-50 flex min-w-0 items-center gap-2 border-white/20 border-t bg-background/95 px-2 py-2">
 				{/* Left section - Menu */}
-				<div className="flex items-center shrink-0">
+				<div className="flex shrink-0 items-center">
 					{session && (
 						<Sheet>
 							<SheetTrigger asChild>
@@ -65,15 +65,15 @@ export function BottomBar({ session }: { session?: Session | null }) {
 				</div>
 
 				{/* Center section - Being Name */}
-				<div className="flex-1 min-w-0 text-center">
+				<div className="min-w-0 flex-1 text-center">
 					<InlineBeingName
 						fallback="Rhiz.om"
-						className="font-medium text-sm text-white truncate block"
+						className="block truncate font-medium text-sm text-white"
 					/>
 				</div>
 
 				{/* Right section - Controls and Settings */}
-				<div className="flex items-center gap-1 shrink-0">
+				<div className="flex shrink-0 items-center gap-1">
 					<Toggle
 						pressed={videoOn}
 						onPressedChange={setVideoOn}
@@ -118,7 +118,12 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					{session ? (
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button variant="ghost" size="icon" aria-label="Page settings" className="h-8 w-8 ml-2">
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label="Page settings"
+									className="ml-2 h-8 w-8"
+								>
 									<Settings className="size-4" />
 								</Button>
 							</SheetTrigger>
@@ -138,7 +143,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					) : (
 						<Link
 							href="/api/auth/signin"
-							className="rounded-full bg-white/10 px-3 py-1 font-semibold text-xs no-underline transition hover:bg-white/20 whitespace-nowrap ml-2"
+							className="ml-2 whitespace-nowrap rounded-full bg-white/10 px-3 py-1 font-semibold text-xs no-underline transition hover:bg-white/20"
 						>
 							Sign in
 						</Link>

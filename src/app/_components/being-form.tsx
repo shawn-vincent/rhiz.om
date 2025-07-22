@@ -6,13 +6,6 @@ import { MobileEntitySelectField } from "packages/entity-kit/src/components/ui/M
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "~/components/ui/select";
 import { Separator } from "~/components/ui/separator";
 
 import { json as jsonLang } from "@codemirror/lang-json";
@@ -35,6 +28,9 @@ export function BeingForm() {
 
 	// Watch the type field to conditionally show bot fields
 	const currentType = watch("type");
+	
+	// Debug logging
+	console.log("🐛 BeingForm - currentType from watch:", currentType);
 	/* ---------- FieldArray for extIds ---------- */
 	const {
 		fields: extIdFields,
@@ -68,32 +64,17 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="type">Type</Label>
-					<Controller
-						control={control}
-						name="type"
-							render={({ field }) => {
-							console.log('Type field value:', field.value); // Debug log
-							return (
-								<Select
-									value={field.value}
-									onValueChange={(value) => {
-										console.log('Changing type to:', value); // Debug log
-										field.onChange(value);
-									}}
-								>
-									<SelectTrigger id="type">
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem value="guest">guest</SelectItem>
-										<SelectItem value="space">space</SelectItem>
-										<SelectItem value="document">document</SelectItem>
-										<SelectItem value="bot">bot</SelectItem>
-									</SelectContent>
-								</Select>
-							);
-						}}
-					/>
+					<select 
+						id="type" 
+						className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+						{...register("type")}
+					>
+						<option value="">Choose type</option>
+						<option value="guest">guest</option>
+						<option value="space">space</option>
+						<option value="document">document</option>
+						<option value="bot">bot</option>
+					</select>
 					{errors.type && (
 						<p className="text-red-600 text-sm">{errors.type.message}</p>
 					)}
@@ -130,31 +111,34 @@ export function BeingForm() {
 					<Separator />
 					<div className="space-y-4">
 						<h3 className="font-medium text-lg">Bot Configuration</h3>
-						
+
 						<div>
 							<Label htmlFor="botModel">Bot Model</Label>
-							<Input 
-								id="botModel" 
-								placeholder="e.g., gpt-4, claude-3-sonnet, etc." 
-								{...register("botModel")} 
+							<Input
+								id="botModel"
+								placeholder="e.g., gpt-4, claude-3-sonnet, etc."
+								{...register("botModel")}
 							/>
 							{errors.botModel && (
-								<p className="text-red-600 text-sm">{errors.botModel.message}</p>
+								<p className="text-red-600 text-sm">
+									{errors.botModel.message}
+								</p>
 							)}
 						</div>
 
 						<div>
 							<Label htmlFor="botPrompt">Bot System Prompt</Label>
-							<p className="text-muted-foreground text-sm mb-2">
-								Define the bot's personality, instructions, and behavior. Supports Markdown formatting.
+							<p className="mb-2 text-muted-foreground text-sm">
+								Define the bot's personality, instructions, and behavior.
+								Supports Markdown formatting.
 							</p>
 							<Controller
 								control={control}
 								name="botPrompt"
 								render={({ field }) => (
 									<CodeMirror
-										basicSetup={{ 
-											lineNumbers: true, 
+										basicSetup={{
+											lineNumbers: true,
 											foldGutter: true,
 											dropCursor: false,
 											allowMultipleSelections: false,
@@ -175,7 +159,9 @@ export function BeingForm() {
 								)}
 							/>
 							{errors.botPrompt && (
-								<p className="text-red-600 text-sm">{errors.botPrompt.message}</p>
+								<p className="text-red-600 text-sm">
+									{errors.botPrompt.message}
+								</p>
 							)}
 						</div>
 					</div>
