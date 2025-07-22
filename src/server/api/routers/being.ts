@@ -8,6 +8,7 @@ import type {
 
 import { TRPCError } from "@trpc/server";
 import { broadcastPresenceUpdate } from "~/app/api/presence/events/route";
+import { emitter } from "~/lib/events";
 import {
 	createTRPCRouter,
 	protectedProcedure,
@@ -100,6 +101,15 @@ export const beingRouter = createTRPCRouter({
 						type: "add",
 						entityId: input.id,
 						causedBy: input.id as BeingId,
+					});
+				}
+
+				// Emit bot location change event for server-side agents
+				if (input.type === "bot") {
+					emitter.emit('bot-location-change', {
+						beingId: input.id,
+						spaceId: input.locationId,
+						oldSpaceId: existingBeing?.locationId || null
 					});
 				}
 			}

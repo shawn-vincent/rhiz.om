@@ -5,6 +5,7 @@ import type {
 	SpacePresence,
 	VersionedState,
 } from "~/lib/state-sync-types";
+import { emitter } from "~/lib/events";
 import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
@@ -14,7 +15,7 @@ interface SSEConnection {
 	controller: ReadableStreamDefaultController;
 	beingId: string;
 	spaceId: string;
-	model: string;
+	dataType: string;
 	lastHeartbeat: number;
 }
 
@@ -45,20 +46,20 @@ setInterval(() => {
 	}
 }, HEARTBEAT_INTERVAL);
 
-function getManagerKey(model: string, spaceId: string): string {
-	return `${model}:${spaceId}`;
+function getManagerKey(dataType: string, spaceId: string): string {
+	return `${dataType}:${spaceId}`;
 }
 
 export class StateManager<T> {
 	private currentVersion = 0;
 	private currentState: T;
 	private readonly emitter = new EventEmitter();
-	private readonly model: string;
+	private readonly dataType: string;
 	private readonly spaceId: string;
 	private heartbeatTimer?: NodeJS.Timeout;
 
-	constructor(model: string, spaceId: string, initialState: T) {
-		this.model = model;
+	constructor(dataType: string, spaceId: string, initialState: T) {
+		this.dataType = dataType;
 		this.spaceId = spaceId;
 		this.currentState = initialState;
 		this.currentVersion = 1; // Start at version 1
@@ -76,6 +77,9 @@ export class StateManager<T> {
 			changeInfo,
 		};
 
+		// Emit for server-side listeners
+		this.emitter.emit('change', versionedState);
+
 		// Broadcast to all subscribers for this model+space
 		this.broadcast(versionedState);
 	}
@@ -86,6 +90,15 @@ export class StateManager<T> {
 			data: this.currentState,
 			timestamp: new Date().toISOString(),
 		};
+	}
+
+	subscribe(listener: (data: VersionedState<T>) => void): () => void {
+		this.emitter.on('change', listener);
+		return () => this.emitter.off('change', listener);
+	}
+
+	getCurrentState(): T {
+		return this.currentState;
 	}
 
 	private startHeartbeat() {
@@ -112,10 +125,10 @@ export class StateManager<T> {
 			encodedData = encoder.encode(data);
 		}
 
-		// Send to all connections subscribed to this model+space
+		// Send to all connections subscribed to this dataType+space
 		for (const [connectionId, connection] of connections) {
 			if (
-				connection.model === this.model &&
+				connection.dataType === this.dataType &&
 				connection.spaceId === this.spaceId
 			) {
 				try {
@@ -165,11 +178,11 @@ export class StateManager<T> {
 
 // Factory function to get or create state managers
 export function getStateManager<T>(
-	model: string,
 	spaceId: string,
+	dataType: string,
 	initialStateFactory: () => Promise<T>,
 ): Promise<StateManager<T>> {
-	const key = getManagerKey(model, spaceId);
+	const key = getManagerKey(dataType, spaceId);
 
 	const existingManager = stateManagers.get(key);
 	if (existingManager) {
@@ -177,7 +190,7 @@ export function getStateManager<T>(
 	}
 
 	return initialStateFactory().then((initialState) => {
-		const manager = new StateManager(model, spaceId, initialState);
+		const manager = new StateManager(dataType, spaceId, initialState);
 		stateManagers.set(key, manager);
 		return manager;
 	});
@@ -235,7 +248,7 @@ export async function triggerPresenceUpdate(
 	spaceId: BeingId,
 	changeInfo?: VersionedState<SpacePresence>["changeInfo"],
 ) {
-	const manager = await getStateManager("presence", spaceId, () =>
+	const manager = await getStateManager(spaceId, "presence", () =>
 		fetchSpacePresence(spaceId),
 	);
 	const newState = await fetchSpacePresence(spaceId);
@@ -246,11 +259,21 @@ export async function triggerIntentionsUpdate(
 	spaceId: BeingId,
 	changeInfo?: VersionedState<SpaceIntentions>["changeInfo"],
 ) {
-	const manager = await getStateManager("intentions", spaceId, () =>
+	const manager = await getStateManager(spaceId, "intentions", () =>
 		fetchSpaceIntentions(spaceId),
 	);
 	const newState = await fetchSpaceIntentions(spaceId);
 	manager.updateState(newState, changeInfo);
+}
+
+// Global bot event listener
+export function onBotLocationChange(callback: (beingId: string, spaceId: string | null, oldSpaceId: string | null) => void): () => void {
+	const handler = (data: { beingId: string, spaceId: string | null, oldSpaceId: string | null }) => {
+		callback(data.beingId, data.spaceId, data.oldSpaceId);
+	};
+	
+	emitter.on('bot-location-change', handler);
+	return () => emitter.off('bot-location-change', handler);
 }
 
 // Cleanup function
@@ -265,7 +288,7 @@ export function cleanupConnection(connectionId: string) {
 	}
 
 	// Find the appropriate manager and remove subscriber
-	const key = getManagerKey(connection.model, connection.spaceId);
+	const key = getManagerKey(connection.dataType, connection.spaceId);
 	const manager = stateManagers.get(key);
 	if (manager) {
 		manager.removeSubscriber(connectionId);
@@ -275,7 +298,7 @@ export function cleanupConnection(connectionId: string) {
 	}
 
 	// If this was a presence connection, trigger presence update
-	if (connection.model === "presence") {
+	if (connection.dataType === "presence") {
 		// Use a timeout to allow the connection to be fully removed before updating presence
 		setTimeout(() => {
 			triggerPresenceUpdate(connection.spaceId as BeingId, {

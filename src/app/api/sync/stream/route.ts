@@ -23,14 +23,14 @@ export async function GET(request: NextRequest) {
 	}
 
 	const searchParams = request.nextUrl.searchParams;
-	const model = searchParams.get("model");
+	const dataType = searchParams.get("model");
 	const spaceId = searchParams.get("spaceId");
 
-	if (!model || !spaceId) {
+	if (!dataType || !spaceId) {
 		return new Response("Missing model or spaceId parameter", { status: 400 });
 	}
 
-	if (!["presence", "intentions"].includes(model)) {
+	if (!["presence", "intentions"].includes(dataType)) {
 		return new Response("Invalid model. Must be 'presence' or 'intentions'", {
 			status: 400,
 		});
@@ -55,13 +55,13 @@ export async function GET(request: NextRequest) {
 			try {
 				// Get or create the appropriate state manager
 				const manager =
-					model === "presence"
-						? await getStateManager<SpacePresence>("presence", spaceId, () =>
+					dataType === "presence"
+						? await getStateManager<SpacePresence>(spaceId, "presence", () =>
 								fetchSpacePresence(spaceId as BeingId),
 							)
 						: await getStateManager<SpaceIntentions>(
-								"intentions",
 								spaceId,
+								"intentions",
 								() => fetchSpaceIntentions(spaceId as BeingId),
 							);
 
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 					controller,
 					beingId: session.user.beingId ?? "",
 					spaceId,
-					model,
+					dataType,
 					lastHeartbeat: Date.now(),
 				});
 

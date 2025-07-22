@@ -34,6 +34,7 @@ async function streamAiResponse({
 	aiIntentionId: string;
 }) {
 	try {
+		intentionLogger.info({ aiIntentionId, beingId }, "Starting AI response stream");
 		const response = await fetch(
 			"https://openrouter.ai/api/v1/chat/completions",
 			{
@@ -55,6 +56,8 @@ async function streamAiResponse({
 		if (!response.body) {
 			throw new Error("Response body is null");
 		}
+
+		intentionLogger.info({ aiIntentionId }, "Got response body, starting stream processing");
 
 		const reader = response.body.getReader();
 		const decoder = new TextDecoder();
@@ -89,6 +92,8 @@ async function streamAiResponse({
 			}
 		}
 
+		intentionLogger.info({ aiIntentionId, responseLength: fullResponse.length }, "AI streaming completed, updating database");
+
 		await db
 			.update(intentions)
 			.set({
@@ -106,6 +111,7 @@ async function streamAiResponse({
 		});
 
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
+		intentionLogger.info({ aiIntentionId }, "AI response stream fully completed");
 	} catch (error) {
 		intentionLogger.error(error, "AI response generation failed");
 		emitter.emit(`update.${aiIntentionId}`, {
