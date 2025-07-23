@@ -7,8 +7,8 @@ import type {
 } from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
-import { broadcastPresenceUpdate } from "~/server/lib/presence";
 import { emitter } from "~/lib/events";
+import { canEdit, isSuperuser } from "~/lib/permissions";
 import {
 	createTRPCRouter,
 	protectedProcedure,
@@ -17,6 +17,7 @@ import {
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { BeingId } from "~/server/db/types";
+import { broadcastPresenceUpdate } from "~/server/lib/presence";
 import { triggerPresenceUpdate } from "~/server/lib/state-sync";
 
 export const beingRouter = createTRPCRouter({
@@ -49,11 +50,20 @@ export const beingRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			const sessionBeingId = ctx.session.user.beingId;
 
-			// Authorization: Ensure user is trying to save a being they own.
-			if (!input.ownerId || input.ownerId !== sessionBeingId) {
+			// Get current user's being to check superuser status
+			const currentUserRaw = sessionBeingId ? await ctx.db.query.beings.findFirst({
+				where: eq(beings.id, sessionBeingId),
+			}) : null;
+			
+			// Parse the being data to match the expected type
+			const currentUser = currentUserRaw ? selectBeingSchema.parse(currentUserRaw) : null;
+			const isCurrentUserSuperuser = isSuperuser(currentUser);
+
+			// Authorization: Check if user can edit this being (owner or superuser)
+			if (!canEdit(sessionBeingId, input.ownerId, isCurrentUserSuperuser)) {
 				throw new TRPCError({
 					code: "FORBIDDEN",
-					message: `You can only save beings that you own [Tried to modify ${input.id} owned by ${input.ownerId || "UNDEFINED"}, you=${sessionBeingId || "UNDEFINED"}.]`,
+					message: `You can only save beings that you own or have superuser access to [Tried to modify ${input.id} owned by ${input.ownerId || "UNDEFINED"}, you=${sessionBeingId || "UNDEFINED"}, superuser=${isCurrentUserSuperuser}.]`,
 				});
 			}
 
