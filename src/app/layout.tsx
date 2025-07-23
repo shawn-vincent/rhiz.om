@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Recursive } from "next/font/google";
 
 import { AppShell } from "~/app/_components/app-shell";
+import { NextAuthSessionProvider } from "~/app/_components/session-provider";
 import { Toaster } from "~/components/ui/sonner";
 import { TRPCReactProvider } from "~/trpc/react";
 
@@ -31,9 +32,11 @@ export default function RootLayout({
 	return (
 		<html lang="en" className={`${recursive.variable} dark`}>
 			<body className="fixed inset-0 h-full w-full touch-none overflow-hidden overscroll-none bg-background">
-				<TRPCReactProvider>
-					<AppShell>{children}</AppShell>
-				</TRPCReactProvider>
+				<NextAuthSessionProvider>
+					<TRPCReactProvider>
+						<AppShell>{children}</AppShell>
+					</TRPCReactProvider>
+				</NextAuthSessionProvider>
 				<Toaster position="top-center" />
 			</body>
 		</html>
