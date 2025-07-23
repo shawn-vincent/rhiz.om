@@ -5,13 +5,13 @@ import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import type { BeingId } from "~/server/db/types";
-import { triggerPresenceUpdate } from "~/server/lib/state-sync";
 import {
-	connections,
+	type ConnectionInfo,
 	beingConnections,
 	broadcastPresenceUpdate,
-	type ConnectionInfo,
+	connections,
 } from "~/server/lib/presence";
+import { triggerPresenceUpdate } from "~/server/lib/state-sync";
 
 // Heartbeat configuration
 const HEARTBEAT_INTERVAL = 30000; // 30 seconds

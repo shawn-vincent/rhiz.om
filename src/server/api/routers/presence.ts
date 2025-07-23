@@ -1,10 +1,7 @@
 import { z } from "zod/v4";
-import {
-	getCurrentPresence,
-	isBeingOnline,
-} from "~/server/lib/presence";
 // src/server/api/routers/presence.ts
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
+import { getCurrentPresence, isBeingOnline } from "~/server/lib/presence";
 
 export const presenceRouter = createTRPCRouter({
 	/**

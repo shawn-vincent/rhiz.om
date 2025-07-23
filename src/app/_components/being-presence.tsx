@@ -1,18 +1,24 @@
 // src/app/_components/being-presence.tsx
 "use client";
 
+import { useSession } from "next-auth/react";
 import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
+import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { useSpacePresence } from "~/hooks/use-state-sync";
+import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
+import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
+import { SuperuserBadge } from "~/components/ui/superuser-badge";
 
 interface BeingPresenceData {
 	id: string;
 	name: string;
 	type: BeingType;
 	isOnline: boolean;
+	ownerId?: string | null;
 }
 
 interface BeingPresenceProps {
@@ -32,6 +38,16 @@ export function BeingPresence({
 		retry,
 	} = useSpacePresence(currentSpaceId as BeingId);
 
+	const { data: session } = useSession();
+	const currentUserBeingId = session?.user?.beingId;
+
+	// Fetch current user's being to check superuser status
+	const { data: currentUserBeing } = api.being.getById.useQuery(
+		{ id: currentUserBeingId ?? "" },
+		{ enabled: !!currentUserBeingId },
+	);
+	const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
+
 	// Transform the new format to the old format for compatibility
 	const beings: BeingPresenceData[] =
 		presence?.beings.map(({ being, connectionStatus }) => ({
@@ -39,6 +55,7 @@ export function BeingPresence({
 			name: being.name,
 			type: being.type as BeingType,
 			isOnline: connectionStatus === "online",
+			ownerId: being.ownerId,
 		})) ?? [];
 
 	const connectionState = isConnected ? "connected" : "disconnected";
@@ -62,10 +79,20 @@ export function BeingPresence({
 		...disconnectedGuests,
 	];
 
-	// State for showing popover
+	// State for showing popover and editing
 	const [showPopover, setShowPopover] = useState(false);
 	const [selectedBeingId, setSelectedBeingId] = useState<string | null>(null);
+	const [editingBeingId, setEditingBeingId] = useState<string | null>(null);
 	const popoverRef = useRef<HTMLDivElement>(null);
+
+	// Check if current user can edit a being
+	const canEdit = (being: BeingPresenceData) => {
+		return canEditPermission(
+			currentUserBeingId,
+			being.ownerId,
+			isCurrentUserSuperuser,
+		);
+	};
 
 	// Click outside handler
 	useEffect(() => {
@@ -145,6 +172,19 @@ export function BeingPresence({
 									entity={being}
 									isOnline={being.isOnline}
 									variant="compact"
+									onClick={() => setSelectedBeingId(being.id)}
+									onEdit={
+										canEdit(being)
+											? () => {
+													setEditingBeingId(being.id);
+													setShowPopover(false);
+												}
+											: undefined
+									}
+									isSelected={selectedBeingId === being.id}
+									showEditButton={
+										!!(selectedBeingId === being.id && canEdit(being))
+									}
 								/>
 							))}
 						</div>
@@ -238,11 +278,30 @@ export function BeingPresence({
 					{(() => {
 						const being = orderedBeings.find((b) => b.id === selectedBeingId);
 						return being ? (
-							<EntityCard entity={being} isOnline={being.isOnline} />
+							<EntityCard
+								entity={being}
+								isOnline={being.isOnline}
+								onEdit={
+									canEdit(being)
+										? () => {
+												setEditingBeingId(being.id);
+												setShowPopover(false);
+											}
+										: undefined
+								}
+								showEditButton={!!canEdit(being)}
+							/>
 						) : null;
 					})()}
 				</div>
 			)}
+
+			{/* Edit modal */}
+			<BeingEditModal
+				beingId={editingBeingId}
+				isOpen={!!editingBeingId}
+				onClose={() => setEditingBeingId(null)}
+			/>
 		</div>
 	);
 }

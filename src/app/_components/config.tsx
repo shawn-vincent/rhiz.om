@@ -1,13 +1,18 @@
 // src/app/_components/config.tsx
 "use client";
 
-import { Pencil } from "lucide-react";
-import Link from "next/link";
+import { Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { useParams } from "next/navigation";
+import { useState } from "react";
+import { BeingCreateModal } from "~/components/being-create-modal";
+import { BeingEditModal } from "~/components/being-edit-modal";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
+import { SuperuserBadge } from "~/components/ui/superuser-badge";
 import { useSpacePresence } from "~/hooks/use-state-sync";
+import { canEdit, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
@@ -35,6 +40,20 @@ export function Config() {
 		? decodeURIComponent(params.beingId as string)
 		: undefined;
 
+	const { data: session } = useSession();
+	const currentUserBeingId = session?.user?.beingId;
+
+	const [selectedBeingId, setSelectedBeingId] = useState<string | null>(null);
+	const [editingBeingId, setEditingBeingId] = useState<string | null>(null);
+	const [isCreatingBeing, setIsCreatingBeing] = useState(false);
+
+	// Fetch current user's being to check superuser status
+	const { data: currentUserBeing } = api.being.getById.useQuery(
+		{ id: currentUserBeingId ?? "" },
+		{ enabled: !!currentUserBeingId },
+	);
+	const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
+
 	const { data: currentSpace, isLoading: isLoadingCurrentSpace } =
 		api.being.getById.useQuery({ id: beingId ?? "" }, { enabled: !!beingId });
 
@@ -55,6 +74,13 @@ export function Config() {
 	);
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;
+
+	// Check if current user can edit - now uses permission utility
+	const canEditBeing = (ownerId: string | null | undefined) => {
+		return canEdit(currentUserBeingId, ownerId, isCurrentUserSuperuser);
+	};
+
+	const canCreateInSpace = currentSpace && canEditBeing(currentSpace.ownerId);
 
 	if (!beingId) {
 		return (
@@ -94,58 +120,114 @@ export function Config() {
 			<div className="flex h-full flex-col overflow-hidden">
 				<div className="flex-1 overflow-y-auto p-4">
 					{currentSpace && (
-						<div className="flex items-center justify-between">
+						<div className="mb-4 flex items-center justify-between">
 							<div className="min-w-0 flex-1">
 								<EntityCard
 									entity={toEntitySummary(currentSpace)}
 									variant="default"
+									onClick={() => setSelectedBeingId(currentSpace.id)}
+									onEdit={
+										canEditBeing(currentSpace.ownerId)
+											? () => setEditingBeingId(currentSpace.id)
+											: undefined
+									}
+									isSelected={selectedBeingId === currentSpace.id}
+									showEditButton={
+										!!(
+											selectedBeingId === currentSpace.id &&
+											canEditBeing(currentSpace.ownerId)
+										)
+									}
 								/>
 							</div>
-							<Link href={`/being/${beingId}/edit`}>
-								<Button variant="ghost" size="icon" aria-label="Edit Space">
-									<Pencil className="size-5" />
-								</Button>
-							</Link>
 						</div>
 					)}
-					<Separator className="my-4" />
-					{orderedBeings.length > 0 && (
-						<>
-							<h3 className="mb-2 font-semibold text-lg text-white">
-								Beings in Space:
-							</h3>
-							<div className="space-y-2">
-								{orderedBeings.map((being) => {
-									const isSpace =
-										being.type === "space" || being.type === "bot";
-									const isOnline = isSpace || presenceMap.get(being.id);
 
-									return (
-										<div key={being.id} className="flex items-center gap-2">
-											<div className="min-w-0 flex-1">
-												<EntityCard
-													entity={toEntitySummary(being)}
-													variant="default"
-													isOnline={isOnline}
-												/>
-											</div>
-											<Link href={`/being/${being.id}/edit`}>
-												<Button
-													variant="ghost"
-													size="icon"
-													aria-label={`Edit ${being.name || being.id}`}
-												>
-													<Pencil className="size-5" />
-												</Button>
-											</Link>
-										</div>
-									);
-								})}
-							</div>
-						</>
+					<div className="mb-2 flex items-center justify-between">
+						<div className="flex items-center gap-2">
+							<h3 className="font-semibold text-lg text-white">
+								Beings in Space
+							</h3>
+							{isCurrentUserSuperuser && <SuperuserBadge />}
+						</div>
+						{canCreateInSpace && (
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={() => setIsCreatingBeing(true)}
+								className="gap-2"
+							>
+								<Plus className="h-4 w-4" />
+								Add Being
+							</Button>
+						)}
+					</div>
+
+					<Separator className="my-4" />
+
+					{orderedBeings.length > 0 ? (
+						<div className="space-y-2">
+							{orderedBeings.map((being) => {
+								const isSpace = being.type === "space" || being.type === "bot";
+								const isOnline = isSpace || presenceMap.get(being.id);
+
+								return (
+									<EntityCard
+										key={being.id}
+										entity={toEntitySummary(being)}
+										variant="default"
+										isOnline={isOnline}
+										onClick={() => setSelectedBeingId(being.id)}
+										onEdit={
+											canEditBeing(being.ownerId)
+												? () => setEditingBeingId(being.id)
+												: undefined
+										}
+										isSelected={selectedBeingId === being.id}
+										showEditButton={
+											!!(
+												selectedBeingId === being.id &&
+												canEditBeing(being.ownerId)
+											)
+										}
+									/>
+								);
+							})}
+						</div>
+					) : (
+						<div className="py-8 text-center text-muted-foreground">
+							<p>No beings in this space yet.</p>
+							{canCreateInSpace && (
+								<Button
+									variant="outline"
+									size="sm"
+									onClick={() => setIsCreatingBeing(true)}
+									className="mt-4 gap-2"
+								>
+									<Plus className="h-4 w-4" />
+									Add your first being
+								</Button>
+							)}
+						</div>
 					)}
 				</div>
 			</div>
+
+			{/* Edit modal */}
+			<BeingEditModal
+				beingId={editingBeingId}
+				isOpen={!!editingBeingId}
+				onClose={() => setEditingBeingId(null)}
+			/>
+
+			{/* Create modal - for now just use edit modal with empty being */}
+			{isCreatingBeing && (
+				<BeingCreateModal
+					spaceId={beingId!}
+					isOpen={isCreatingBeing}
+					onClose={() => setIsCreatingBeing(false)}
+				/>
+			)}
 		</ErrorBoundary>
 	);
 }
