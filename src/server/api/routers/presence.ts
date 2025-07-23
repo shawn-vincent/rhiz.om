@@ -2,7 +2,7 @@ import { z } from "zod/v4";
 import {
 	getCurrentPresence,
 	isBeingOnline,
-} from "~/app/api/presence/events/route";
+} from "~/server/lib/presence";
 // src/server/api/routers/presence.ts
 import { createTRPCRouter, publicProcedure } from "~/server/api/trpc";
 

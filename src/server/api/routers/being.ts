@@ -7,7 +7,7 @@ import type {
 } from "../../../../packages/entity-kit/src/types";
 
 import { TRPCError } from "@trpc/server";
-import { broadcastPresenceUpdate } from "~/app/api/presence/events/route";
+import { broadcastPresenceUpdate } from "~/server/lib/presence";
 import { emitter } from "~/lib/events";
 import {
 	createTRPCRouter,
