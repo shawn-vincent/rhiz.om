@@ -96,3 +96,7 @@ Required environment variables (see `src/env.js`):
 
 ## Commits
 When committing: Use emoji, detailed descriptions, and end with Buddhist Sutta quotes relating to the change content. Identity: Shawn Vincent, svincent@svincent.com.
+
+## Database Access
+You can read the project database using the DATABASE_URL in .env using psql
+

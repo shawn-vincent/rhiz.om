@@ -8,6 +8,17 @@ import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
 import { api } from "~/trpc/react";
+import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
+import type { BeingType, EntitySummary } from "../../../packages/entity-kit/src/types";
+
+// Convert being to EntitySummary format
+function toEntitySummary(being: { id: string; name: string; type: string }): EntitySummary {
+	return {
+		id: being.id,
+		name: being.name,
+		type: being.type as BeingType,
+	};
+}
 
 export function Config() {
 	const params = useParams();
@@ -15,7 +26,10 @@ export function Config() {
 		? decodeURIComponent(params.beingId as string)
 		: undefined;
 
-	const { data: allBeings, isLoading } = api.being.getAll.useQuery();
+	const { data: beingsInSpace, isLoading } = api.being.getByLocation.useQuery(
+		{ locationId: beingId ?? "" },
+		{ enabled: !!beingId }
+	);
 
 	if (!beingId) {
 		return (
@@ -29,11 +43,10 @@ export function Config() {
 		);
 	}
 
-	const otherBeings = allBeings?.filter((b) => b.id !== beingId) || [];
-
 	return (
 		<ErrorBoundary>
-			<div className="p-4">
+			<div className="flex h-full flex-col overflow-hidden">
+				<div className="flex-1 overflow-y-auto p-4">
 				<div className="flex items-center justify-between">
 					<h3 className="font-semibold text-lg text-white">
 						Current Space: {beingId}
@@ -45,20 +58,20 @@ export function Config() {
 					</Link>
 				</div>
 				<Separator className="my-4" />
-				{otherBeings.length > 0 && (
+				{beingsInSpace && beingsInSpace.length > 0 && (
 					<>
 						<h3 className="mb-2 font-semibold text-lg text-white">
-							Other Beings:
+							Beings in Space:
 						</h3>
-						<ul>
-							{otherBeings.map((being) => (
-								<li
+						<div className="space-y-2">
+							{beingsInSpace.map((being) => (
+								<div
 									key={being.id}
-									className="flex items-center justify-between py-1"
+									className="flex items-center gap-2"
 								>
-									<span className="text-white/80">
-										{being.name || being.id}
-									</span>
+									<div className="flex-1 min-w-0">
+										<EntityCard entity={toEntitySummary(being)} variant="compact" />
+									</div>
 									<Link href={`/being/${being.id}/edit`}>
 										<Button
 											variant="ghost"
@@ -68,11 +81,12 @@ export function Config() {
 											<Pencil className="size-5" />
 										</Button>
 									</Link>
-								</li>
+								</div>
 							))}
-						</ul>
+						</div>
 					</>
 				)}
+				</div>
 			</div>
 		</ErrorBoundary>
 	);
