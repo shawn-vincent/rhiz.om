@@ -19,18 +19,18 @@ export function ResponsiveShell({
 	trigger,
 	panel,
 }: ResponsiveShellProps) {
-	const isDesktop = useMediaQuery("(min-width: 768px)"); // Equivalent to Tailwind's md breakpoint
+	const isDesktop = useMediaQuery("(min-width: 1024px)"); // Equivalent to Tailwind's lg breakpoint
 
 	if (isDesktop) {
 		return (
 			<Popover open={open} onOpenChange={onOpenChange}>
 				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
 				<PopoverContent
-					className="w-[400px] max-w-[calc(100vw-2rem)] p-0"
-					align="center"
+					className="w-[320px] p-0"
+					align="start"
 					side="bottom"
-					sideOffset={4}
-					collisionPadding={20}
+					sideOffset={6}
+					collisionPadding={16}
 					avoidCollisions={true}
 				>
 					{panel}
