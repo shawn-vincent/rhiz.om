@@ -116,7 +116,7 @@ export function BeingForm() {
 							<Label htmlFor="botModel">Bot Model</Label>
 							<Input
 								id="botModel"
-								placeholder="e.g., gpt-4, claude-3-sonnet, etc."
+								placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free, deepseek/deepseek-r1:free"
 								{...register("botModel")}
 							/>
 							{errors.botModel && (

@@ -117,8 +117,8 @@ async function streamBotResponse(
 			"Starting bot response stream",
 		);
 
-		// Use bot's model or default to GPT-3.5-turbo
-		const model = bot.botModel ?? "openai/gpt-3.5-turbo";
+		// Use bot's model or default to a reasonable free model
+		const model = bot.botModel ?? "meta-llama/llama-3.3-70b-instruct:free";
 
 		// Build messages array with bot's system prompt if available
 		const messages: Array<{ role: string; content: string }> = [];
