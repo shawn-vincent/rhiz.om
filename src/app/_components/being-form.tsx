@@ -3,6 +3,7 @@ import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import type { z } from "zod/v4";
 
 import { BeingSelectField } from "~/components/being-selector";
+import { ModelSelectField } from "~/components/model-selector";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -107,10 +108,9 @@ export function BeingForm() {
 
 						<div>
 							<Label htmlFor="botModel">Bot Model</Label>
-							<Input
-								id="botModel"
-								placeholder="e.g., meta-llama/llama-3.3-70b-instruct:free, deepseek/deepseek-r1:free"
-								{...register("botModel")}
+							<ModelSelectField
+								name="botModel"
+								placeholder="Select an AI model..."
 							/>
 							{errors.botModel && (
 								<p className="text-red-600 text-sm">

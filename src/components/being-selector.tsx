@@ -1,8 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
-import { cn } from "~/lib/utils";
-import { api } from "~/trpc/react";
 import { Label } from "~/components/ui/label";
 import {
 	Select,
@@ -11,12 +9,17 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/select";
+import { useBeings } from "~/hooks/use-beings";
+import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
 import { EntitySelectPanel } from "../../packages/entity-kit/src/components/ui/EntitySelectPanel";
 import { ResponsiveShell } from "../../packages/entity-kit/src/components/ui/ResponsiveShell";
 import { SelectedEntityDisplay } from "../../packages/entity-kit/src/components/ui/SelectedEntityDisplay";
-import { useBeings } from "~/hooks/use-beings";
-import type { BeingType, EntitySummary } from "../../packages/entity-kit/src/types";
+import type {
+	BeingType,
+	EntitySummary,
+} from "../../packages/entity-kit/src/types";
 
 // Generic EntitySelector - reusable for any entity type
 interface EntitySelectorProps<T extends EntitySummary> {
@@ -42,19 +45,23 @@ function EntitySelector<T extends EntitySummary>({
 }: EntitySelectorProps<T>) {
 	const [open, setOpen] = useState(false);
 
-	const selectedEntity = items.find(item => item.id === value);
+	const selectedEntity = items.find((item) => item.id === value);
 
 	const { data: fetchedEntity, isLoading: isFetchingEntity } =
 		api.being.getById.useQuery(
-			{ id: value!, },
-			{ enabled: !!value && !selectedEntity }
+			{ id: value! },
+			{ enabled: !!value && !selectedEntity },
 		);
 
-	const displayEntity = selectedEntity || (fetchedEntity ? {
-		id: fetchedEntity.id,
-		name: fetchedEntity.name,
-		type: fetchedEntity.type as BeingType
-	} as T : undefined);
+	const displayEntity =
+		selectedEntity ||
+		(fetchedEntity
+			? ({
+					id: fetchedEntity.id,
+					name: fetchedEntity.name,
+					type: fetchedEntity.type as BeingType,
+				} as T)
+			: undefined);
 
 	const handleSelect = (id: string) => {
 		onValueChange?.(id);
@@ -110,7 +117,9 @@ function BeingTypeFilter({
 			<Label className="shrink-0 font-medium text-xs">Type:</Label>
 			<Select
 				value={value || "all"}
-				onValueChange={(val) => onChange(val === "all" ? undefined : (val as BeingType))}
+				onValueChange={(val) =>
+					onChange(val === "all" ? undefined : (val as BeingType))
+				}
 			>
 				<SelectTrigger className="h-8 text-xs">
 					<SelectValue placeholder="All types" />
@@ -141,7 +150,8 @@ export function BeingSelector({
 	showTypeFilter = true,
 	placeholder,
 }: BeingSelectorProps) {
-	const { items, isLoading, isError, query, setQuery, type, setType } = useBeings();
+	const { items, isLoading, isError, query, setQuery, type, setType } =
+		useBeings();
 
 	const filtersNode = showTypeFilter ? (
 		<BeingTypeFilter value={type} onChange={setType} />
