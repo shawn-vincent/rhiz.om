@@ -26,8 +26,12 @@ export function ResponsiveShell({
 			<Popover open={open} onOpenChange={onOpenChange}>
 				<PopoverTrigger asChild>{trigger}</PopoverTrigger>
 				<PopoverContent
-					className="w-[--radix-popover-trigger-width] min-w-[400px] max-w-2xl p-0"
+					className="w-[min(calc(100vw-2rem),max(400px,var(--radix-popover-trigger-width)))] max-w-2xl p-0"
 					align="start"
+					side="bottom"
+					sideOffset={8}
+					collisionPadding={16}
+					avoidCollisions={true}
 				>
 					{panel}
 				</PopoverContent>
