@@ -6,8 +6,8 @@ import {
 	CommandList,
 } from "~/components/ui/command";
 import type { EntitySummary } from "../../types";
+import { EntityCard } from "./EntityCard";
 import { EntitySkeleton } from "./EntitySkeleton";
-import { SelectedEntityDisplay } from "./SelectedEntityDisplay";
 
 interface EntitySelectPanelProps {
 	value?: string;
@@ -55,7 +55,7 @@ export function EntitySelectPanel({
 							onSelect={() => onSelect(item.id)}
 							className="aria-selected:bg-accent aria-selected:text-accent-foreground"
 						>
-							<SelectedEntityDisplay entity={item} />
+							<EntityCard entity={item} variant="compact" />
 						</CommandItem>
 					))
 				)}

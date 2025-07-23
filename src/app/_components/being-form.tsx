@@ -42,7 +42,12 @@ export function BeingForm() {
 				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 					<div>
 						<Label htmlFor="id">ID</Label>
-						<Input id="id" placeholder="@new-being" {...register("id")} readOnly />
+						<Input
+							id="id"
+							placeholder="@new-being"
+							{...register("id")}
+							readOnly
+						/>
 						{errors.id && (
 							<p className="text-red-600 text-sm">{errors.id.message}</p>
 						)}
@@ -151,35 +156,34 @@ export function BeingForm() {
 							)}
 						</div>
 						<div>
-                            <Label htmlFor="llmApiKey">OpenRouter API Key</Label>
-                            <p className="mb-2 text-muted-foreground text-sm">
-                                Optional. If provided, this key will be used for all LLM calls
-                                instead of the system-wide key. Get one from the{' '}
-                                <a
-                                    href="https://openrouter.ai/keys"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="underline"
-                                >
-                                    OpenRouter website
-                                </a>
-                                .
-                            </p>
-                            <PasswordField
-                                id="llmApiKey"
-                                placeholder="sk-or-..."
-                                {...register('llmApiKey')}
-                            />
-                            {errors.llmApiKey && (
-                                <p className="text-red-600 text-sm">
-                                    {errors.llmApiKey.message}
-                                </p>
-                            )}
-                        </div>
+							<Label htmlFor="llmApiKey">OpenRouter API Key</Label>
+							<p className="mb-2 text-muted-foreground text-sm">
+								Optional. If provided, this key will be used for all LLM calls
+								instead of the system-wide key. Get one from the{" "}
+								<a
+									href="https://openrouter.ai/keys"
+									target="_blank"
+									rel="noopener noreferrer"
+									className="underline"
+								>
+									OpenRouter website
+								</a>
+								.
+							</p>
+							<PasswordField
+								id="llmApiKey"
+								placeholder="sk-or-..."
+								{...register("llmApiKey")}
+							/>
+							{errors.llmApiKey && (
+								<p className="text-red-600 text-sm">
+									{errors.llmApiKey.message}
+								</p>
+							)}
+						</div>
 					</div>
 				</>
 			)}
-
 		</div>
 	);
 }

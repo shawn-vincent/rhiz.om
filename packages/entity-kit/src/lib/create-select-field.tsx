@@ -3,9 +3,9 @@ import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+import { EntityCard } from "../components/ui/EntityCard";
 import { EntitySelectPanel } from "../components/ui/EntitySelectPanel";
 import { ResponsiveShell } from "../components/ui/ResponsiveShell";
-import { SelectedEntityDisplay } from "../components/ui/SelectedEntityDisplay";
 import type { EntitySummary } from "../types";
 
 interface SelectProps {
@@ -63,7 +63,7 @@ export function createSelectField(
 						aria-expanded={open}
 					>
 						{displayEntity ? (
-							<SelectedEntityDisplay entity={displayEntity} />
+							<EntityCard entity={displayEntity} variant="compact" />
 						) : isFetchingEntity ? (
 							"Loading..."
 						) : (

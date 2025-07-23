@@ -15,7 +15,6 @@ import { api } from "~/trpc/react";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
 import { EntitySelectPanel } from "../../packages/entity-kit/src/components/ui/EntitySelectPanel";
 import { ResponsiveShell } from "../../packages/entity-kit/src/components/ui/ResponsiveShell";
-import { SelectedEntityDisplay } from "../../packages/entity-kit/src/components/ui/SelectedEntityDisplay";
 import type {
 	BeingType,
 	EntitySummary,
@@ -82,7 +81,7 @@ function EntitySelector<T extends EntitySummary>({
 					aria-expanded={open}
 				>
 					{displayEntity ? (
-						<SelectedEntityDisplay entity={displayEntity} />
+						<EntityCard entity={displayEntity} variant="compact" />
 					) : isFetchingEntity ? (
 						"Loading..."
 					) : (

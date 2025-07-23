@@ -21,13 +21,9 @@ export function PasswordField(props: React.ComponentProps<typeof Input>) {
 				size="icon"
 				variant="ghost"
 				onClick={() => setVisible(!visible)}
-				className="absolute right-2 top-1/2 -translate-y-1/2"
+				className="-translate-y-1/2 absolute top-1/2 right-2"
 			>
-				{visible ? (
-					<EyeOff className="h-4 w-4" />
-				) : (
-					<Eye className="h-4 w-4" />
-				)}
+				{visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
 			</Button>
 		</div>
 	);

@@ -2,9 +2,11 @@
 "use client";
 
 import type { BeingType } from "packages/entity-kit/src/types";
+import { useEffect, useRef, useState } from "react";
 import { Avatar } from "~/components/ui/avatar";
 import { useSpacePresence } from "~/hooks/use-state-sync";
 import type { BeingId } from "~/server/db/types";
+import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 
 interface BeingPresenceData {
 	id: string;
@@ -43,61 +45,111 @@ export function BeingPresence({
 	const isLoading = !presence && !presenceError;
 
 	// Separate beings by type and connection status
+	const spacesAndBots = beings.filter(
+		(being) => being.type === "space" || being.type === "bot",
+	);
 	const connectedGuests = beings.filter(
 		(being) => being.type === "guest" && being.isOnline,
 	);
 	const disconnectedGuests = beings.filter(
 		(being) => being.type === "guest" && !being.isOnline,
 	);
-	const spacesAndBots = beings.filter(
-		(being) => being.type === "space" || being.type === "bot",
-	);
+
+	// Consistent ordering: spaces/bots first, then connected guests, then disconnected
+	const orderedBeings = [
+		...spacesAndBots,
+		...connectedGuests,
+		...disconnectedGuests,
+	];
+
+	// State for showing popover
+	const [showPopover, setShowPopover] = useState(false);
+	const [selectedBeingId, setSelectedBeingId] = useState<string | null>(null);
+	const popoverRef = useRef<HTMLDivElement>(null);
+
+	// Click outside handler
+	useEffect(() => {
+		function handleClickOutside(event: MouseEvent) {
+			if (
+				popoverRef.current &&
+				!popoverRef.current.contains(event.target as Node)
+			) {
+				setShowPopover(false);
+				setSelectedBeingId(null);
+			}
+		}
+
+		if (showPopover) {
+			document.addEventListener("mousedown", handleClickOutside);
+			return () =>
+				document.removeEventListener("mousedown", handleClickOutside);
+		}
+	}, [showPopover]);
 
 	// Compact mode for mobile/narrow screens
 	if (compact) {
-		const allVisibleBeings = [
-			...spacesAndBots,
-			...connectedGuests,
-			...disconnectedGuests,
-		];
-		const firstBeing = allVisibleBeings[0];
+		const firstBeing = orderedBeings[0];
 		const totalConnected = spacesAndBots.length + connectedGuests.length;
-		const hasMultiple = allVisibleBeings.length > 1;
+		const hasMultiple = orderedBeings.length > 1;
 
 		if (!firstBeing) return null;
 
 		return (
-			<div className="relative flex items-center">
-				<div className="relative">
-					<Avatar
-						beingId={firstBeing.id}
-						beingType={firstBeing.type}
-						size="sm"
-						className={`ring-2 ${
-							firstBeing.isOnline
-								? "ring-green-400/50"
-								: "opacity-60 ring-gray-400/50"
-						}`}
-					/>
-					{/* Online/offline indicator */}
-					<div
-						className={`-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black ${
-							firstBeing.isOnline ? "bg-green-400" : "bg-gray-500"
-						}`}
-					/>
+			<div className="relative">
+				<div
+					className="relative flex cursor-pointer items-center"
+					onClick={() => setShowPopover(!showPopover)}
+				>
+					<div className="relative">
+						<Avatar
+							beingId={firstBeing.id}
+							beingType={firstBeing.type}
+							size="sm"
+							className={`ring-2 ${
+								firstBeing.isOnline
+									? "ring-green-400/50"
+									: "opacity-60 ring-gray-400/50"
+							}`}
+						/>
+						{/* Online/offline indicator */}
+						<div
+							className={`-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black ${
+								firstBeing.isOnline ? "bg-green-400" : "bg-gray-500"
+							}`}
+						/>
 
-					{/* Stack indicator for multiple beings */}
-					{hasMultiple && (
-						<>
-							{/* Shadow avatar behind */}
-							<div className="-top-1 -right-1 -z-10 absolute h-8 w-8 rounded-full bg-gray-600/50 ring-1 ring-green-400/30" />
-							{/* Count badge - show total connected */}
-							<div className="-top-2 -right-2 absolute flex h-5 w-5 items-center justify-center rounded-full bg-green-400 font-bold text-black text-xs">
-								{totalConnected}
-							</div>
-						</>
-					)}
+						{/* Stack indicator for multiple beings */}
+						{hasMultiple && (
+							<>
+								{/* Shadow avatar behind */}
+								<div className="-top-1 -right-1 -z-10 absolute h-8 w-8 rounded-full bg-gray-600/50 ring-1 ring-green-400/30" />
+								{/* Count badge - show total connected */}
+								<div className="-top-2 -right-2 absolute flex h-5 w-5 items-center justify-center rounded-full bg-green-400 font-bold text-black text-xs">
+									{totalConnected}
+								</div>
+							</>
+						)}
+					</div>
 				</div>
+
+				{/* Popover for being cards */}
+				{showPopover && (
+					<div
+						ref={popoverRef}
+						className="absolute bottom-full left-0 z-50 mb-2 w-64 rounded-md border bg-popover p-2 shadow-md"
+					>
+						<div className="space-y-1">
+							{orderedBeings.map((being) => (
+								<EntityCard
+									key={being.id}
+									entity={being}
+									isOnline={being.isOnline}
+									variant="compact"
+								/>
+							))}
+						</div>
+					</div>
+				)}
 			</div>
 		);
 	}
@@ -106,7 +158,7 @@ export function BeingPresence({
 	const totalConnected = spacesAndBots.length + connectedGuests.length;
 
 	return (
-		<div className="flex h-full w-16 flex-col items-center py-4 sm:w-20">
+		<div className="relative flex h-full w-16 flex-col items-center py-4 sm:w-20">
 			{/* Connection status indicator */}
 			<div className="mb-4 flex flex-col items-center gap-1">
 				<div className="font-medium text-outline text-white/60 text-xs">
@@ -130,33 +182,46 @@ export function BeingPresence({
 				)}
 			</div>
 
-			{/* Spaces and Bots (always online) */}
-			{spacesAndBots.map((being) => (
-				<div key={being.id} className="relative mb-3">
-					<Avatar
-						beingId={being.id}
-						beingType={being.type}
-						size="sm"
-						className="ring-2 ring-blue-400/50 transition-all hover:scale-110 hover:ring-blue-400"
-					/>
-					{/* Always online indicator for spaces/bots */}
-					<div className="-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black bg-blue-400" />
-				</div>
-			))}
+			{/* Render beings in consistent order */}
+			{orderedBeings.map((being) => {
+				const isSpace = being.type === "space" || being.type === "bot";
+				const isDisconnected = !being.isOnline && being.type === "guest";
 
-			{/* Connected Guests */}
-			{connectedGuests.map((being) => (
-				<div key={being.id} className="relative mb-3">
-					<Avatar
-						beingId={being.id}
-						beingType={being.type}
-						size="sm"
-						className="ring-2 ring-green-400/50 transition-all hover:scale-110 hover:ring-green-400"
-					/>
-					{/* Online indicator */}
-					<div className="-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black bg-green-400" />
-				</div>
-			))}
+				return (
+					<div key={being.id} className="relative mb-3">
+						<div
+							className={`relative cursor-pointer ${isDisconnected ? "opacity-50" : ""}`}
+							onClick={() => {
+								setSelectedBeingId(being.id);
+								setShowPopover(true);
+							}}
+						>
+							<Avatar
+								beingId={being.id}
+								beingType={being.type}
+								size="sm"
+								className={`ring-2 transition-all hover:scale-110 ${
+									isSpace
+										? "ring-blue-400/50 hover:ring-blue-400"
+										: being.isOnline
+											? "ring-green-400/50 hover:ring-green-400"
+											: "ring-gray-600/30"
+								}`}
+							/>
+							{/* Online/offline indicator */}
+							<div
+								className={`-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black ${
+									isSpace
+										? "bg-blue-400"
+										: being.isOnline
+											? "bg-green-400"
+											: "bg-gray-500"
+								}`}
+							/>
+						</div>
+					</div>
+				);
+			})}
 
 			{/* Separator if there are disconnected guests */}
 			{disconnectedGuests.length > 0 &&
@@ -164,19 +229,20 @@ export function BeingPresence({
 					<div className="my-4 h-px w-8 bg-white/20" />
 				)}
 
-			{/* Disconnected Guests */}
-			{disconnectedGuests.map((being) => (
-				<div key={being.id} className="relative mb-3 opacity-50">
-					<Avatar
-						beingId={being.id}
-						beingType={being.type}
-						size="sm"
-						className="ring-2 ring-gray-600/30"
-					/>
-					{/* Offline indicator */}
-					<div className="-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black bg-gray-500" />
+			{/* Popover for selected being */}
+			{showPopover && selectedBeingId && (
+				<div
+					ref={popoverRef}
+					className="-translate-y-1/2 absolute top-1/2 left-full z-50 ml-2 w-64 rounded-md border bg-popover p-2 shadow-md"
+				>
+					{(() => {
+						const being = orderedBeings.find((b) => b.id === selectedBeingId);
+						return being ? (
+							<EntityCard entity={being} isOnline={being.isOnline} />
+						) : null;
+					})()}
 				</div>
-			))}
+			)}
 		</div>
 	);
 }
