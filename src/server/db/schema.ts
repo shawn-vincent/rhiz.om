@@ -41,6 +41,7 @@ export const beings = createTable("being", {
 	// Bot-specific fields
 	botModel: varchar("botModel", { length: 255 }), // AI model identifier for bots
 	botPrompt: text("botPrompt"), // System prompt for bots (can be very long)
+	llmApiKey: text("llmApiKey"), // Per-being API key for LLM services like OpenRouter
 });
 
 // "Intention" entity table. Represents actions, like utterances (chat messages).

@@ -130,12 +130,15 @@ async function streamBotResponse(
 			: triggeringIntention.content;
 		messages.push({ role: "user", content: String(userContent ?? "") });
 
+		// Determine the API key
+		const apiKey = bot.llmApiKey ?? env.OPENROUTER_API_KEY;
+
 		const response = await fetch(
 			"https://openrouter.ai/api/v1/chat/completions",
 			{
 				method: "POST",
 				headers: {
-					Authorization: `Bearer ${env.OPENROUTER_API_KEY}`,
+					Authorization: `Bearer ${apiKey}`,
 					"Content-Type": "application/json",
 					"HTTP-Referer": "http://localhost:3000",
 					"X-Title": "Rhiz.om",

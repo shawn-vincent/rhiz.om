@@ -1,0 +1,1 @@
+ALTER TABLE "rhiz.om_being" ADD COLUMN "llmApiKey" text;
