@@ -2,11 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod/v4";
 import { BeingForm } from "~/app/_components/being-form";
+import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -21,23 +22,24 @@ import {
 	SheetTitle,
 } from "~/components/ui/sheet";
 import { insertBeingSchema } from "~/server/db/types";
+import type { BeingType } from "../../packages/entity-kit/src/types";
 import { api } from "~/trpc/react";
 import { useMediaQuery } from "../../packages/entity-kit/src/hooks/use-media-query";
 
 interface BeingCreateModalProps {
-	spaceId: string;
 	isOpen: boolean;
 	onClose: () => void;
 	onCreated?: (beingId: string) => void;
+	defaultValues?: Partial<BeingFormData>;
 }
 
 type BeingFormData = z.infer<typeof insertBeingSchema>;
 
 export function BeingCreateModal({
-	spaceId,
 	isOpen,
 	onClose,
 	onCreated,
+	defaultValues = {},
 }: BeingCreateModalProps) {
 	const isMobile = useMediaQuery("(max-width: 768px)");
 	const isTablet = useMediaQuery("(max-width: 1024px)");
@@ -45,18 +47,20 @@ export function BeingCreateModal({
 	const { data: session } = useSession();
 
 	const createBeing = api.being.upsert.useMutation({
-		onSuccess: async (data) => {
+		onSuccess: async (newBeing) => {
+			console.log("🐛 BeingCreateModal - onSuccess newBeing:", newBeing);
+			console.log("🐛 BeingCreateModal - onSuccess newBeing.id:", newBeing?.id);
+			
 			await utils.being.getAll.invalidate();
-			await utils.being.getByLocation.invalidate({ locationId: spaceId });
+			await utils.being.getByLocation.invalidate();
 			toast.success("Being created successfully");
-			if (
-				data &&
-				typeof data === "object" &&
-				"id" in data &&
-				typeof data.id === "string"
-			) {
-				onCreated?.(data.id);
+			
+			if (newBeing?.id) {
+				onCreated?.(newBeing.id);
+			} else {
+				console.error("🔥 BeingCreateModal - newBeing.id is undefined!", newBeing);
 			}
+			
 			onClose();
 		},
 		onError: (err) => {
@@ -67,7 +71,9 @@ export function BeingCreateModal({
 	// Generate a unique ID for new being
 	const generateBeingId = () => {
 		const randomPart = Math.random().toString(36).substring(2, 8);
-		return `@new-being-${randomPart}`;
+		const generatedId = `@new-being-${randomPart}`;
+		console.log("🐛 BeingCreateModal - generated ID:", generatedId);
+		return generatedId;
 	};
 
 	const baseDefaults: BeingFormData = {
@@ -75,7 +81,7 @@ export function BeingCreateModal({
 		name: "",
 		type: "guest",
 		ownerId: session?.user?.beingId ?? undefined,
-		locationId: spaceId,
+		locationId: undefined,
 		extIds: [],
 		idHistory: [],
 		metadata: {},
@@ -83,6 +89,7 @@ export function BeingCreateModal({
 		content: [],
 		botModel: "",
 		botPrompt: "",
+		...defaultValues,
 	};
 
 	const methods = useForm<BeingFormData>({
@@ -90,16 +97,45 @@ export function BeingCreateModal({
 		defaultValues: baseDefaults,
 	});
 
+	// Reset form when modal opens with new default values
+	useEffect(() => {
+		if (isOpen) {
+			const generatedId = generateBeingId();
+			const newDefaults = {
+				id: generatedId,
+				name: "",
+				type: "guest",
+				ownerId: session?.user?.beingId ?? undefined,
+				locationId: undefined,
+				extIds: [],
+				idHistory: [],
+				metadata: {},
+				properties: {},
+				content: [],
+				botModel: "",
+				botPrompt: "",
+				...defaultValues,
+			};
+			console.log("🐛 BeingCreateModal - useEffect newDefaults:", newDefaults);
+			console.log("🐛 BeingCreateModal - useEffect generatedId:", generatedId);
+			methods.reset(newDefaults);
+		}
+	}, [isOpen, defaultValues, methods, session?.user?.beingId]);
+
 	const handleSubmit = async (data: BeingFormData) => {
+		console.log("🐛 BeingCreateModal - handleSubmit data:", data);
+		console.log("🐛 BeingCreateModal - handleSubmit data.id:", data.id);
 		await createBeing.mutate(data);
 	};
 
 	const handleCancel = useCallback(() => {
-		methods.reset(baseDefaults);
 		onClose();
-	}, [onClose, methods, baseDefaults]);
+	}, [onClose]);
 
 	if (!isOpen) return null;
+
+	const typeDisplayName = (defaultValues.type as BeingType) || "guest";
+	const titleText = `Create New ${typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : "Being"}`;
 
 	const content = (
 		<FormProvider {...methods}>
@@ -123,7 +159,7 @@ export function BeingCreateModal({
 							className="flex-1"
 							disabled={methods.formState.isSubmitting}
 						>
-							{methods.formState.isSubmitting ? "Creating…" : "Create Being"}
+							{methods.formState.isSubmitting ? "Creating…" : "Create"}
 						</Button>
 					</div>
 				</div>
@@ -140,7 +176,15 @@ export function BeingCreateModal({
 					className="flex h-[90vh] flex-col overflow-hidden"
 				>
 					<SheetHeader>
-						<SheetTitle>Create New Being</SheetTitle>
+						<SheetTitle className="flex items-center gap-3">
+							<Avatar 
+								beingId="@new-being" 
+								beingType={typeDisplayName} 
+								size="md"
+								className="h-8 w-8"
+							/>
+							{titleText}
+						</SheetTitle>
 					</SheetHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 				</SheetContent>
@@ -154,7 +198,15 @@ export function BeingCreateModal({
 			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[95vw] flex-col overflow-hidden">
 					<DialogHeader>
-						<DialogTitle>Create New Being</DialogTitle>
+						<DialogTitle className="flex items-center gap-3">
+						<Avatar 
+							beingId="@new-being" 
+							beingType={typeDisplayName} 
+							size="md"
+							className="h-8 w-8"
+						/>
+						{titleText}
+					</DialogTitle>
 					</DialogHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 				</DialogContent>
@@ -170,7 +222,15 @@ export function BeingCreateModal({
 				className="flex w-[95vw] max-w-none flex-col overflow-hidden"
 			>
 				<SheetHeader>
-					<SheetTitle>Create New Being</SheetTitle>
+					<SheetTitle className="flex items-center gap-3">
+					<Avatar 
+						beingId="@new-being" 
+						beingType={typeDisplayName} 
+						size="md"
+						className="h-8 w-8"
+					/>
+					{titleText}
+				</SheetTitle>
 				</SheetHeader>
 				<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 			</SheetContent>

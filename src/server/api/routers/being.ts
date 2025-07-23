@@ -74,7 +74,7 @@ export const beingRouter = createTRPCRouter({
 
 			// Use Drizzle's ON CONFLICT for an atomic upsert operation.
 			// This is the best practice for create-or-update logic.
-			const result = await ctx.db
+			await ctx.db
 				.insert(beings)
 				.values({
 					...input,
@@ -87,6 +87,21 @@ export const beingRouter = createTRPCRouter({
 						modifiedAt: new Date(),
 					},
 				});
+
+			// Fetch the upserted being to return proper data
+			const result = await ctx.db.query.beings.findFirst({
+				where: eq(beings.id, input.id),
+			});
+
+			console.log("🐛 being.upsert - result from DB:", result);
+			console.log("🐛 being.upsert - result.id:", result?.id);
+
+			if (!result) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message: "Failed to create or update being",
+				});
+			}
 
 			// Broadcast presence update if location changed
 			if (existingBeing?.locationId !== input.locationId) {
@@ -124,7 +139,12 @@ export const beingRouter = createTRPCRouter({
 				}
 			}
 
-			return result;
+			// Parse the result through the schema to ensure proper typing
+			const parsedResult = selectBeingSchema.parse(result);
+			console.log("🐛 being.upsert - parsedResult:", parsedResult);
+			console.log("🐛 being.upsert - parsedResult.id:", parsedResult.id);
+			
+			return parsedResult;
 		}),
 
 	/**

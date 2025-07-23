@@ -3,8 +3,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import { BeingSelectField } from "~/components/being-selector";
+import { BeingCreateModal } from "~/components/being-create-modal";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
@@ -49,6 +50,22 @@ function NavigationSelector() {
 }
 
 export function SiteMenu() {
+	const router = useRouter();
+	const [isCreatingSpace, setIsCreatingSpace] = useState(false);
+
+	const handleSpaceCreated = (spaceId: string) => {
+		console.log("🐛 SiteMenu - handleSpaceCreated called with spaceId:", spaceId);
+		
+		if (!spaceId) {
+			console.error("🔥 SiteMenu - spaceId is undefined or empty!");
+			return;
+		}
+		
+		// Navigate to the newly created space
+		console.log("🐛 SiteMenu - navigating to:", `/being/${spaceId}`);
+		router.push(`/being/${spaceId}`);
+	};
+
 	return (
 		<ErrorBoundary>
 			<div className="flex h-full flex-col">
@@ -56,6 +73,17 @@ export function SiteMenu() {
 				<div className="p-4">
 					<h3 className="mb-4 font-medium text-white/80">Navigate To</h3>
 					<NavigationSelector />
+				</div>
+				<Separator className="bg-white/20" />
+				<div className="p-4">
+					<Button
+						variant="outline"
+						className="w-full border-white/20 bg-transparent hover:bg-white/10 gap-2"
+						onClick={() => setIsCreatingSpace(true)}
+					>
+						<Plus className="h-4 w-4" />
+						Create New Space
+					</Button>
 				</div>
 				<div className="mt-auto p-4">
 					<Button
@@ -67,6 +95,16 @@ export function SiteMenu() {
 					</Button>
 				</div>
 			</div>
+
+			{/* Create New Space Modal */}
+			<BeingCreateModal
+				isOpen={isCreatingSpace}
+				onClose={() => setIsCreatingSpace(false)}
+				onCreated={handleSpaceCreated}
+				defaultValues={{
+					type: "space",
+				}}
+			/>
 		</ErrorBoundary>
 	);
 }

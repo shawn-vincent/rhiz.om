@@ -220,14 +220,15 @@ export function Config() {
 				onClose={() => setEditingBeingId(null)}
 			/>
 
-			{/* Create modal - for now just use edit modal with empty being */}
-			{isCreatingBeing && (
-				<BeingCreateModal
-					spaceId={beingId!}
-					isOpen={isCreatingBeing}
-					onClose={() => setIsCreatingBeing(false)}
-				/>
-			)}
+			{/* Create modal for adding beings to space */}
+			<BeingCreateModal
+				isOpen={isCreatingBeing}
+				onClose={() => setIsCreatingBeing(false)}
+				defaultValues={{
+					type: "bot",
+					locationId: beingId,
+				}}
+			/>
 		</ErrorBoundary>
 	);
 }

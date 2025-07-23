@@ -178,7 +178,7 @@ export function BeingEditModal({
 						<DialogTitle className="flex items-center gap-3">
 							<Avatar 
 								beingId={being?.id || "@new-being"} 
-								beingType={being?.type || "guest"} 
+								beingType={(being?.type as any) || "guest"} 
 								size="md"
 								className="h-8 w-8"
 							/>
@@ -202,7 +202,7 @@ export function BeingEditModal({
 					<SheetTitle className="flex items-center gap-3">
 						<Avatar 
 							beingId={being?.id || "@new-being"} 
-							beingType={being?.type || "guest"} 
+							beingType={(being?.type as any) || "guest"} 
 							size="md"
 							className="h-8 w-8"
 						/>
