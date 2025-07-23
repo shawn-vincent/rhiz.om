@@ -152,7 +152,7 @@ export function BeingCreateModal({
 	if (isTablet) {
 		return (
 			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[min(95vw,5xl)] flex-col overflow-hidden">
+				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[95vw] flex-col overflow-hidden">
 					<DialogHeader>
 						<DialogTitle>Create New Being</DialogTitle>
 					</DialogHeader>
@@ -167,7 +167,7 @@ export function BeingCreateModal({
 		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
 			<SheetContent
 				side="right"
-				className="flex w-[min(95vw,800px)] flex-col overflow-hidden sm:max-w-[800px]"
+				className="flex w-[95vw] max-w-none flex-col overflow-hidden"
 			>
 				<SheetHeader>
 					<SheetTitle>Create New Being</SheetTitle>
