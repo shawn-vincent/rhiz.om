@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { Controller, useFieldArray, useFormContext } from "react-hook-form";
 import type { z } from "zod/v4";
 
-import { MobileEntitySelectField } from "packages/entity-kit/src/components/ui/MobileEntitySelector";
+import { BeingSelectField } from "~/components/being-selector";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
@@ -11,6 +11,7 @@ import { Separator } from "~/components/ui/separator";
 import { json as jsonLang } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { oneDark } from "@codemirror/theme-one-dark";
+import { EditorView } from "@codemirror/view";
 import CodeMirror from "@uiw/react-codemirror";
 
 import type { insertBeingSchema } from "~/server/db/types";
@@ -82,11 +83,7 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="ownerId">Owner ID</Label>
-					<MobileEntitySelectField
-						name="ownerId"
-						selectUrl="/select/being"
-						placeholder="Select owner..."
-					/>
+					<BeingSelectField name="ownerId" />
 					{errors.ownerId && (
 						<p className="text-red-600 text-sm">{errors.ownerId.message}</p>
 					)}
@@ -94,11 +91,7 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="locationId">Location ID</Label>
-					<MobileEntitySelectField
-						name="locationId"
-						selectUrl="/select/being"
-						placeholder="Select location..."
-					/>
+					<BeingSelectField name="locationId" />
 					{errors.locationId && (
 						<p className="text-red-600 text-sm">{errors.locationId.message}</p>
 					)}
@@ -148,7 +141,7 @@ export function BeingForm() {
 											autocompletion: true,
 											highlightSelectionMatches: true,
 										}}
-										extensions={[markdown()]}
+										extensions={[markdown(), EditorView.lineWrapping]}
 										theme={oneDark}
 										minHeight="200px"
 										maxHeight="600px"
@@ -227,7 +220,7 @@ export function BeingForm() {
 							<Label>{label}</Label>
 							<CodeMirror
 								basicSetup={{ lineNumbers: true }}
-								extensions={[jsonLang()]}
+								extensions={[jsonLang(), EditorView.lineWrapping]}
 								theme="dark"
 								height="200px"
 								value={

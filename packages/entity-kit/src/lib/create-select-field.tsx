@@ -87,11 +87,8 @@ export function createSelectField(
 
 	const SelectField = ({
 		name,
-		...props
 	}: {
 		name: string;
-		renderCard: (entity: EntitySummary) => React.ReactNode;
-		useHook: (initialValue?: any) => any;
 	}) => {
 		const { control } = useFormContext();
 		return (
@@ -100,7 +97,8 @@ export function createSelectField(
 				control={control}
 				render={({ field }) => (
 					<Select
-						{...props}
+						renderCard={renderCard}
+						useHook={useHook}
 						value={field.value}
 						onValueChange={field.onChange}
 					/>
