@@ -13,6 +13,7 @@ interface SelectProps {
 	onValueChange?: (value: string) => void;
 	renderCard: (entity: EntitySummary) => React.ReactNode;
 	useHook: (initialValue?: any) => any; // Simplified for now
+	filtersNode?: React.ReactNode;
 }
 
 export function createSelectField(
@@ -24,6 +25,7 @@ export function createSelectField(
 		onValueChange,
 		renderCard,
 		useHook,
+		filtersNode,
 	}: SelectProps) => {
 		const [open, setOpen] = useState(false);
 		const { items, isLoading, isError, query, setQuery } = useHook();
@@ -79,6 +81,7 @@ export function createSelectField(
 						isError={isError}
 						isEmpty={items.length === 0 && !isLoading && !isError}
 						onSearchChange={setQuery}
+						filtersNode={filtersNode}
 					/>
 				}
 			/>
@@ -87,8 +90,10 @@ export function createSelectField(
 
 	const SelectField = ({
 		name,
+		filtersNode,
 	}: {
 		name: string;
+		filtersNode?: React.ReactNode;
 	}) => {
 		const { control } = useFormContext();
 		return (
@@ -101,6 +106,7 @@ export function createSelectField(
 						useHook={useHook}
 						value={field.value}
 						onValueChange={field.onChange}
+						filtersNode={filtersNode}
 					/>
 				)}
 			/>

@@ -17,6 +17,7 @@ interface EntitySelectPanelProps {
 	isError: boolean;
 	isEmpty: boolean;
 	onSearchChange: (search: string) => void;
+	filtersNode?: React.ReactNode;
 }
 
 export function EntitySelectPanel({
@@ -27,12 +28,14 @@ export function EntitySelectPanel({
 	isError,
 	isEmpty,
 	onSearchChange,
+	filtersNode,
 }: EntitySelectPanelProps) {
 	return (
 		<Command className="h-full w-full">
 			<div className="flex items-center border-b px-3" cmdk-input-wrapper="">
 				<CommandInput placeholder="Search..." onValueChange={onSearchChange} />
 			</div>
+			{filtersNode && <div className="border-b px-3 py-2">{filtersNode}</div>}
 			<CommandList className="flex-1">
 				{isLoading && items.length === 0 ? (
 					<div className="p-2">
