@@ -2,7 +2,6 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm"; // Import eq for queries
 import type { DefaultSession, NextAuthConfig } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { v4 as uuidv4 } from "uuid"; // Import uuid for generating IDs
 
 import { db } from "~/server/db";
 import {
@@ -64,11 +63,16 @@ export const authConfig = {
 				return false; // User ID is required
 			}
 
-			let userBeingId = user.beingId;
+			// Check if the user already has a being
+			const existingUser = await db.query.users.findFirst({
+				where: eq(users.id, user.id),
+			});
+
+			let userBeingId = existingUser?.beingId;
 
 			if (!userBeingId) {
 				// If user doesn't have a beingId, create a new Being
-				const newBeingId = uuidv4();
+				const newBeingId = crypto.randomUUID(); // Use crypto.randomUUID for modern ID generation
 				const extIds = account
 					? [{ provider: account.provider, id: account.providerAccountId }]
 					: [];

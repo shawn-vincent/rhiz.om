@@ -7,6 +7,7 @@ import { ModelSelectField } from "~/components/model-selector";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
+import { PasswordField } from "~/components/ui/password-field";
 import { Separator } from "~/components/ui/separator";
 
 import { markdown } from "@codemirror/lang-markdown";
