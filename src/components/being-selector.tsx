@@ -141,6 +141,7 @@ interface BeingSelectorProps {
 	onValueChange?: (value: string) => void;
 	showTypeFilter?: boolean;
 	placeholder?: string;
+	defaultTypeFilter?: BeingType;
 }
 
 export function BeingSelector({
@@ -148,9 +149,10 @@ export function BeingSelector({
 	onValueChange,
 	showTypeFilter = true,
 	placeholder,
+	defaultTypeFilter,
 }: BeingSelectorProps) {
 	const { items, isLoading, isError, query, setQuery, type, setType } =
-		useBeings();
+		useBeings(defaultTypeFilter);
 
 	const filtersNode = showTypeFilter ? (
 		<BeingTypeFilter value={type} onChange={setType} />
@@ -175,10 +177,12 @@ export function BeingSelectField({
 	name,
 	showTypeFilter = true,
 	placeholder,
+	defaultTypeFilter,
 }: {
 	name: string;
 	showTypeFilter?: boolean;
 	placeholder?: string;
+	defaultTypeFilter?: BeingType;
 }) {
 	const { control } = useFormContext();
 
@@ -192,6 +196,7 @@ export function BeingSelectField({
 					onValueChange={field.onChange}
 					showTypeFilter={showTypeFilter}
 					placeholder={placeholder}
+					defaultTypeFilter={defaultTypeFilter}
 				/>
 			)}
 		/>

@@ -6,6 +6,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod/v4";
 import { BeingForm } from "~/app/_components/being-form";
+import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import {
 	Dialog,
@@ -174,7 +175,15 @@ export function BeingEditModal({
 			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
 				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[95vw] flex-col overflow-hidden">
 					<DialogHeader>
-						<DialogTitle>Edit {being?.name ?? "Being"}</DialogTitle>
+						<DialogTitle className="flex items-center gap-3">
+							<Avatar 
+								beingId={being?.id || "@new-being"} 
+								beingType={being?.type || "guest"} 
+								size="md"
+								className="h-8 w-8"
+							/>
+							Edit {being?.name ?? "Being"}
+						</DialogTitle>
 					</DialogHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 				</DialogContent>
@@ -190,7 +199,15 @@ export function BeingEditModal({
 				className="flex w-[95vw] max-w-none flex-col overflow-hidden"
 			>
 				<SheetHeader>
-					<SheetTitle>Edit {being?.name ?? "Being"}</SheetTitle>
+					<SheetTitle className="flex items-center gap-3">
+						<Avatar 
+							beingId={being?.id || "@new-being"} 
+							beingType={being?.type || "guest"} 
+							size="md"
+							className="h-8 w-8"
+						/>
+						Edit {being?.name ?? "Being"}
+					</SheetTitle>
 				</SheetHeader>
 				<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 			</SheetContent>

@@ -4,7 +4,6 @@ import type { z } from "zod/v4";
 
 import { BeingSelectField } from "~/components/being-selector";
 import { ModelSelectField } from "~/components/model-selector";
-import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { PasswordField } from "~/components/ui/password-field";
@@ -90,7 +89,7 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="locationId">Location ID</Label>
-					<BeingSelectField name="locationId" />
+					<BeingSelectField name="locationId" defaultTypeFilter="space" />
 					{errors.locationId && (
 						<p className="text-red-600 text-sm">{errors.locationId.message}</p>
 					)}

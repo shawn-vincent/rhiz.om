@@ -259,6 +259,28 @@ export function BeingPresence({
 								}`}
 							/>
 						</div>
+						
+						{/* Popover for this specific being */}
+						{showPopover && selectedBeingId === being.id && (
+							<div
+								ref={popoverRef}
+								className="-translate-y-1/2 absolute top-1/2 left-[calc(100%+8px)] z-50 w-64 rounded-md border bg-popover p-2 shadow-md"
+							>
+								<EntityCard
+									entity={being}
+									isOnline={being.isOnline}
+									onEdit={
+										canEdit(being)
+											? () => {
+													setEditingBeingId(being.id);
+													setShowPopover(false);
+												}
+											: undefined
+									}
+									showEditButton={!!canEdit(being)}
+								/>
+							</div>
+						)}
 					</div>
 				);
 			})}
@@ -268,33 +290,6 @@ export function BeingPresence({
 				(spacesAndBots.length > 0 || connectedGuests.length > 0) && (
 					<div className="my-4 h-px w-8 bg-white/20" />
 				)}
-
-			{/* Popover for selected being */}
-			{showPopover && selectedBeingId && (
-				<div
-					ref={popoverRef}
-					className="-translate-y-1/2 absolute top-1/2 left-full z-50 ml-2 w-64 rounded-md border bg-popover p-2 shadow-md"
-				>
-					{(() => {
-						const being = orderedBeings.find((b) => b.id === selectedBeingId);
-						return being ? (
-							<EntityCard
-								entity={being}
-								isOnline={being.isOnline}
-								onEdit={
-									canEdit(being)
-										? () => {
-												setEditingBeingId(being.id);
-												setShowPopover(false);
-											}
-										: undefined
-								}
-								showEditButton={!!canEdit(being)}
-							/>
-						) : null;
-					})()}
-				</div>
-			)}
 
 			{/* Edit modal */}
 			<BeingEditModal
