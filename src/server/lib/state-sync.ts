@@ -119,7 +119,7 @@ export class StateManager<T> {
 
 		if ("type" in payload && payload.type === "heartbeat") {
 			// This is a comment, it will keep the connection alive but won't trigger onmessage
-			encodedData = encoder.encode(`: heartbeat\n\n`);
+			encodedData = encoder.encode(": heartbeat\n\n");
 		} else {
 			const data = `data: ${JSON.stringify(payload)}\n\n`;
 			encodedData = encoder.encode(data);

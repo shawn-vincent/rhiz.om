@@ -31,7 +31,6 @@ export function BeingForm() {
 	// Watch the type field to conditionally show bot fields
 	const currentType = watch("type");
 
-
 	/* ---------- render ---------- */
 	return (
 		<div className="space-y-6">
@@ -53,11 +52,11 @@ export function BeingForm() {
 
 					<div>
 						<Label htmlFor="name">Name</Label>
-						<Input 
-							id="name" 
-							placeholder="Soulspace" 
+						<Input
+							id="name"
+							placeholder="Soulspace"
 							autoComplete="name"
-							{...register("name")} 
+							{...register("name")}
 						/>
 						{errors.name && (
 							<p className="text-red-600 text-sm">{errors.name.message}</p>

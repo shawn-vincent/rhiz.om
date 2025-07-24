@@ -119,7 +119,9 @@ function BeingTypeFilter({
 		{ value: "document", label: "Documents", icon: FileText },
 	] as const;
 
-	const selectedOption = typeOptions.find(opt => opt.value === (value || "all"));
+	const selectedOption = typeOptions.find(
+		(opt) => opt.value === (value || "all"),
+	);
 
 	return (
 		<div className="flex items-center gap-2">
@@ -134,7 +136,9 @@ function BeingTypeFilter({
 					<SelectValue placeholder="All types">
 						{selectedOption && (
 							<div className="flex items-center gap-1.5">
-								{selectedOption.icon && <selectedOption.icon className="size-3 text-muted-foreground" />}
+								{selectedOption.icon && (
+									<selectedOption.icon className="size-3 text-muted-foreground" />
+								)}
 								<span>{selectedOption.label}</span>
 							</div>
 						)}
@@ -144,7 +148,9 @@ function BeingTypeFilter({
 					{typeOptions.map((option) => (
 						<SelectItem key={option.value} value={option.value}>
 							<div className="flex items-center gap-1.5">
-								{option.icon && <option.icon className="size-3 text-muted-foreground" />}
+								{option.icon && (
+									<option.icon className="size-3 text-muted-foreground" />
+								)}
 								<span>{option.label}</span>
 							</div>
 						</SelectItem>

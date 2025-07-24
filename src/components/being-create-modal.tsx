@@ -22,9 +22,9 @@ import {
 	SheetTitle,
 } from "~/components/ui/sheet";
 import { insertBeingSchema } from "~/server/db/types";
-import type { BeingType } from "../../packages/entity-kit/src/types";
 import { api } from "~/trpc/react";
 import { useMediaQuery } from "../../packages/entity-kit/src/hooks/use-media-query";
+import type { BeingType } from "../../packages/entity-kit/src/types";
 
 interface BeingCreateModalProps {
 	isOpen: boolean;
@@ -50,17 +50,20 @@ export function BeingCreateModal({
 		onSuccess: async (newBeing) => {
 			console.log("🐛 BeingCreateModal - onSuccess newBeing:", newBeing);
 			console.log("🐛 BeingCreateModal - onSuccess newBeing.id:", newBeing?.id);
-			
+
 			await utils.being.getAll.invalidate();
 			await utils.being.getByLocation.invalidate();
 			toast.success("Being created successfully");
-			
+
 			if (newBeing?.id) {
 				onCreated?.(newBeing.id);
 			} else {
-				console.error("🔥 BeingCreateModal - newBeing.id is undefined!", newBeing);
+				console.error(
+					"🔥 BeingCreateModal - newBeing.id is undefined!",
+					newBeing,
+				);
 			}
-			
+
 			onClose();
 		},
 		onError: (err) => {
@@ -137,7 +140,8 @@ export function BeingCreateModal({
 
 	if (!isOpen) return null;
 
-	const typeDisplayName = (currentType as BeingType) || (defaultValues.type as BeingType) || "guest";
+	const typeDisplayName =
+		(currentType as BeingType) || (defaultValues.type as BeingType) || "guest";
 	const titleText = `Create New ${typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being"}`;
 
 	const content = (
@@ -180,9 +184,9 @@ export function BeingCreateModal({
 				>
 					<SheetHeader>
 						<SheetTitle className="flex items-center gap-3">
-							<Avatar 
-								beingId="@new-being" 
-								beingType={typeDisplayName} 
+							<Avatar
+								beingId="@new-being"
+								beingType={typeDisplayName}
 								size="md"
 								className="h-8 w-8"
 							/>
@@ -199,17 +203,17 @@ export function BeingCreateModal({
 	if (isTablet) {
 		return (
 			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[95vw] flex-col overflow-hidden">
+				<DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col overflow-hidden">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-3">
-						<Avatar 
-							beingId="@new-being" 
-							beingType={typeDisplayName} 
-							size="md"
-							className="h-8 w-8"
-						/>
-						{titleText}
-					</DialogTitle>
+							<Avatar
+								beingId="@new-being"
+								beingType={typeDisplayName}
+								size="md"
+								className="h-8 w-8"
+							/>
+							{titleText}
+						</DialogTitle>
 					</DialogHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 				</DialogContent>
@@ -226,14 +230,14 @@ export function BeingCreateModal({
 			>
 				<SheetHeader>
 					<SheetTitle className="flex items-center gap-3">
-					<Avatar 
-						beingId="@new-being" 
-						beingType={typeDisplayName} 
-						size="md"
-						className="h-8 w-8"
-					/>
-					{titleText}
-				</SheetTitle>
+						<Avatar
+							beingId="@new-being"
+							beingType={typeDisplayName}
+							size="md"
+							className="h-8 w-8"
+						/>
+						{titleText}
+					</SheetTitle>
 				</SheetHeader>
 				<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 			</SheetContent>

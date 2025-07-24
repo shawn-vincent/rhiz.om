@@ -102,7 +102,6 @@ export function BeingEditModal({
 
 	// Watch the type field to update UI elements reactively
 	const currentType = methods.watch("type");
-	
 
 	// Reset form when being data becomes available
 	useEffect(() => {
@@ -134,8 +133,16 @@ export function BeingEditModal({
 	if (!beingId || !isOpen) return null;
 
 	// Get reactive display name and type - prefer currentType from form, fallback to being.type, then "guest"
-	const typeDisplayName = (currentType as BeingType) || (being?.type as BeingType) || "guest";
-	const typeLabel = typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being";
+	const typeDisplayName =
+		(currentType as BeingType) || (being?.type as BeingType) || "guest";
+	const typeLabel =
+		typeDisplayName === "space"
+			? "Space"
+			: typeDisplayName === "bot"
+				? "Bot"
+				: typeDisplayName === "document"
+					? "Document"
+					: "Being";
 	const titleText = `Edit ${being?.name ?? typeLabel}`;
 
 	const content = (
@@ -190,9 +197,9 @@ export function BeingEditModal({
 				>
 					<SheetHeader>
 						<SheetTitle className="flex items-center gap-3">
-							<Avatar 
-								beingId={being?.id || "@new-being"} 
-								beingType={typeDisplayName} 
+							<Avatar
+								beingId={being?.id || "@new-being"}
+								beingType={typeDisplayName}
 								size="md"
 								className="h-8 w-8"
 							/>
@@ -209,12 +216,12 @@ export function BeingEditModal({
 	if (isTablet) {
 		return (
 			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<DialogContent className="flex max-h-[90vh] max-w-5xl w-[95vw] flex-col overflow-hidden">
+				<DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col overflow-hidden">
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-3">
-							<Avatar 
-								beingId={being?.id || "@new-being"} 
-								beingType={typeDisplayName} 
+							<Avatar
+								beingId={being?.id || "@new-being"}
+								beingType={typeDisplayName}
 								size="md"
 								className="h-8 w-8"
 							/>
@@ -236,9 +243,9 @@ export function BeingEditModal({
 			>
 				<SheetHeader>
 					<SheetTitle className="flex items-center gap-3">
-						<Avatar 
-							beingId={being?.id || "@new-being"} 
-							beingType={typeDisplayName} 
+						<Avatar
+							beingId={being?.id || "@new-being"}
+							beingType={typeDisplayName}
 							size="md"
 							className="h-8 w-8"
 						/>

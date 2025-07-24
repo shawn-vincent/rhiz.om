@@ -51,12 +51,16 @@ export const beingRouter = createTRPCRouter({
 			const sessionBeingId = ctx.session.user.beingId;
 
 			// Get current user's being to check superuser status
-			const currentUserRaw = sessionBeingId ? await ctx.db.query.beings.findFirst({
-				where: eq(beings.id, sessionBeingId),
-			}) : null;
-			
+			const currentUserRaw = sessionBeingId
+				? await ctx.db.query.beings.findFirst({
+						where: eq(beings.id, sessionBeingId),
+					})
+				: null;
+
 			// Parse the being data to match the expected type
-			const currentUser = currentUserRaw ? selectBeingSchema.parse(currentUserRaw) : null;
+			const currentUser = currentUserRaw
+				? selectBeingSchema.parse(currentUserRaw)
+				: null;
 			const isCurrentUserSuperuser = isSuperuser(currentUser);
 
 			// Authorization: Check if user can edit this being (owner or superuser)
@@ -143,7 +147,7 @@ export const beingRouter = createTRPCRouter({
 			const parsedResult = selectBeingSchema.parse(result);
 			console.log("🐛 being.upsert - parsedResult:", parsedResult);
 			console.log("🐛 being.upsert - parsedResult.id:", parsedResult.id);
-			
+
 			return parsedResult;
 		}),
 

@@ -37,6 +37,14 @@ export function EntityCard({
 				isCompact ? "h-12" : "h-16",
 			)}
 			onClick={onClick}
+			onKeyDown={(e) => {
+				if ((e.key === "Enter" || e.key === " ") && onClick) {
+					e.preventDefault();
+					onClick();
+				}
+			}}
+			tabIndex={onClick ? 0 : undefined}
+			role={onClick ? "button" : undefined}
 			data-type={entity.type}
 		>
 			{accent && (

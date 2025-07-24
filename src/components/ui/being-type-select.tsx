@@ -23,7 +23,11 @@ const typeOptions = [
 	{ value: "bot", label: "Bot", icon: Bot },
 ] as const;
 
-function TypeOption({ type, label, icon: Icon }: { type: string; label: string; icon: typeof Bot }) {
+function TypeOption({
+	type,
+	label,
+	icon: Icon,
+}: { type: string; label: string; icon: typeof Bot }) {
 	return (
 		<div className="flex items-center gap-2">
 			<Icon className="size-4 text-muted-foreground" />
@@ -32,35 +36,35 @@ function TypeOption({ type, label, icon: Icon }: { type: string; label: string; 
 	);
 }
 
-export const BeingTypeSelect = forwardRef<HTMLButtonElement, BeingTypeSelectProps>(
-	({ value, onValueChange, placeholder = "Choose type", disabled }, ref) => {
-		const selectedOption = typeOptions.find(opt => opt.value === value);
-		
+export const BeingTypeSelect = forwardRef<
+	HTMLButtonElement,
+	BeingTypeSelectProps
+>(({ value, onValueChange, placeholder = "Choose type", disabled }, ref) => {
+	const selectedOption = typeOptions.find((opt) => opt.value === value);
 
-		return (
-			<Select 
-				key={value} 
-				value={value} 
-				onValueChange={onValueChange} 
-				disabled={disabled}
-			>
-				<SelectTrigger ref={ref}>
-					<SelectValue placeholder={placeholder} />
-				</SelectTrigger>
-				<SelectContent>
-					{typeOptions.map((option) => (
-						<SelectItem key={option.value} value={option.value}>
-							<TypeOption 
-								type={option.value}
-								label={option.label}
-								icon={option.icon}
-							/>
-						</SelectItem>
-					))}
-				</SelectContent>
-			</Select>
-		);
-	}
-);
+	return (
+		<Select
+			key={value}
+			value={value}
+			onValueChange={onValueChange}
+			disabled={disabled}
+		>
+			<SelectTrigger ref={ref}>
+				<SelectValue placeholder={placeholder} />
+			</SelectTrigger>
+			<SelectContent>
+				{typeOptions.map((option) => (
+					<SelectItem key={option.value} value={option.value}>
+						<TypeOption
+							type={option.value}
+							label={option.label}
+							icon={option.icon}
+						/>
+					</SelectItem>
+				))}
+			</SelectContent>
+		</Select>
+	);
+});
 
 BeingTypeSelect.displayName = "BeingTypeSelect";

@@ -193,7 +193,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		if (isAtBottom && bottomAnchorRef.current) {
 			bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
 		}
-	}, [groupedMessages, isAtBottom]); // Re-run when new messages arrive or bottom status changes
+	}, [isAtBottom]); // Re-run when bottom status changes
 
 	// Mount-time scroll to bottom to eliminate top-then-jump visual artifact
 	useLayoutEffect(() => {
@@ -242,7 +242,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 						return (
 							<li
-								key={groupIndex}
+								key={`${group.ownerId}-${group.messages[0]?.id || groupIndex}`}
 								className={`group flex items-end gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 							>
 								<Avatar
@@ -288,6 +288,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				</ul>
 				{!isAtBottom && (
 					<button
+						type="button"
 						onClick={scrollToBottom}
 						className="absolute right-8 bottom-24 z-20 rounded-full bg-blue-500 p-3 text-white shadow-lg transition-all hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75"
 						title="Jump to latest messages"
@@ -299,7 +300,9 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 							strokeWidth={1.5}
 							stroke="currentColor"
 							className="h-6 w-6"
+							aria-label="Down arrow"
 						>
+							<title>Down arrow</title>
 							<path
 								strokeLinecap="round"
 								strokeLinejoin="round"

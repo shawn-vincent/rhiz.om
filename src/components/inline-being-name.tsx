@@ -28,7 +28,7 @@ export function InlineBeingName({
 	const utils = api.useUtils();
 
 	const { data: being, error: beingError } = api.being.getById.useQuery(
-		{ id: beingId! },
+		{ id: beingId as string },
 		{
 			enabled: !!beingId,
 			retry: false, // Don't retry if being doesn't exist
@@ -37,7 +37,7 @@ export function InlineBeingName({
 
 	const upsertBeing = api.being.upsert.useMutation({
 		onSuccess: async () => {
-			await utils.being.getById.invalidate({ id: beingId! });
+			await utils.being.getById.invalidate({ id: beingId as string });
 			await utils.being.getAll.invalidate();
 		},
 		onError: (err) => {

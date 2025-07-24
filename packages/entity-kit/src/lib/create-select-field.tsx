@@ -12,12 +12,24 @@ interface SelectProps {
 	value?: string;
 	onValueChange?: (value: string) => void;
 	renderCard: (entity: EntitySummary) => React.ReactNode;
-	useHook: (initialValue?: any) => any; // Simplified for now
+	useHook: (initialValue?: unknown) => {
+		items: EntitySummary[];
+		isLoading: boolean;
+		isError: boolean;
+		query: string;
+		setQuery: (query: string) => void;
+	};
 	filtersNode?: React.ReactNode;
 }
 
 export function createSelectField(
-	useHook: (initialValue?: any) => any,
+	useHook: (initialValue?: unknown) => {
+		items: EntitySummary[];
+		isLoading: boolean;
+		isError: boolean;
+		query: string;
+		setQuery: (query: string) => void;
+	},
 	renderCard: (entity: EntitySummary) => React.ReactNode,
 ) {
 	const Select = ({
@@ -36,7 +48,7 @@ export function createSelectField(
 
 		const { data: fetchedEntity, isLoading: isFetchingEntity } =
 			api.being.getById.useQuery(
-				{ id: value! },
+				{ id: value as string },
 				{
 					enabled: !!value && !selectedEntity,
 				},
@@ -59,11 +71,19 @@ export function createSelectField(
 							"flex h-16 w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md border bg-transparent p-2 text-left text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 							!value && "text-muted-foreground",
 						)}
+						tabIndex={0}
 						role="combobox"
 						aria-expanded={open}
+						aria-controls="entity-select-panel"
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								setOpen(!open);
+							}
+						}}
 					>
 						{displayEntity ? (
-							<EntityCard entity={displayEntity} variant="compact" />
+							<EntityCard entity={displayEntity as EntitySummary} variant="compact" />
 						) : isFetchingEntity ? (
 							"Loading..."
 						) : (

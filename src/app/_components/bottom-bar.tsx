@@ -57,7 +57,13 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					{session && (
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button variant="ghost" size="icon" aria-label="Open menu" title="Open menu" className="h-10 w-10">
+								<Button
+									variant="ghost"
+									size="icon"
+									aria-label="Open menu"
+									title="Open menu"
+									className="h-10 w-10"
+								>
 									<Menu className="size-6" />
 								</Button>
 							</SheetTrigger>

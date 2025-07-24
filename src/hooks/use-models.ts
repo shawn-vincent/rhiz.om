@@ -132,9 +132,8 @@ export function useModels() {
 				// Then by output cost (primary pricing metric)
 				return a.outputCost - b.outputCost;
 			});
-		} else {
-			return filtered.sort((a, b) => a.name.localeCompare(b.name));
 		}
+		return filtered.sort((a, b) => a.name.localeCompare(b.name));
 	}, [allModels, selectedCapabilities, sortBy, deferredQuery]);
 
 	return {

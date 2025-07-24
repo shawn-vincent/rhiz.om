@@ -6,12 +6,12 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
+import { SuperuserBadge } from "~/components/ui/superuser-badge";
 import { useSpacePresence } from "~/hooks/use-state-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
-import { SuperuserBadge } from "~/components/ui/superuser-badge";
 
 interface BeingPresenceData {
 	id: string;
@@ -126,6 +126,15 @@ export function BeingPresence({
 				<div
 					className="relative flex cursor-pointer items-center"
 					onClick={() => setShowPopover(!showPopover)}
+					onKeyDown={(e) => {
+						if (e.key === "Enter" || e.key === " ") {
+							e.preventDefault();
+							setShowPopover(!showPopover);
+						}
+					}}
+					tabIndex={0}
+					role="button"
+					aria-label="Show user details"
 				>
 					<div className="relative">
 						<Avatar
@@ -220,6 +229,7 @@ export function BeingPresence({
 				{/* Show retry button if there's an error */}
 				{presenceError && (
 					<button
+						type="button"
 						onClick={retry}
 						className="text-red-400 text-xs hover:text-red-300"
 						title="Retry connection"
@@ -266,7 +276,7 @@ export function BeingPresence({
 								}`}
 							/>
 						</div>
-						
+
 						{/* Popover for this specific being */}
 						{showPopover && selectedBeingId === being.id && (
 							<div

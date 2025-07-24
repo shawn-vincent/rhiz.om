@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
 					})
 					.catch(console.error);
 			}
-			beingConnections.get(beingId)!.add(connectionId);
+			beingConnections.get(beingId)?.add(connectionId);
 
 			// Send initial connection message
 			controller.enqueue(

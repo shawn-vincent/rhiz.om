@@ -139,6 +139,7 @@ export function InlineEditable({
 
 	return (
 		<button
+			type="button"
 			onClick={handleEdit}
 			disabled={disabled}
 			className={cn(
