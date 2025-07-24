@@ -57,8 +57,8 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					{session && (
 						<Sheet>
 							<SheetTrigger asChild>
-								<Button variant="ghost" size="icon" aria-label="Open menu">
-									<Menu className="size-5" />
+								<Button variant="ghost" size="icon" aria-label="Open menu" title="Open menu" className="h-10 w-10">
+									<Menu className="size-6" />
 								</Button>
 							</SheetTrigger>
 							<SheetContent
@@ -85,7 +85,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 				<div className="min-w-0 flex-1 text-center">
 					<InlineBeingName
 						fallback="Rhiz.om"
-						className="block truncate font-medium text-sm text-white"
+						className="block truncate font-medium text-base text-white"
 						readOnly
 					/>
 				</div>
@@ -96,12 +96,13 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						pressed={videoOn}
 						onPressedChange={setVideoOn}
 						aria-label={videoOn ? "Turn camera off" : "Turn camera on"}
-						className={`${base} h-8 w-8`}
+						title={videoOn ? "Turn camera off" : "Turn camera on"}
+						className={`${base} h-10 w-10`}
 					>
 						{videoOn ? (
-							<Video className="size-4" />
+							<Video className="size-6" />
 						) : (
-							<VideoOff className="size-4" />
+							<VideoOff className="size-6" />
 						)}
 					</Toggle>
 
@@ -109,12 +110,13 @@ export function BottomBar({ session }: { session?: Session | null }) {
 						pressed={audioOn}
 						onPressedChange={setAudioOn}
 						aria-label={audioOn ? "Mute microphone" : "Unmute microphone"}
-						className={`${base} h-8 w-8`}
+						title={audioOn ? "Mute microphone" : "Unmute microphone"}
+						className={`${base} h-10 w-10`}
 					>
 						{audioOn ? (
-							<Mic className="size-4" />
+							<Mic className="size-6" />
 						) : (
-							<MicOff className="size-4" />
+							<MicOff className="size-6" />
 						)}
 					</Toggle>
 
@@ -125,31 +127,32 @@ export function BottomBar({ session }: { session?: Session | null }) {
 									variant="ghost"
 									size="icon"
 									aria-label="More options"
-									className="ml-2 h-8 w-8"
+									title="More options"
+									className="ml-2 h-10 w-10"
 								>
-									<MoreHorizontal className="size-4" />
+									<MoreHorizontal className="size-6" />
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-48">
 								<DropdownMenuItem
 									onClick={() => setSharing(!sharing)}
-									className="flex items-center gap-2"
+									className="flex items-center gap-2 text-base"
 								>
 									{sharing ? (
-										<MonitorX className="size-4" />
+										<MonitorX className="size-5" />
 									) : (
-										<MonitorUp className="size-4" />
+										<MonitorUp className="size-5" />
 									)}
-									{sharing ? "Stop screen sharing" : "Start screen sharing"}
+									{sharing ? "Stop Share" : "Share Screen"}
 								</DropdownMenuItem>
 								<Sheet>
 									<SheetTrigger asChild>
 										<DropdownMenuItem
 											onSelect={(e) => e.preventDefault()}
-											className="flex items-center gap-2"
+											className="flex items-center gap-2 text-base"
 										>
-											<Settings className="size-4" />
-											Space config
+											<Settings className="size-5" />
+											Space Config
 										</DropdownMenuItem>
 									</SheetTrigger>
 									<SheetContent
@@ -157,7 +160,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 										className="w-72 border-l-white/20 bg-background/95 text-white"
 									>
 										<SheetHeader>
-											<SheetTitle>Space Configuration</SheetTitle>
+											<SheetTitle>Space Config</SheetTitle>
 											<SheetDescription>
 												Manage the settings for the current space.
 											</SheetDescription>

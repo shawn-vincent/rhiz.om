@@ -190,6 +190,13 @@ export function BeingPresence({
 						</div>
 					</div>
 				)}
+
+				{/* Edit modal for compact mode */}
+				<BeingEditModal
+					beingId={editingBeingId}
+					isOpen={!!editingBeingId}
+					onClose={() => setEditingBeingId(null)}
+				/>
 			</div>
 		);
 	}

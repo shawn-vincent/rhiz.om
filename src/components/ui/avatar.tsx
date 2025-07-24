@@ -52,11 +52,19 @@ export function Avatar({
 	const sizeClass = sizeClasses[size];
 	const iconSize = iconSizeClasses[size];
 
-	// Fetch being data if auto-detection is enabled and no type provided
+	// Fetch being data for name and type detection
 	const { data: beingData } = api.being.getById.useQuery(
 		{ id: beingId },
 		{
 			enabled: autoDetectType && !beingType,
+			staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+		},
+	);
+
+	// Always fetch being data for name display in title
+	const { data: beingNameData } = api.being.getById.useQuery(
+		{ id: beingId },
+		{
 			staleTime: 5 * 60 * 1000, // Cache for 5 minutes
 		},
 	);
@@ -72,7 +80,7 @@ export function Avatar({
 				sizeClass,
 				className,
 			)}
-			title={`${finalBeingType}: ${beingId}`}
+			title={beingNameData?.name || beingId}
 		>
 			{getBeingIcon(finalBeingType, iconSize)}
 		</div>

@@ -135,7 +135,8 @@ export function BeingEditModal({
 
 	// Get reactive display name and type - prefer currentType from form, fallback to being.type, then "guest"
 	const typeDisplayName = (currentType as BeingType) || (being?.type as BeingType) || "guest";
-	const titleText = `Edit ${being?.name ?? typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being"}`;
+	const typeLabel = typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being";
+	const titleText = `Edit ${being?.name ?? typeLabel}`;
 
 	const content = (
 		<>
