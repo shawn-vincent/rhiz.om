@@ -13,7 +13,7 @@ import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
-import { api } from "~/trpc/react";
+import { useBeing } from "~/hooks/use-being-cache";
 
 function NavigationSelector() {
 	const router = useRouter();
@@ -57,10 +57,7 @@ function UserCard() {
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
 
-	const { data: currentUserBeing } = api.being.getById.useQuery(
-		{ id: currentUserBeingId ?? "" },
-		{ enabled: !!currentUserBeingId },
-	);
+	const { data: currentUserBeing } = useBeing(currentUserBeingId);
 
 	if (!session || !currentUserBeing) {
 		return null;

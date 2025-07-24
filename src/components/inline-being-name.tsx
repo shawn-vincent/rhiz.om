@@ -6,6 +6,7 @@ import { InlineText } from "~/components/ui/inline-editable";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+import { useBeing } from "~/hooks/use-being-cache";
 
 const inlineBeingLogger = logger.child({ name: "InlineBeingName" });
 
@@ -27,13 +28,7 @@ export function InlineBeingName({
 
 	const utils = api.useUtils();
 
-	const { data: being, error: beingError } = api.being.getById.useQuery(
-		{ id: beingId as string },
-		{
-			enabled: !!beingId,
-			retry: false, // Don't retry if being doesn't exist
-		},
-	);
+	const { data: being, error: beingError } = useBeing(beingId);
 
 	const upsertBeing = api.being.upsert.useMutation({
 		onSuccess: async () => {

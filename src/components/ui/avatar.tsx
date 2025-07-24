@@ -2,7 +2,7 @@ import { Bot, FileText, MapPinned, UserRound } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { isSuperuser } from "~/lib/permissions";
 import { cn } from "~/lib/utils";
-import { api } from "~/trpc/react";
+import { useBeing } from "~/hooks/use-being-cache";
 import { SuperuserBadge } from "./superuser-badge";
 
 export type BeingType = "space" | "guest" | "bot" | "document";
@@ -58,31 +58,22 @@ export function Avatar({
 	const sizeClass = sizeClasses[size];
 	const iconSize = iconSizeClasses[size];
 
-	// Fetch being data for name and type detection
-	const { data: beingData } = api.being.getById.useQuery(
-		{ id: beingId },
-		{
-			enabled: autoDetectType && !beingType,
-			staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-		},
-	);
-
-	// Always fetch being data for name display in title
-	const { data: beingNameData } = api.being.getById.useQuery(
-		{ id: beingId },
-		{
-			staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-		},
-	);
+	// Use the being cache instead of individual queries
+	const shouldFetchBeing = autoDetectType || !beingType;
+	const { data: beingData, error } = useBeing(beingId, {
+		enabled: shouldFetchBeing,
+	});
 
 	// Check if this being is a superuser (only when showSuperuserBadge is true)
 	const isCurrentUserSuperuser = showSuperuserBadge
-		? isSuperuser(beingNameData)
+		? isSuperuser(beingData)
 		: false;
 
-	// Determine the final being type
+	// Determine the final being type (fallback to guest if being not found)
 	const finalBeingType: BeingType =
-		beingType || (beingData?.type as BeingType) || "guest";
+		beingType || 
+		(error?.data?.code === "NOT_FOUND" ? "guest" : (beingData?.type as BeingType)) || 
+		"guest";
 
 	return (
 		<div className="relative">
@@ -92,7 +83,11 @@ export function Avatar({
 					sizeClass,
 					className,
 				)}
-				title={beingNameData?.name || beingId}
+				title={
+					error?.data?.code === "NOT_FOUND"
+						? beingId // Show ID if being not found
+						: beingData?.name || beingId
+				}
 			>
 				{getBeingIcon(finalBeingType, iconSize)}
 			</div>

@@ -5,9 +5,10 @@ import { Send } from "lucide-react";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
-import { Avatar } from "~/components/ui/avatar";
+import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { useSpaceIntentions } from "~/hooks/use-state-sync";
+import { useBeingCache } from "~/hooks/use-being-cache";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId } from "~/server/db/types";
@@ -66,25 +67,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		return Array.from(ids);
 	}, [displayUtterances]);
 
-	// Fetch all beings at once instead of individual queries
-	const { data: allBeings } = api.being.getAll.useQuery();
-
-	// Create a map of being ID to being name
-	const beingNames = useMemo(() => {
-		const nameMap: Record<string, string> = {};
-		if (allBeings) {
-			for (const being of allBeings) {
-				nameMap[being.id] = being.name;
-			}
-		}
-		// Add fallbacks for any beings not found
-		for (const beingId of uniqueBeingIds) {
-			if (!nameMap[beingId]) {
-				nameMap[beingId] = beingId; // Fallback to ID
-			}
-		}
-		return nameMap;
-	}, [allBeings, uniqueBeingIds]);
+	// Use the being cache instead of separate queries
+	const { getBeing } = useBeingCache();
 
 	const groupedMessages = useMemo(() => {
 		// This logic remains the same and will work with the streaming updates
@@ -229,9 +213,12 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
-						// Special case for known AI agent, otherwise auto-detect
+						// Get being data from cache to avoid individual queries
+						const beingData = getBeing(group.ownerId);
+						// Special case for known AI agent, otherwise use cached type or fallback to guest
 						const knownBeingType =
-							group.ownerId === AI_AGENT_BEING_ID ? "bot" : undefined;
+							group.ownerId === AI_AGENT_BEING_ID ? "bot" : 
+							beingData?.type as BeingType || "guest";
 						const firstMessage = group.messages[0];
 						const firstMessageTime = firstMessage
 							? new Date(firstMessage.createdAt).toLocaleTimeString([], {
@@ -248,7 +235,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 								<Avatar
 									beingId={group.ownerId}
 									beingType={knownBeingType}
-									autoDetectType={!knownBeingType}
+									autoDetectType={false}
 									size="sm"
 								/>
 								<div
@@ -258,7 +245,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 										className={`flex items-baseline gap-2 ${isCurrentUser ? "flex-row-reverse" : ""}`}
 									>
 										<span className="font-medium text-outline text-white">
-											{beingNames[group.ownerId] || group.ownerId}
+											{beingData?.name || group.ownerId}
 										</span>
 										<time className="text-gray-500 text-outline text-xs dark:text-gray-400">
 											{firstMessageTime}

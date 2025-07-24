@@ -154,15 +154,11 @@ export const beingRouter = createTRPCRouter({
 	/**
 	 * Fetches all beings, ordered by name.
 	 */
-	getAll: publicProcedure.query(({ ctx }) => {
-		return ctx.db.query.beings.findMany({
+	getAll: publicProcedure.query(async ({ ctx }) => {
+		const beings = await ctx.db.query.beings.findMany({
 			orderBy: (beings, { asc }) => [asc(beings.name)],
-			columns: {
-				id: true,
-				name: true,
-				type: true,
-			},
 		});
+		return beings.map((being) => selectBeingSchema.parse(being));
 	}),
 
 	/**

@@ -33,6 +33,15 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 					enabled: (op) =>
 						process.env.NODE_ENV === "development" ||
 						(op.direction === "down" && op.result instanceof Error),
+					logger: (opts) => {
+						if (opts.direction === "down" && opts.result instanceof Error) {
+							console.error("tRPC Error:", {
+								path: opts.path,
+								error: opts.result,
+								input: opts.input,
+							});
+						}
+					},
 				}),
 				httpBatchStreamLink({
 					transformer: SuperJSON,

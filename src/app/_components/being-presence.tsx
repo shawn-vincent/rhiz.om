@@ -10,7 +10,7 @@ import { SuperuserBadge } from "~/components/ui/superuser-badge";
 import { useSpacePresence } from "~/hooks/use-state-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
-import { api } from "~/trpc/react";
+import { useBeing } from "~/hooks/use-being-cache";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 
 interface BeingPresenceData {
@@ -41,11 +41,8 @@ export function BeingPresence({
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
 
-	// Fetch current user's being to check superuser status
-	const { data: currentUserBeing } = api.being.getById.useQuery(
-		{ id: currentUserBeingId ?? "" },
-		{ enabled: !!currentUserBeingId },
-	);
+	// Get current user's being from cache to check superuser status
+	const { data: currentUserBeing } = useBeing(currentUserBeingId);
 	const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
 
 	// Transform the new format to the old format for compatibility
