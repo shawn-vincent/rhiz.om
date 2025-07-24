@@ -1,6 +1,9 @@
 import { Bot, FileText, MapPinned, UserRound } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { isSuperuser } from "~/lib/permissions";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
+import { SuperuserBadge } from "./superuser-badge";
 
 export type BeingType = "space" | "guest" | "bot" | "document";
 
@@ -11,6 +14,8 @@ interface AvatarProps {
 	className?: string;
 	/** If true, will fetch being data to determine type automatically */
 	autoDetectType?: boolean;
+	/** If true, will show superuser badge if this being is a superuser */
+	showSuperuserBadge?: boolean;
 }
 
 const sizeClasses = {
@@ -48,6 +53,7 @@ export function Avatar({
 	size = "md",
 	className,
 	autoDetectType = false,
+	showSuperuserBadge = false,
 }: AvatarProps) {
 	const sizeClass = sizeClasses[size];
 	const iconSize = iconSizeClasses[size];
@@ -69,20 +75,34 @@ export function Avatar({
 		},
 	);
 
+	// Check if this being is a superuser (only when showSuperuserBadge is true)
+	const isCurrentUserSuperuser = showSuperuserBadge
+		? isSuperuser(beingNameData)
+		: false;
+
 	// Determine the final being type
 	const finalBeingType: BeingType =
 		beingType || (beingData?.type as BeingType) || "guest";
 
 	return (
-		<div
-			className={cn(
-				"flex shrink-0 items-center justify-center rounded-full bg-muted",
-				sizeClass,
-				className,
+		<div className="relative">
+			<div
+				className={cn(
+					"flex shrink-0 items-center justify-center rounded-full bg-muted",
+					sizeClass,
+					className,
+				)}
+				title={beingNameData?.name || beingId}
+			>
+				{getBeingIcon(finalBeingType, iconSize)}
+			</div>
+
+			{/* Superuser badge overlay */}
+			{isCurrentUserSuperuser && (
+				<div className="-bottom-1 -right-1 absolute">
+					<SuperuserBadge size="sm" />
+				</div>
 			)}
-			title={beingNameData?.name || beingId}
-		>
-			{getBeingIcon(finalBeingType, iconSize)}
 		</div>
 	);
 }

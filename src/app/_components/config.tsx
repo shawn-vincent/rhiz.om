@@ -10,7 +10,6 @@ import { BeingEditModal } from "~/components/being-edit-modal";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
-import { SuperuserBadge } from "~/components/ui/superuser-badge";
 import { useSpacePresence } from "~/hooks/use-state-sync";
 import { canEdit, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
@@ -144,12 +143,9 @@ export function Config() {
 					)}
 
 					<div className="mb-2 flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<h3 className="font-semibold text-lg text-white">
-								Beings in Space
-							</h3>
-							{isCurrentUserSuperuser && <SuperuserBadge />}
-						</div>
+						<h3 className="font-semibold text-lg text-white">
+							Beings in Space
+						</h3>
 						{canCreateInSpace && (
 							<Button
 								variant="outline"
