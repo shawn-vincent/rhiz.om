@@ -24,6 +24,7 @@ import type { InsertBeing } from "~/server/db/types";
 import { insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useMediaQuery } from "../../packages/entity-kit/src/hooks/use-media-query";
+import type { BeingType } from "../../packages/entity-kit/src/types";
 
 interface BeingEditModalProps {
 	beingId: string | null;
@@ -62,26 +63,48 @@ export function BeingEditModal({
 		},
 	});
 
-	const baseDefaults: BeingFormData = {
-		id: "",
-		name: "",
-		type: "guest",
-		ownerId: undefined,
-		locationId: undefined,
-		extIds: [],
-		idHistory: [],
-		metadata: {},
-		properties: {},
-		content: [],
-		botModel: "",
-		botPrompt: "",
+	// Create form with proper initial values based on being data
+	const getInitialValues = (): BeingFormData => {
+		if (being) {
+			return {
+				...being,
+				ownerId: being.ownerId ?? undefined,
+				locationId: being.locationId ?? undefined,
+				extIds: being.extIds ?? undefined,
+				idHistory: being.idHistory ?? undefined,
+				metadata: being.metadata ?? undefined,
+				properties: being.properties ?? undefined,
+				content: being.content ?? undefined,
+				botModel: being.botModel ?? undefined,
+				botPrompt: being.botPrompt ?? undefined,
+			};
+		}
+		return {
+			id: "",
+			name: "",
+			type: "guest",
+			ownerId: undefined,
+			locationId: undefined,
+			extIds: [],
+			idHistory: [],
+			metadata: {},
+			properties: {},
+			content: [],
+			botModel: "",
+			botPrompt: "",
+		};
 	};
 
 	const methods = useForm<BeingFormData>({
 		resolver: zodResolver(insertBeingSchema) as any,
-		defaultValues: baseDefaults,
+		defaultValues: getInitialValues(),
 	});
 
+	// Watch the type field to update UI elements reactively
+	const currentType = methods.watch("type");
+	
+
+	// Reset form when being data becomes available
 	useEffect(() => {
 		if (being) {
 			const formValues: BeingFormData = {
@@ -109,6 +132,10 @@ export function BeingEditModal({
 	}, [onClose]);
 
 	if (!beingId || !isOpen) return null;
+
+	// Get reactive display name and type - prefer currentType from form, fallback to being.type, then "guest"
+	const typeDisplayName = (currentType as BeingType) || (being?.type as BeingType) || "guest";
+	const titleText = `Edit ${being?.name ?? typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being"}`;
 
 	const content = (
 		<>
@@ -161,7 +188,15 @@ export function BeingEditModal({
 					className="flex h-[90vh] flex-col overflow-hidden"
 				>
 					<SheetHeader>
-						<SheetTitle>Edit {being?.name ?? "Being"}</SheetTitle>
+						<SheetTitle className="flex items-center gap-3">
+							<Avatar 
+								beingId={being?.id || "@new-being"} 
+								beingType={typeDisplayName} 
+								size="md"
+								className="h-8 w-8"
+							/>
+							{titleText}
+						</SheetTitle>
 					</SheetHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
 				</SheetContent>
@@ -178,11 +213,11 @@ export function BeingEditModal({
 						<DialogTitle className="flex items-center gap-3">
 							<Avatar 
 								beingId={being?.id || "@new-being"} 
-								beingType={(being?.type as any) || "guest"} 
+								beingType={typeDisplayName} 
 								size="md"
 								className="h-8 w-8"
 							/>
-							Edit {being?.name ?? "Being"}
+							{titleText}
 						</DialogTitle>
 					</DialogHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
@@ -202,11 +237,11 @@ export function BeingEditModal({
 					<SheetTitle className="flex items-center gap-3">
 						<Avatar 
 							beingId={being?.id || "@new-being"} 
-							beingType={(being?.type as any) || "guest"} 
+							beingType={typeDisplayName} 
 							size="md"
 							className="h-8 w-8"
 						/>
-						Edit {being?.name ?? "Being"}
+						{titleText}
 					</SheetTitle>
 				</SheetHeader>
 				<div className="mt-6 flex-1 overflow-y-auto">{content}</div>

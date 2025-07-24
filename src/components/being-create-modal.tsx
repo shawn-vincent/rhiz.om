@@ -97,6 +97,9 @@ export function BeingCreateModal({
 		defaultValues: baseDefaults,
 	});
 
+	// Watch the type field to update UI elements reactively
+	const currentType = methods.watch("type");
+
 	// Reset form when modal opens with new default values
 	useEffect(() => {
 		if (isOpen) {
@@ -134,8 +137,8 @@ export function BeingCreateModal({
 
 	if (!isOpen) return null;
 
-	const typeDisplayName = (defaultValues.type as BeingType) || "guest";
-	const titleText = `Create New ${typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : "Being"}`;
+	const typeDisplayName = (currentType as BeingType) || (defaultValues.type as BeingType) || "guest";
+	const titleText = `Create New ${typeDisplayName === "space" ? "Space" : typeDisplayName === "bot" ? "Bot" : typeDisplayName === "document" ? "Document" : "Being"}`;
 
 	const content = (
 		<FormProvider {...methods}>

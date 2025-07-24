@@ -4,6 +4,7 @@ import type { z } from "zod/v4";
 
 import { BeingSelectField } from "~/components/being-selector";
 import { ModelSelectField } from "~/components/model-selector";
+import { BeingTypeSelect } from "~/components/ui/being-type-select";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { PasswordField } from "~/components/ui/password-field";
@@ -30,8 +31,6 @@ export function BeingForm() {
 	// Watch the type field to conditionally show bot fields
 	const currentType = watch("type");
 
-	// Debug logging
-	console.log("🐛 BeingForm - currentType from watch:", currentType);
 
 	/* ---------- render ---------- */
 	return (
@@ -54,7 +53,12 @@ export function BeingForm() {
 
 					<div>
 						<Label htmlFor="name">Name</Label>
-						<Input id="name" placeholder="Soulspace" {...register("name")} />
+						<Input 
+							id="name" 
+							placeholder="Soulspace" 
+							autoComplete="name"
+							{...register("name")} 
+						/>
 						{errors.name && (
 							<p className="text-red-600 text-sm">{errors.name.message}</p>
 						)}
@@ -63,17 +67,17 @@ export function BeingForm() {
 
 				<div>
 					<Label htmlFor="type">Type</Label>
-					<select
-						id="type"
-						className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:font-medium file:text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-						{...register("type")}
-					>
-						<option value="">Choose type</option>
-						<option value="guest">guest</option>
-						<option value="space">space</option>
-						<option value="document">document</option>
-						<option value="bot">bot</option>
-					</select>
+					<Controller
+						control={control}
+						name="type"
+						render={({ field }) => (
+							<BeingTypeSelect
+								value={field.value}
+								onValueChange={field.onChange}
+								placeholder="Choose type"
+							/>
+						)}
+					/>
 					{errors.type && (
 						<p className="text-red-600 text-sm">{errors.type.message}</p>
 					)}

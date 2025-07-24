@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+import { Bot, ChevronDown, FileText, MapPinned, UserRound } from "lucide-react";
 import { useState } from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import { Label } from "~/components/ui/label";
@@ -111,6 +111,16 @@ function BeingTypeFilter({
 	value,
 	onChange,
 }: { value?: BeingType; onChange: (type?: BeingType) => void }) {
+	const typeOptions = [
+		{ value: "all", label: "All types", icon: null },
+		{ value: "space", label: "Spaces", icon: MapPinned },
+		{ value: "guest", label: "Guests", icon: UserRound },
+		{ value: "bot", label: "Bots", icon: Bot },
+		{ value: "document", label: "Documents", icon: FileText },
+	] as const;
+
+	const selectedOption = typeOptions.find(opt => opt.value === (value || "all"));
+
 	return (
 		<div className="flex items-center gap-2">
 			<Label className="shrink-0 font-medium text-xs">Type:</Label>
@@ -121,14 +131,24 @@ function BeingTypeFilter({
 				}
 			>
 				<SelectTrigger className="h-8 text-xs">
-					<SelectValue placeholder="All types" />
+					<SelectValue placeholder="All types">
+						{selectedOption && (
+							<div className="flex items-center gap-1.5">
+								{selectedOption.icon && <selectedOption.icon className="size-3 text-muted-foreground" />}
+								<span>{selectedOption.label}</span>
+							</div>
+						)}
+					</SelectValue>
 				</SelectTrigger>
 				<SelectContent>
-					<SelectItem value="all">All types</SelectItem>
-					<SelectItem value="space">Spaces</SelectItem>
-					<SelectItem value="guest">Guests</SelectItem>
-					<SelectItem value="bot">Bots</SelectItem>
-					<SelectItem value="document">Documents</SelectItem>
+					{typeOptions.map((option) => (
+						<SelectItem key={option.value} value={option.value}>
+							<div className="flex items-center gap-1.5">
+								{option.icon && <option.icon className="size-3 text-muted-foreground" />}
+								<span>{option.label}</span>
+							</div>
+						</SelectItem>
+					))}
 				</SelectContent>
 			</Select>
 		</div>
