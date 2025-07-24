@@ -20,6 +20,7 @@ import { BeingForm } from "~/app/_components/being-form";
 import { MobileBreadcrumb } from "~/components/ui/breadcrumb";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { useBeing } from "~/hooks/use-being-cache";
 import { logger } from "~/lib/logger.client";
 import { type InsertBeing, insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";
@@ -38,17 +39,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 	const router = useRouter();
 	const utils = api.useUtils();
 
-	const {
-		data: being,
-		isLoading,
-		error,
-	} = api.being.getById.useQuery(
-		{ id: beingId },
-		{
-			enabled: !!beingId,
-			retry: false, // Don't retry if being doesn't exist
-		},
-	);
+	const { data: being, isLoading, error } = useBeing(beingId);
 
 	const upsertBeing = api.being.upsert.useMutation({
 		onSuccess: async () => {

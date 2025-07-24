@@ -7,10 +7,10 @@ import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { SuperuserBadge } from "~/components/ui/superuser-badge";
+import { useBeing } from "~/hooks/use-being-cache";
 import { useSpacePresence } from "~/hooks/use-state-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
-import { useBeing } from "~/hooks/use-being-cache";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 
 interface BeingPresenceData {

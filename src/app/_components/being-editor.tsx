@@ -13,6 +13,7 @@ import type { z } from "zod/v4";
 import { Button } from "~/components/ui/button";
 import { DialogFooter } from "~/components/ui/dialog";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { useBeing } from "~/hooks/use-being-cache";
 import { logger } from "~/lib/logger.client";
 import {
 	type Being,
@@ -33,11 +34,7 @@ type BeingFormData = z.infer<typeof insertBeingSchema>;
 export function BeingEditor({ beingId }: BeingEditorProps) {
 	const utils = api.useUtils();
 
-	const {
-		data: being,
-		isLoading,
-		error,
-	} = api.being.getById.useQuery({ id: beingId }, { enabled: !!beingId });
+	const { data: being, isLoading, error } = useBeing(beingId);
 
 	const upsertBeing = api.being.upsert.useMutation({
 		onSuccess: async () => {

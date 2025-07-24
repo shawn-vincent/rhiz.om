@@ -7,8 +7,8 @@ import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { useSpaceIntentions } from "~/hooks/use-state-sync";
 import { useBeingCache } from "~/hooks/use-being-cache";
+import { useSpaceIntentions } from "~/hooks/use-state-sync";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId } from "~/server/db/types";
@@ -217,8 +217,9 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						const beingData = getBeing(group.ownerId);
 						// Special case for known AI agent, otherwise use cached type or fallback to guest
 						const knownBeingType =
-							group.ownerId === AI_AGENT_BEING_ID ? "bot" : 
-							beingData?.type as BeingType || "guest";
+							group.ownerId === AI_AGENT_BEING_ID
+								? "bot"
+								: (beingData?.type as BeingType) || "guest";
 						const firstMessage = group.messages[0];
 						const firstMessageTime = firstMessage
 							? new Date(firstMessage.createdAt).toLocaleTimeString([], {

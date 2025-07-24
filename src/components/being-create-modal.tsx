@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod/v4";
@@ -72,12 +72,12 @@ export function BeingCreateModal({
 	});
 
 	// Generate a unique ID for new being
-	const generateBeingId = () => {
+	const generateBeingId = useCallback(() => {
 		const randomPart = Math.random().toString(36).substring(2, 8);
 		const generatedId = `@new-being-${randomPart}`;
 		console.log("🐛 BeingCreateModal - generated ID:", generatedId);
 		return generatedId;
-	};
+	}, []);
 
 	const baseDefaults: BeingFormData = {
 		id: generateBeingId(),
@@ -126,7 +126,7 @@ export function BeingCreateModal({
 			console.log("🐛 BeingCreateModal - useEffect generatedId:", generatedId);
 			methods.reset(newDefaults);
 		}
-	}, [isOpen, defaultValues, methods, session?.user?.beingId]);
+	}, [isOpen, defaultValues, session?.user?.beingId, generateBeingId]);
 
 	const handleSubmit = async (data: BeingFormData) => {
 		console.log("🐛 BeingCreateModal - handleSubmit data:", data);

@@ -1,7 +1,7 @@
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { api } from "~/trpc/react";
 import type { Being, BeingId } from "~/server/db/types";
+import { api } from "~/trpc/react";
 import { useSpacePresence } from "./use-state-sync";
 
 /**
@@ -12,13 +12,13 @@ import { useSpacePresence } from "./use-state-sync";
  */
 export function useBeingCache() {
 	const params = useParams();
-	const currentSpaceId = params?.beingId 
-		? decodeURIComponent(params.beingId as string) as BeingId
+	const currentSpaceId = params?.beingId
+		? (decodeURIComponent(params.beingId as string) as BeingId)
 		: undefined;
 
 	// Get beings from the sync store (current space)
-	const { presence } = useSpacePresence(currentSpaceId ?? "" as BeingId);
-	const syncBeings = presence?.beings.map(b => b.being) ?? [];
+	const { presence } = useSpacePresence(currentSpaceId ?? ("" as BeingId));
+	const syncBeings = presence?.beings.map((b) => b.being) ?? [];
 
 	// Get all beings from the global cache (fallback)
 	const { data: allBeings } = api.being.getAll.useQuery(undefined, {
@@ -30,19 +30,19 @@ export function useBeingCache() {
 	// Create a combined being map
 	const beingMap = useMemo(() => {
 		const map = new Map<string, Being>();
-		
+
 		// First add all beings from global cache
 		if (allBeings) {
 			for (const being of allBeings) {
 				map.set(being.id, being);
 			}
 		}
-		
+
 		// Then overlay beings from sync store (more up-to-date)
 		for (const being of syncBeings) {
 			map.set(being.id, being);
 		}
-		
+
 		return map;
 	}, [allBeings, syncBeings]);
 
@@ -59,7 +59,7 @@ export function useBeingCache() {
 		 * Get multiple beings by IDs from the cache.
 		 */
 		getBeings: (ids: string[]): (Being | undefined)[] => {
-			return ids.map(id => beingMap.get(id));
+			return ids.map((id) => beingMap.get(id));
 		},
 
 		/**
@@ -87,17 +87,17 @@ export function useBeingCache() {
  * Hook for getting a single being with automatic fallback to server query.
  * Use this as a drop-in replacement for api.being.getById.useQuery.
  */
-export function useBeing(id: string | undefined, options?: {
-	enabled?: boolean;
-}) {
+export function useBeing(
+	id: string | undefined,
+	options?: {
+		enabled?: boolean;
+	},
+) {
 	const { getBeing } = useBeingCache();
 	const cachedBeing = id ? getBeing(id) : undefined;
-	
-	const shouldFetchFromServer = 
-		options?.enabled !== false && 
-		!!id && 
-		id.length > 0 && 
-		!cachedBeing;
+
+	const shouldFetchFromServer =
+		options?.enabled !== false && !!id && id.length > 0 && !cachedBeing;
 
 	// Only query server if not in cache and we're on the client
 	const { data: serverBeing, error } = api.being.getById.useQuery(
@@ -106,7 +106,7 @@ export function useBeing(id: string | undefined, options?: {
 			enabled: shouldFetchFromServer && typeof window !== "undefined",
 			retry: false,
 			staleTime: 5 * 60 * 1000,
-		}
+		},
 	);
 
 	return {

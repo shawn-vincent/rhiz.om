@@ -20,6 +20,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "~/components/ui/sheet";
+import { useBeing } from "~/hooks/use-being-cache";
 import type { InsertBeing } from "~/server/db/types";
 import { insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";
@@ -45,10 +46,9 @@ export function BeingEditModal({
 	const isTablet = useMediaQuery("(max-width: 1024px)");
 	const utils = api.useUtils();
 
-	const { data: being, isLoading } = api.being.getById.useQuery(
-		{ id: beingId ?? "" },
-		{ enabled: !!beingId && isOpen },
-	);
+	const { data: being, isLoading } = useBeing(beingId ?? undefined, {
+		enabled: !!beingId && isOpen,
+	});
 
 	const upsertBeing = api.being.upsert.useMutation({
 		onSuccess: async () => {

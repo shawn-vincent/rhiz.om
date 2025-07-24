@@ -1,8 +1,8 @@
 import { Bot, FileText, MapPinned, UserRound } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useBeing } from "~/hooks/use-being-cache";
 import { isSuperuser } from "~/lib/permissions";
 import { cn } from "~/lib/utils";
-import { useBeing } from "~/hooks/use-being-cache";
 import { SuperuserBadge } from "./superuser-badge";
 
 export type BeingType = "space" | "guest" | "bot" | "document";
@@ -71,8 +71,10 @@ export function Avatar({
 
 	// Determine the final being type (fallback to guest if being not found)
 	const finalBeingType: BeingType =
-		beingType || 
-		(error?.data?.code === "NOT_FOUND" ? "guest" : (beingData?.type as BeingType)) || 
+		beingType ||
+		(error?.data?.code === "NOT_FOUND"
+			? "guest"
+			: (beingData?.type as BeingType)) ||
 		"guest";
 
 	return (
