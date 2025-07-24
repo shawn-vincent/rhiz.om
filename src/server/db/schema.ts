@@ -16,10 +16,10 @@ import type { AdapterAccount } from "next-auth/adapters";
  *
  * @see https://orm.drizzle.team/docs/goodies#multi-project-schema
  */
-export const createTable = pgTableCreator((name) => `rhiz.om_${name}`);
+export const createTable = pgTableCreator((name) => `rhiz_om_${name}`);
 
 // Core "Being" entity table. Represents users, spaces, etc.
-export const beings = createTable("being", {
+export const beings = createTable("beings", {
 	id: varchar("id", { length: 255 }).primaryKey(), // e.g., @shawn-vincent or @some-space
 	name: varchar("name", { length: 256 }).notNull(),
 	type: varchar("type", { length: 50 }).notNull(), // 'guest', 'being', 'document', etc.
@@ -46,7 +46,7 @@ export const beings = createTable("being", {
 
 // "Intention" entity table. Represents actions, like utterances (chat messages).
 export const intentions = createTable(
-	"intention",
+	"intentions",
 	{
 		id: varchar("id", { length: 255 }).primaryKey(), // e.g., /msg-abcde
 		name: varchar("name", { length: 256 }).notNull(),
@@ -76,7 +76,7 @@ export const intentions = createTable(
 );
 
 // NextAuth.js User table, now linked to a Being
-export const users = createTable("user", (d) => ({
+export const users = createTable("users", (d) => ({
 	id: d
 		.varchar({ length: 255 })
 		.notNull()
@@ -104,7 +104,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 
 // Standard NextAuth.js tables below
 export const accounts = createTable(
-	"account",
+	"accounts",
 	(d) => ({
 		userId: d
 			.varchar({ length: 255 })
@@ -132,7 +132,7 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 }));
 
 export const sessions = createTable(
-	"session",
+	"sessions",
 	(d) => ({
 		sessionToken: d.varchar({ length: 255 }).notNull().primaryKey(),
 		userId: d
@@ -149,7 +149,7 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
 }));
 
 export const verificationTokens = createTable(
-	"verification_token",
+	"verification_tokens",
 	(d) => ({
 		identifier: d.varchar({ length: 255 }).notNull(),
 		token: d.varchar({ length: 255 }).notNull(),

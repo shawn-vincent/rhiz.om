@@ -23,6 +23,8 @@ export function useBeingCache() {
 	// Get all beings from the global cache (fallback)
 	const { data: allBeings } = api.being.getAll.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+		// Disable during SSR to prevent hydration mismatches
+		enabled: typeof window !== "undefined",
 	});
 
 	// Create a combined being map
@@ -97,11 +99,11 @@ export function useBeing(id: string | undefined, options?: {
 		id.length > 0 && 
 		!cachedBeing;
 
-	// Only query server if not in cache
+	// Only query server if not in cache and we're on the client
 	const { data: serverBeing, error } = api.being.getById.useQuery(
 		{ id: id ?? "" },
 		{
-			enabled: shouldFetchFromServer,
+			enabled: shouldFetchFromServer && typeof window !== "undefined",
 			retry: false,
 			staleTime: 5 * 60 * 1000,
 		}
