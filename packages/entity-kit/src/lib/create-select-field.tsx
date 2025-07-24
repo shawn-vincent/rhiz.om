@@ -83,7 +83,10 @@ export function createSelectField(
 						}}
 					>
 						{displayEntity ? (
-							<EntityCard entity={displayEntity as EntitySummary} variant="compact" />
+							<EntityCard
+								entity={displayEntity as EntitySummary}
+								variant="compact"
+							/>
 						) : isFetchingEntity ? (
 							"Loading..."
 						) : (

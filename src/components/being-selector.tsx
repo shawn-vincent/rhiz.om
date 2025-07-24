@@ -48,7 +48,7 @@ function EntitySelector<T extends EntitySummary>({
 
 	const { data: fetchedEntity, isLoading: isFetchingEntity } =
 		api.being.getById.useQuery(
-			{ id: value! },
+			{ id: value as string },
 			{ enabled: !!value && !selectedEntity },
 		);
 

@@ -252,6 +252,16 @@ export function BeingPresence({
 								setSelectedBeingId(being.id);
 								setShowPopover(true);
 							}}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									setSelectedBeingId(being.id);
+									setShowPopover(true);
+								}
+							}}
+							tabIndex={0}
+							role="button"
+							aria-label={`View details for ${being.name}`}
 						>
 							<Avatar
 								beingId={being.id}

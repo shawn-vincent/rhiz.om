@@ -278,7 +278,7 @@ function CapabilityFilter({
 		value.length === 0
 			? "All capabilities"
 			: value.length === 1
-				? capabilityConfig[value[0]!].label
+				? capabilityConfig[value[0] as string].label
 				: `${value.length} capabilities`;
 
 	return (
