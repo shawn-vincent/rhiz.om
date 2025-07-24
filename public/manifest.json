@@ -4,8 +4,8 @@
 	"description": "A place to pause, notice, and connect.",
 	"start_url": "/",
 	"display": "standalone",
-	"background_color": "#15162c",
-	"theme_color": "#2e026d",
+	"background_color": "#000000",
+	"theme_color": "#000000",
 	"icons": [
 		{
 			"src": "/icons/icon-192x192.png",
