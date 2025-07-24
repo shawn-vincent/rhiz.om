@@ -79,7 +79,7 @@ export function BeingCreateModal({
 		return generatedId;
 	}, []);
 
-	const baseDefaults: BeingFormData = {
+	const baseDefaults: BeingFormData = useMemo(() => ({
 		id: generateBeingId(),
 		name: "",
 		type: "guest",
@@ -93,7 +93,7 @@ export function BeingCreateModal({
 		botModel: "",
 		botPrompt: "",
 		...defaultValues,
-	};
+	}), [generateBeingId, session?.user?.beingId, defaultValues]);
 
 	const methods = useForm<BeingFormData>({
 		resolver: zodResolver(insertBeingSchema) as any,
@@ -103,30 +103,13 @@ export function BeingCreateModal({
 	// Watch the type field to update UI elements reactively
 	const currentType = methods.watch("type");
 
-	// Reset form when modal opens with new default values
+	// Reset form when modal opens with existing default values
 	useEffect(() => {
 		if (isOpen) {
-			const generatedId = generateBeingId();
-			const newDefaults = {
-				id: generatedId,
-				name: "",
-				type: "guest",
-				ownerId: session?.user?.beingId ?? undefined,
-				locationId: undefined,
-				extIds: [],
-				idHistory: [],
-				metadata: {},
-				properties: {},
-				content: [],
-				botModel: "",
-				botPrompt: "",
-				...defaultValues,
-			};
-			console.log("🐛 BeingCreateModal - useEffect newDefaults:", newDefaults);
-			console.log("🐛 BeingCreateModal - useEffect generatedId:", generatedId);
-			methods.reset(newDefaults);
+			console.log("🐛 BeingCreateModal - useEffect resetting to baseDefaults:", baseDefaults);
+			methods.reset(baseDefaults);
 		}
-	}, [isOpen, defaultValues, session?.user?.beingId, generateBeingId]);
+	}, [isOpen, baseDefaults]);
 
 	const handleSubmit = async (data: BeingFormData) => {
 		console.log("🐛 BeingCreateModal - handleSubmit data:", data);
