@@ -8,6 +8,7 @@ import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { BeingCreateModal } from "~/components/being-create-modal";
 import { BeingSelectField } from "~/components/being-selector";
+import { PWAInstallButton } from "~/components/pwa-install-button";
 import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
@@ -125,6 +126,7 @@ export function SiteMenu() {
 					</Button>
 				</div>
 				<div className="mt-auto space-y-4 p-4">
+					<PWAInstallButton />
 					<UserCard />
 					<Button
 						variant="outline"
