@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod/v4";
+import { z } from "zod/v4";
 import { BeingForm } from "~/app/_components/being-form";
 import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -21,7 +21,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "~/components/ui/sheet";
-import { insertBeingSchema } from "~/server/db/types";
+import { type InsertBeing, insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useMediaQuery } from "../../packages/entity-kit/src/hooks/use-media-query";
 import type { BeingType } from "../../packages/entity-kit/src/types";
@@ -33,7 +33,12 @@ interface BeingCreateModalProps {
 	defaultValues?: Partial<BeingFormData>;
 }
 
-type BeingFormData = z.infer<typeof insertBeingSchema>;
+// Custom schema for form that makes ID optional (will be generated on save)
+const beingFormSchema = insertBeingSchema.extend({
+	id: z.string().optional().default(""),
+});
+
+type BeingFormData = z.infer<typeof beingFormSchema>;
 
 export function BeingCreateModal({
 	isOpen,
@@ -48,20 +53,12 @@ export function BeingCreateModal({
 
 	const createBeing = api.being.upsert.useMutation({
 		onSuccess: async (newBeing) => {
-			console.log("🐛 BeingCreateModal - onSuccess newBeing:", newBeing);
-			console.log("🐛 BeingCreateModal - onSuccess newBeing.id:", newBeing?.id);
-
 			await utils.being.getAll.invalidate();
 			await utils.being.getByLocation.invalidate();
 			toast.success("Being created successfully");
 
 			if (newBeing?.id) {
 				onCreated?.(newBeing.id);
-			} else {
-				console.error(
-					"🔥 BeingCreateModal - newBeing.id is undefined!",
-					newBeing,
-				);
 			}
 
 			onClose();
@@ -71,32 +68,27 @@ export function BeingCreateModal({
 		},
 	});
 
-	// Generate a unique ID for new being
-	const generateBeingId = useCallback(() => {
-		const randomPart = Math.random().toString(36).substring(2, 8);
-		const generatedId = `@new-being-${randomPart}`;
-		console.log("🐛 BeingCreateModal - generated ID:", generatedId);
-		return generatedId;
-	}, []);
-
-	const baseDefaults: BeingFormData = useMemo(() => ({
-		id: generateBeingId(),
-		name: "",
-		type: "guest",
-		ownerId: session?.user?.beingId ?? undefined,
-		locationId: undefined,
-		extIds: [],
-		idHistory: [],
-		metadata: {},
-		properties: {},
-		content: [],
-		botModel: "",
-		botPrompt: "",
-		...defaultValues,
-	}), [generateBeingId, session?.user?.beingId, defaultValues]);
+	const baseDefaults: BeingFormData = useMemo(
+		() => ({
+			id: "", // ID will be generated on save, not in form
+			name: "",
+			type: "guest",
+			ownerId: session?.user?.beingId ?? undefined,
+			locationId: undefined,
+			extIds: [],
+			idHistory: [],
+			metadata: {},
+			properties: {},
+			content: [],
+			botModel: "",
+			botPrompt: "",
+			...defaultValues,
+		}),
+		[session?.user?.beingId, defaultValues],
+	);
 
 	const methods = useForm<BeingFormData>({
-		resolver: zodResolver(insertBeingSchema) as any,
+		resolver: zodResolver(beingFormSchema) as any,
 		defaultValues: baseDefaults,
 	});
 
@@ -104,17 +96,45 @@ export function BeingCreateModal({
 	const currentType = methods.watch("type");
 
 	// Reset form when modal opens with existing default values
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		if (isOpen) {
-			console.log("🐛 BeingCreateModal - useEffect resetting to baseDefaults:", baseDefaults);
 			methods.reset(baseDefaults);
 		}
 	}, [isOpen, baseDefaults]);
 
 	const handleSubmit = async (data: BeingFormData) => {
-		console.log("🐛 BeingCreateModal - handleSubmit data:", data);
-		console.log("🐛 BeingCreateModal - handleSubmit data.id:", data.id);
-		await createBeing.mutate(data);
+		console.log("🐛 BeingCreateModal - handleSubmit called with data:", data);
+		console.log("🐛 BeingCreateModal - form errors:", methods.formState.errors);
+
+		// Generate ID only when creating new being (empty ID)
+		const finalData: InsertBeing = {
+			...data,
+			id: data.id || `@new-being-${Math.random().toString(36).substring(2, 8)}`,
+		};
+
+		console.log("🐛 BeingCreateModal - finalData:", finalData);
+		console.log("🐛 BeingCreateModal - session:", session);
+		console.log("🐛 BeingCreateModal - session.user:", session?.user);
+
+		try {
+			console.log("🐛 BeingCreateModal - calling createBeing.mutate...");
+			console.log("🐛 BeingCreateModal - mutation status:", {
+				isPending: createBeing.isPending,
+				isError: createBeing.isError,
+				error: createBeing.error,
+			});
+
+			const result = await createBeing.mutateAsync(finalData);
+			console.log("🐛 BeingCreateModal - mutation success:", result);
+		} catch (error) {
+			console.error("🔥 BeingCreateModal - mutation error:", error);
+			console.error("🔥 BeingCreateModal - mutation error details:", {
+				message: error instanceof Error ? error.message : "Unknown error",
+				stack: error instanceof Error ? error.stack : undefined,
+				cause: error instanceof Error ? error.cause : undefined,
+			});
+		}
 	};
 
 	const handleCancel = useCallback(() => {

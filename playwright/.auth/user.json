@@ -1,0 +1,35 @@
+{
+  "cookies": [
+    {
+      "name": "WMF-Uniq",
+      "value": "0o9Tly5I2Xu3P1uy3LCXGwI7AAAAAFvdzAN2btO41aR21G9ueD-MzifFteKD53LP",
+      "domain": ".upload.wikimedia.org",
+      "path": "/",
+      "expires": 1784943748.465716,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "authjs.session-token",
+      "value": "mock-session-1753457814080",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "authjs.csrf-token",
+      "value": "mock-csrf-1753457814080",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

@@ -48,6 +48,12 @@ export const beingRouter = createTRPCRouter({
 	upsert: protectedProcedure
 		.input(insertBeingSchema)
 		.mutation(async ({ ctx, input }) => {
+			console.log("🐛 being.upsert - MUTATION CALLED with input:", input);
+			console.log("🐛 being.upsert - session:", ctx.session);
+			console.log(
+				"🐛 being.upsert - sessionBeingId:",
+				ctx.session.user.beingId,
+			);
 			const sessionBeingId = ctx.session.user.beingId;
 
 			// Get current user's being to check superuser status

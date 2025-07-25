@@ -10,7 +10,7 @@ import { BeingEditModal } from "~/components/being-edit-modal";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
-import { useSpacePresence } from "~/hooks/use-state-sync";
+import { useSpaceData } from "~/hooks/use-simple-sync";
 import { canEdit, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";
@@ -62,14 +62,11 @@ export function Config() {
 			{ enabled: !!beingId },
 		);
 
-	const { presence, onlineBeings } = useSpacePresence(
+	const { beings } = useSpaceData(
 		beingId ? (beingId as BeingId) : ("" as BeingId),
 	);
 	const presenceMap = new Map(
-		presence?.beings.map((p) => [
-			p.being.id,
-			p.connectionStatus === "online",
-		]) ?? [],
+		beings.map((being) => [being.id, true]) // All beings from simple sync are considered "present"
 	);
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;

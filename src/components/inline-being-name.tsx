@@ -1,7 +1,12 @@
 // src/components/inline-being-name.tsx
 "use client";
 
+import { useFeatureFlag } from "~/lib/feature-flags";
+import { InlineBeingNameSimple } from "./inline-being-name-simple";
+
+// Original complex implementation
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
 import { useBeing } from "~/hooks/use-being-cache";
 import { logger } from "~/lib/logger.client";
@@ -21,6 +26,20 @@ export function InlineBeingName({
 	className,
 	readOnly = false,
 }: InlineBeingNameProps) {
+	const useSimpleSync = useFeatureFlag("USE_SIMPLE_SYNC");
+
+	// Use new simple system if flag is enabled
+	if (useSimpleSync) {
+		return (
+			<InlineBeingNameSimple
+				fallback={fallback}
+				className={className}
+				readOnly={readOnly}
+			/>
+		);
+	}
+
+	// Original implementation continues below...
 	const params = useParams();
 	const beingId = params.beingId
 		? decodeURIComponent(params.beingId as string)
@@ -89,8 +108,15 @@ export function InlineBeingName({
 		);
 	}
 
+	// Track if we're hydrated to prevent SSR mismatch
+	const [isHydrated, setIsHydrated] = useState(false);
+	useEffect(() => {
+		setIsHydrated(true);
+	}, []);
+
 	// If being found, show editable or read-only name
-	const displayName = being?.name || beingId;
+	// During SSR/before hydration, always show beingId to prevent mismatch
+	const displayName = (isHydrated && being?.name) || beingId;
 
 	// If read-only mode, just show the text
 	if (readOnly) {

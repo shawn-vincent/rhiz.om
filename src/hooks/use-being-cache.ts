@@ -2,7 +2,7 @@ import { useParams } from "next/navigation";
 import { useMemo } from "react";
 import type { Being, BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";
-import { useSpacePresence } from "./use-state-sync";
+import { useSpaceData } from "./use-simple-sync";
 
 /**
  * A client-side being cache that:
@@ -17,8 +17,8 @@ export function useBeingCache() {
 		: undefined;
 
 	// Get beings from the sync store (current space)
-	const { presence } = useSpacePresence(currentSpaceId ?? ("" as BeingId));
-	const syncBeings = presence?.beings.map((b) => b.being) ?? [];
+	const { beings } = useSpaceData(currentSpaceId ?? ("" as BeingId));
+	const syncBeings = beings ?? [];
 
 	// Get all beings from the global cache (fallback)
 	const { data: allBeings } = api.being.getAll.useQuery(undefined, {

@@ -36,32 +36,20 @@ export function BeingForm() {
 		<div className="space-y-6">
 			{/* ----- Simple scalars ----- */}
 			<div className="space-y-4">
-				<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-					<div>
-						<Label htmlFor="id">ID</Label>
-						<Input
-							id="id"
-							placeholder="@new-being"
-							{...register("id")}
-							readOnly
-						/>
-						{errors.id && (
-							<p className="text-red-600 text-sm">{errors.id.message}</p>
-						)}
-					</div>
+				{/* ID field hidden - generated on save */}
+				<input type="hidden" {...register("id")} />
 
-					<div>
-						<Label htmlFor="name">Name</Label>
-						<Input
-							id="name"
-							placeholder="Soulspace"
-							autoComplete="name"
-							{...register("name")}
-						/>
-						{errors.name && (
-							<p className="text-red-600 text-sm">{errors.name.message}</p>
-						)}
-					</div>
+				<div>
+					<Label htmlFor="name">Name</Label>
+					<Input
+						id="name"
+						placeholder="Soulspace"
+						autoComplete="name"
+						{...register("name")}
+					/>
+					{errors.name && (
+						<p className="text-red-600 text-sm">{errors.name.message}</p>
+					)}
 				</div>
 
 				<div>
