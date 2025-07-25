@@ -13,7 +13,7 @@ import { intentions, users } from "~/server/db/schema";
 import type { BeingId, IntentionId } from "~/server/db/types";
 import { activateBots } from "~/server/lib/bots";
 import { logger } from "~/server/lib/logger";
-import { triggerIntentionsUpdate } from "~/server/lib/state-sync";
+// Note: removed old state-sync dependency
 
 const intentionLogger = logger.child({ name: "IntentionRouter" });
 
@@ -49,11 +49,7 @@ export const intentionRouter = createTRPCRouter({
 			});
 
 			// Trigger state sync update for user message
-			await triggerIntentionsUpdate(input.beingId as BeingId, {
-				type: "add",
-				entityId: userIntentionId,
-				causedBy: userRecord.beingId as BeingId,
-			});
+			// Note: removed old state sync system call - new simple sync handles this automatically
 
 			// Activate all bots in the space
 			activateBots(input.beingId as BeingId, userIntentionId).catch((error) =>

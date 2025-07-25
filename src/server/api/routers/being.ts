@@ -18,7 +18,7 @@ import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { BeingId } from "~/server/db/types";
 import { broadcastPresenceUpdate } from "~/server/lib/presence";
-import { triggerPresenceUpdate } from "~/server/lib/state-sync";
+// Note: removed old state-sync dependency
 
 export const beingRouter = createTRPCRouter({
 	/**
@@ -122,22 +122,7 @@ export const beingRouter = createTRPCRouter({
 					locationId: input.locationId,
 				});
 
-				// New state sync system - trigger updates for both old and new spaces
-				if (existingBeing?.locationId) {
-					triggerPresenceUpdate(existingBeing.locationId as BeingId, {
-						type: "remove",
-						entityId: input.id,
-						causedBy: input.id as BeingId,
-					});
-				}
-
-				if (input.locationId) {
-					triggerPresenceUpdate(input.locationId as BeingId, {
-						type: "add",
-						entityId: input.id,
-						causedBy: input.id as BeingId,
-					});
-				}
+				// Note: removed old state sync system calls - new simple sync handles this automatically
 
 				// Emit bot location change event for server-side agents
 				if (input.type === "bot") {

@@ -61,7 +61,12 @@ export async function activateBot(
 			content: [""],
 		});
 
-		// Note: removed old state sync system call - new simple sync handles this automatically
+		// Trigger state sync update for AI message (initial state)
+		await triggerIntentionsUpdate(spaceId, {
+			type: "add",
+			entityId: aiIntentionId,
+			causedBy: botId,
+		});
 
 		// Stream the bot's response
 		await streamBotResponse(
@@ -202,7 +207,12 @@ async function streamBotResponse(
 			})
 			.where(eq(intentions.id, aiIntentionId));
 
-		// Note: removed old state sync system call - new simple sync handles this automatically
+		// Trigger state sync update for the space
+		await triggerIntentionsUpdate(spaceId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: bot.id as BeingId,
+		});
 
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
 		botLogger.info({ aiIntentionId }, "Bot response stream fully completed");
@@ -217,6 +227,11 @@ async function streamBotResponse(
 			.set({ state: "failed", content: ["AI failed to respond."] })
 			.where(eq(intentions.id, aiIntentionId));
 
-		// Note: removed old state sync system call - new simple sync handles this automatically
+		// Trigger state sync update for failed AI response
+		await triggerIntentionsUpdate(spaceId, {
+			type: "update",
+			entityId: aiIntentionId,
+			causedBy: botId,
+		});
 	}
 }
