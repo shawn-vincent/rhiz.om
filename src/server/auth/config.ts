@@ -39,6 +39,9 @@ declare module "next-auth" {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authConfig = {
+	pages: {
+		signIn: "/auth/signin",
+	},
 	providers: [
 		GoogleProvider,
 		/**
@@ -58,6 +61,42 @@ export const authConfig = {
 		verificationTokensTable: verificationTokens,
 	}),
 	callbacks: {
+		async jwt({ token, user, account, profile }) {
+			// Handle dev mode authentication
+			if (process.env.NODE_ENV === "development") {
+				// Check if this is a dev mode session by looking at the token
+				if (token.devMode) {
+					return token;
+				}
+			}
+			
+			if (user) {
+				token.beingId = user.beingId;
+			}
+			return token;
+		},
+		async session({ session, token, user }) {
+			// Handle dev mode sessions
+			if (process.env.NODE_ENV === "development" && token.devMode) {
+				return {
+					...session,
+					user: {
+						...session.user,
+						id: token.sub as string,
+						beingId: token.beingId as string,
+					},
+				};
+			}
+
+			return {
+				...session,
+				user: {
+					...session.user,
+					id: user?.id ?? token.sub as string,
+					beingId: user?.beingId ?? token.beingId as string,
+				},
+			};
+		},
 		async signIn({ user, account, profile }) {
 			if (!user.id) {
 				return false; // User ID is required
