@@ -12,17 +12,17 @@
     },
     {
       "name": "WMF-Uniq",
-      "value": "EI6NjSyqQZ1gwaDC_Y8f1gI8AAAAAFvdb9XIsatPz-UFM7_1fcHvEWnXcxcTv3EK",
+      "value": "2AGNNtzKgp6WI1oeSRVDiQI8AAAAAFvdyBM_fTUxyyw-aJTXCBp552vSC-MIg5si",
       "domain": ".upload.wikimedia.org",
       "path": "/",
-      "expires": 1785065091.460713,
+      "expires": 1785065440.33833,
       "httpOnly": true,
       "secure": true,
       "sameSite": "None"
     },
     {
       "name": "authjs.session-token",
-      "value": "mock-session-1753492757623",
+      "value": "mock-session-1753493109593",
       "domain": "localhost",
       "path": "/",
       "expires": -1,
@@ -32,7 +32,7 @@
     },
     {
       "name": "authjs.csrf-token",
-      "value": "mock-csrf-1753492757623",
+      "value": "mock-csrf-1753493109593",
       "domain": "localhost",
       "path": "/",
       "expires": -1,

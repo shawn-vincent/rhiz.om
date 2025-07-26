@@ -6,14 +6,15 @@ import { Button } from "~/components/ui/button";
 
 interface DevModeAuthProps {
   callbackUrl?: string;
+  isDevelopment?: boolean;
 }
 
-export function DevModeAuth({ callbackUrl }: DevModeAuthProps) {
+export function DevModeAuth({ callbackUrl, isDevelopment = false }: DevModeAuthProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   return (
     <div className="mx-auto w-full max-w-md rounded-lg border border-gray-700 bg-gray-800/50 p-6 shadow-lg">
-      {process.env.NODE_ENV === "development" && (
+      {isDevelopment && (
         <>
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-white">🔧 Dev Mode Authentication</h2>
@@ -24,12 +25,16 @@ export function DevModeAuth({ callbackUrl }: DevModeAuthProps) {
           <div className="space-y-4">
             <Button 
               onClick={async () => {
+                console.log("🚀 Dev login button clicked!");
                 setIsLoading(true);
                 try {
+                  const devLoginUrl = `/api/auth/dev-login?callbackUrl=${encodeURIComponent(callbackUrl || "/")}`;
+                  console.log("🔗 Redirecting to:", devLoginUrl);
+                  
                   // For dev mode, we'll set up a test session directly
-                  window.location.href = `/api/auth/dev-login?callbackUrl=${encodeURIComponent(callbackUrl || "/")}`;
+                  window.location.href = devLoginUrl;
                 } catch (error) {
-                  console.error("Dev login error:", error);
+                  console.error("❌ Dev login error:", error);
                   setIsLoading(false);
                 }
               }}
@@ -57,7 +62,7 @@ export function DevModeAuth({ callbackUrl }: DevModeAuthProps) {
         </>
       )}
       
-      {process.env.NODE_ENV !== "development" && (
+      {!isDevelopment && (
         <>
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-white">Welcome to Rhiz.om</h2>

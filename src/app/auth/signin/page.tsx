@@ -7,6 +7,7 @@ interface SignInPageProps {
 
 export default async function SignInPage({ searchParams }: SignInPageProps) {
   const { callbackUrl, error } = await searchParams;
+  const isDevelopment = process.env.NODE_ENV === "development";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-900 to-black p-4">
@@ -25,7 +26,7 @@ export default async function SignInPage({ searchParams }: SignInPageProps) {
         )}
 
         <Suspense fallback={<div className="text-center text-white">Loading...</div>}>
-          <DevModeAuth callbackUrl={callbackUrl} />
+          <DevModeAuth callbackUrl={callbackUrl} isDevelopment={isDevelopment} />
         </Suspense>
       </div>
     </div>
