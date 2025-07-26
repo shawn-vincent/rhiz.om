@@ -13,6 +13,7 @@ import { ZodError } from "zod/v4";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
+import { getAuthContext } from "~/server/lib/auth";
 import { logger } from "~/server/lib/logger";
 
 /**
@@ -124,6 +125,25 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
+/**
+ * Authorization middleware that fetches current user's being data
+ * and provides auth context including superuser status
+ */
+const authorizationMiddleware = t.middleware(async ({ ctx, next }) => {
+	if (!ctx.session?.user?.beingId) {
+		throw new TRPCError({ code: "UNAUTHORIZED" });
+	}
+
+	const auth = await getAuthContext(ctx.session.user.beingId);
+
+	return next({
+		ctx: {
+			...ctx,
+			auth,
+		},
+	});
+});
+
 export const protectedProcedure = t.procedure
 	.use(loggingMiddleware)
 	.use(({ ctx, next }) => {
@@ -137,3 +157,9 @@ export const protectedProcedure = t.procedure
 			},
 		});
 	});
+
+/**
+ * Procedure with full authorization context
+ * Use this when you need to check permissions or access current user's being data
+ */
+export const authorizedProcedure = protectedProcedure.use(authorizationMiddleware);

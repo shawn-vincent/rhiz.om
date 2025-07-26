@@ -1,30 +1,16 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useCallback } from "react";
+import { FormProvider } from "react-hook-form";
 import { toast } from "sonner";
-import type { z } from "zod/v4";
 import { BeingForm } from "~/app/_components/being-form";
 import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "~/components/ui/dialog";
-import {
-	Sheet,
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-} from "~/components/ui/sheet";
+import { ResponsiveModal } from "~/components/ui/responsive-modal";
 import { useBeing } from "~/hooks/use-being-cache";
-import type { InsertBeing } from "~/server/db/types";
-import { insertBeingSchema } from "~/server/db/types";
+import { useBeingForm } from "~/hooks/use-being-form";
+import type { BeingFormData } from "~/hooks/use-being-form";
 import { api } from "~/trpc/react";
-import { useMediaQuery } from "../../packages/entity-kit/src/hooks/use-media-query";
 import type { BeingType } from "../../packages/entity-kit/src/types";
 
 interface BeingEditModalProps {
@@ -34,7 +20,6 @@ interface BeingEditModalProps {
 	onSaved?: () => void;
 }
 
-type BeingFormData = z.infer<typeof insertBeingSchema>;
 
 export function BeingEditModal({
 	beingId,
@@ -42,12 +27,16 @@ export function BeingEditModal({
 	onClose,
 	onSaved,
 }: BeingEditModalProps) {
-	const isMobile = useMediaQuery("(max-width: 768px)");
-	const isTablet = useMediaQuery("(max-width: 1024px)");
 	const utils = api.useUtils();
 
 	const { data: being, isLoading } = useBeing(beingId ?? undefined, {
 		enabled: !!beingId && isOpen,
+	});
+
+	// Use the custom form hook
+	const { methods, currentType, prepareSubmitData } = useBeingForm({
+		being,
+		isOpen,
 	});
 
 	const upsertBeing = api.being.upsert.useMutation({
@@ -63,67 +52,10 @@ export function BeingEditModal({
 		},
 	});
 
-	// Create form with proper initial values based on being data
-	const getInitialValues = (): BeingFormData => {
-		if (being) {
-			return {
-				...being,
-				ownerId: being.ownerId ?? undefined,
-				locationId: being.locationId ?? undefined,
-				extIds: being.extIds ?? undefined,
-				idHistory: being.idHistory ?? undefined,
-				metadata: being.metadata ?? undefined,
-				properties: being.properties ?? undefined,
-				content: being.content ?? undefined,
-				botModel: being.botModel ?? undefined,
-				botPrompt: being.botPrompt ?? undefined,
-			};
-		}
-		return {
-			id: "",
-			name: "",
-			type: "guest",
-			ownerId: undefined,
-			locationId: undefined,
-			extIds: [],
-			idHistory: [],
-			metadata: {},
-			properties: {},
-			content: [],
-			botModel: "",
-			botPrompt: "",
-		};
-	};
-
-	const methods = useForm<BeingFormData>({
-		resolver: zodResolver(insertBeingSchema) as any,
-		defaultValues: getInitialValues(),
-	});
-
-	// Watch the type field to update UI elements reactively
-	const currentType = methods.watch("type");
-
-	// Reset form when being data becomes available
-	useEffect(() => {
-		if (being) {
-			const formValues: BeingFormData = {
-				...being,
-				ownerId: being.ownerId ?? undefined,
-				locationId: being.locationId ?? undefined,
-				extIds: being.extIds ?? undefined,
-				idHistory: being.idHistory ?? undefined,
-				metadata: being.metadata ?? undefined,
-				properties: being.properties ?? undefined,
-				content: being.content ?? undefined,
-				botModel: being.botModel ?? undefined,
-				botPrompt: being.botPrompt ?? undefined,
-			};
-			methods.reset(formValues);
-		}
-	}, [being, methods]);
 
 	const handleSubmit = async (data: BeingFormData) => {
-		await upsertBeing.mutate(data);
+		const finalData = prepareSubmitData(data);
+		await upsertBeing.mutate(finalData);
 	};
 
 	const handleCancel = useCallback(() => {
@@ -187,73 +119,23 @@ export function BeingEditModal({
 		</>
 	);
 
-	// Mobile: Bottom sheet
-	if (isMobile) {
-		return (
-			<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<SheetContent
-					side="bottom"
-					className="flex h-[90vh] flex-col overflow-hidden"
-				>
-					<SheetHeader>
-						<SheetTitle className="flex items-center gap-3">
-							<Avatar
-								beingId={being?.id || "@new-being"}
-								beingType={typeDisplayName}
-								size="md"
-								className="h-8 w-8"
-							/>
-							{titleText}
-						</SheetTitle>
-					</SheetHeader>
-					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
-				</SheetContent>
-			</Sheet>
-		);
-	}
-
-	// Tablet: Modal dialog
-	if (isTablet) {
-		return (
-			<Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-				<DialogContent className="flex max-h-[90vh] w-[95vw] max-w-5xl flex-col overflow-hidden">
-					<DialogHeader>
-						<DialogTitle className="flex items-center gap-3">
-							<Avatar
-								beingId={being?.id || "@new-being"}
-								beingType={typeDisplayName}
-								size="md"
-								className="h-8 w-8"
-							/>
-							{titleText}
-						</DialogTitle>
-					</DialogHeader>
-					<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
-				</DialogContent>
-			</Dialog>
-		);
-	}
-
-	// Desktop: Side panel from right
 	return (
-		<Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
-			<SheetContent
-				side="right"
-				className="flex w-[95vw] max-w-none flex-col overflow-hidden"
-			>
-				<SheetHeader>
-					<SheetTitle className="flex items-center gap-3">
-						<Avatar
-							beingId={being?.id || "@new-being"}
-							beingType={typeDisplayName}
-							size="md"
-							className="h-8 w-8"
-						/>
-						{titleText}
-					</SheetTitle>
-				</SheetHeader>
-				<div className="mt-6 flex-1 overflow-y-auto">{content}</div>
-			</SheetContent>
-		</Sheet>
+		<ResponsiveModal
+			isOpen={isOpen}
+			onClose={onClose}
+			title={
+				<>
+					<Avatar
+						beingId={being?.id || "@new-being"}
+						beingType={typeDisplayName}
+						size="md"
+						className="h-8 w-8"
+					/>
+					{titleText}
+				</>
+			}
+		>
+			{content}
+		</ResponsiveModal>
 	);
 }

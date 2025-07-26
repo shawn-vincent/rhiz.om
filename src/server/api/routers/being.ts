@@ -8,8 +8,9 @@ import type {
 
 import { TRPCError } from "@trpc/server";
 import { emitter } from "~/lib/events";
-import { canEdit, isSuperuser } from "~/lib/permissions";
+import { canEdit } from "~/lib/permissions";
 import {
+	authorizedProcedure,
 	createTRPCRouter,
 	protectedProcedure,
 	publicProcedure,
@@ -45,29 +46,16 @@ export const beingRouter = createTRPCRouter({
 	 * This is a protected procedure, requiring the user to be authenticated.
 	 * It also verifies that the user is the owner of the being they are trying to modify.
 	 */
-	upsert: protectedProcedure
+	upsert: authorizedProcedure
 		.input(insertBeingSchema)
 		.mutation(async ({ ctx, input }) => {
 			console.log("🐛 being.upsert - MUTATION CALLED with input:", input);
 			console.log("🐛 being.upsert - session:", ctx.session);
 			console.log(
 				"🐛 being.upsert - sessionBeingId:",
-				ctx.session.user.beingId,
+				ctx.auth.sessionBeingId,
 			);
-			const sessionBeingId = ctx.session.user.beingId;
-
-			// Get current user's being to check superuser status
-			const currentUserRaw = sessionBeingId
-				? await ctx.db.query.beings.findFirst({
-						where: eq(beings.id, sessionBeingId),
-					})
-				: null;
-
-			// Parse the being data to match the expected type
-			const currentUser = currentUserRaw
-				? selectBeingSchema.parse(currentUserRaw)
-				: null;
-			const isCurrentUserSuperuser = isSuperuser(currentUser);
+			const { sessionBeingId, isCurrentUserSuperuser } = ctx.auth;
 
 			// Authorization: Check if user can edit this being (owner or superuser)
 			if (!canEdit(sessionBeingId, input.ownerId, isCurrentUserSuperuser)) {

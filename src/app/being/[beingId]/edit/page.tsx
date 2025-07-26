@@ -80,15 +80,16 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 
 			const formValues: BeingFormData = {
 				...being,
-				ownerId: being.ownerId ?? undefined,
-				locationId: being.locationId ?? undefined,
-				extIds: being.extIds ?? undefined,
-				idHistory: being.idHistory ?? undefined,
-				metadata: being.metadata ?? undefined,
-				properties: being.properties ?? undefined,
-				content: being.content ?? undefined,
-				botModel: being.botModel ?? undefined,
-				botPrompt: being.botPrompt ?? undefined,
+				ownerId: being.ownerId || undefined,
+				locationId: being.locationId || undefined,
+				extIds: being.extIds || undefined,
+				idHistory: being.idHistory || undefined,
+				metadata: being.metadata || undefined,
+				properties: being.properties || undefined,
+				content: being.content || undefined,
+				botModel: being.botModel || undefined,
+				botPrompt: being.botPrompt || undefined,
+				llmApiKey: being.llmApiKey || undefined,
 			};
 
 			console.log("🐛 formValues.type:", formValues.type);

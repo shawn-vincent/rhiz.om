@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { canEdit, isSuperuser } from "~/lib/permissions";
+import { canEdit } from "~/lib/permissions";
+import { getAuthContext } from "~/server/lib/auth";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { beings } from "~/server/db/schema";
@@ -92,17 +93,9 @@ export async function POST(request: Request) {
 
 				// For create, generate ID if not provided
 				const targetId = beingId || data.id || `@${crypto.randomUUID()}`;
-				const sessionBeingId = session.user.beingId;
-
-				// Get current user's being to check superuser status
-				const currentUserRaw = await db.query.beings.findFirst({
-					where: eq(beings.id, sessionBeingId),
-				});
-
-				const currentUser = currentUserRaw
-					? selectBeingSchema.parse(currentUserRaw)
-					: null;
-				const isCurrentUserSuperuser = isSuperuser(currentUser);
+				const { sessionBeingId, isCurrentUserSuperuser } = await getAuthContext(
+					session.user.beingId,
+				);
 
 				// Authorization check
 				if (!canEdit(sessionBeingId, data.ownerId, isCurrentUserSuperuser)) {
@@ -186,7 +179,9 @@ export async function POST(request: Request) {
 					});
 				}
 
-				const sessionBeingId = session.user.beingId;
+				const { sessionBeingId, isCurrentUserSuperuser } = await getAuthContext(
+					session.user.beingId,
+				);
 
 				// Get being to delete
 				const beingToDelete = await db.query.beings.findFirst({
@@ -199,16 +194,6 @@ export async function POST(request: Request) {
 						error: `Being with ID "${beingId}" not found`,
 					});
 				}
-
-				// Get current user's being to check superuser status
-				const currentUserRaw = await db.query.beings.findFirst({
-					where: eq(beings.id, sessionBeingId),
-				});
-
-				const currentUser = currentUserRaw
-					? selectBeingSchema.parse(currentUserRaw)
-					: null;
-				const isCurrentUserSuperuser = isSuperuser(currentUser);
 
 				// Authorization check
 				if (
