@@ -9,8 +9,8 @@ import ErrorBoundary from "~/components/ui/error-boundary";
 import {
 	callIntentionAPI,
 	getCachedBeing,
-	useSpaceData,
 } from "~/hooks/use-simple-sync";
+import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId, Intention } from "~/server/db/types";
@@ -30,8 +30,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const chatContainerRef = useRef<HTMLUListElement>(null);
 	const bottomAnchorRef = useRef<HTMLLIElement>(null);
 
-	// Use the new simple sync system
-	const { utterances, error, refresh } = useSpaceData(beingId as BeingId);
+	// Use the shared space data context
+	const { utterances, error, refresh } = useSpaceDataContext();
 
 	// Group messages by owner (consecutive messages from same user)
 	const groupedMessages = useMemo(() => {

@@ -13,6 +13,9 @@ import type { Being, BeingId, Intention } from "~/server/db/types";
 const globalBeingCache = new Map<string, Being>();
 const globalIntentionCache = new Map<string, Intention>();
 
+// Global connection management to prevent multiple connections per space
+const activeConnections = new Map<string, EventSource>();
+
 // Update global cache when space data changes
 function updateGlobalCache(spaceData: SpaceData) {
 	spaceData.beings.forEach((being) => globalBeingCache.set(being.id, being));
@@ -45,7 +48,11 @@ export function useSpaceData(spaceId: BeingId) {
 			clearInterval(pollingIntervalRef.current);
 			pollingIntervalRef.current = null;
 		}
-	}, []);
+		// Remove from global tracking
+		if (activeConnections.get(spaceId) === eventSourceRef.current) {
+			activeConnections.delete(spaceId);
+		}
+	}, [spaceId]);
 
 	// Polling fallback
 	const startPolling = useCallback(async () => {
@@ -92,6 +99,12 @@ export function useSpaceData(spaceId: BeingId) {
 
 	// Real-time SSE connection
 	const startRealTime = useCallback(() => {
+		// Check if there's already an active connection for this space
+		const existingConnection = activeConnections.get(spaceId);
+		if (existingConnection && existingConnection.readyState === EventSource.OPEN) {
+			return;
+		}
+
 		cleanup(); // Clean up any existing connections
 
 		if (!spaceId) return;
@@ -103,6 +116,7 @@ export function useSpaceData(spaceId: BeingId) {
 				`/api/sync?spaceId=${encodeURIComponent(spaceId)}&types=beings,intentions`,
 			);
 			eventSourceRef.current = eventSource;
+			activeConnections.set(spaceId, eventSource);
 
 			eventSource.onopen = () => {
 				setConnectionState("connected");
@@ -122,9 +136,12 @@ export function useSpaceData(spaceId: BeingId) {
 			};
 
 			eventSource.onerror = (event) => {
-				console.error("SSE connection error:", event);
+				console.error(`EventSource error for ${spaceId}:`, event);
 				setConnectionState("error");
 				setError("Connection failed");
+
+				// Clean up failed connection
+				activeConnections.delete(spaceId);
 
 				// Fall back to polling after a short delay
 				reconnectTimeoutRef.current = setTimeout(() => {
@@ -132,7 +149,7 @@ export function useSpaceData(spaceId: BeingId) {
 				}, 1000);
 			};
 		} catch (err) {
-			console.error("Failed to create EventSource:", err);
+			console.error(`Failed to create EventSource for ${spaceId}:`, err);
 			setConnectionState("error");
 			setError("Failed to establish connection");
 			startPolling();

@@ -6,7 +6,8 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
-import { getCachedBeing, useSpaceData } from "~/hooks/use-simple-sync";
+import { getCachedBeing } from "~/hooks/use-simple-sync";
+import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
@@ -28,10 +29,8 @@ export function BeingPresence({
 	compact = false,
 	currentSpaceId,
 }: BeingPresenceProps) {
-	// Use the new simple sync system
-	const { beings, connected, error, refresh } = useSpaceData(
-		currentSpaceId as BeingId,
-	);
+	// Use the shared space data context
+	const { beings, connected, error, refresh } = useSpaceDataContext();
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
