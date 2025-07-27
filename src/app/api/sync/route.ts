@@ -1,6 +1,8 @@
 import type { NextRequest } from "next/server";
 import { z } from "zod/v4";
+import { auth } from "~/server/auth";
 import type { BeingId } from "~/server/db/types";
+import { beingConnections, connections } from "~/server/lib/presence";
 import {
 	addSpaceConnection,
 	fetchSpaceData,
@@ -29,13 +31,34 @@ export async function GET(request: NextRequest) {
 			return new Response("Invalid types parameter", { status: 400 });
 		}
 
+		// Get the current session to identify the being
+		const session = await auth();
+		const beingId = session?.user?.beingId;
+
 		const encoder = new TextEncoder();
+		const connectionId = Math.random().toString(36).substring(7);
 
 		const stream = new ReadableStream({
 			async start(controller) {
 				try {
 					// Add this connection to the space
 					addSpaceConnection(spaceId as BeingId, controller);
+
+					// Register being connection for presence if authenticated
+					if (beingId) {
+						connections.set(connectionId, {
+							controller,
+							beingId,
+							connectedAt: Date.now(),
+							lastHeartbeat: Date.now(),
+						});
+
+						// Add to being connections map
+						if (!beingConnections.has(beingId)) {
+							beingConnections.set(beingId, new Set());
+						}
+						beingConnections.get(beingId)!.add(connectionId);
+					}
 
 					// Send initial space data
 					const initialData = await fetchSpaceData(spaceId as BeingId);
@@ -51,14 +74,38 @@ export async function GET(request: NextRequest) {
 				}
 			},
 			cancel() {
-				// Clean up connection when client disconnects
+				// Clean up space connection
 				removeSpaceConnection(spaceId as BeingId, this as any);
+
+				// Clean up being connection
+				if (beingId) {
+					connections.delete(connectionId);
+					const beingConnectionSet = beingConnections.get(beingId);
+					if (beingConnectionSet) {
+						beingConnectionSet.delete(connectionId);
+						if (beingConnectionSet.size === 0) {
+							beingConnections.delete(beingId);
+						}
+					}
+				}
 			},
 		});
 
 		// Clean up when the client closes the connection
 		request.signal.addEventListener("abort", () => {
 			removeSpaceConnection(spaceId as BeingId, stream as any);
+
+			// Clean up being connection
+			if (beingId) {
+				connections.delete(connectionId);
+				const beingConnectionSet = beingConnections.get(beingId);
+				if (beingConnectionSet) {
+					beingConnectionSet.delete(connectionId);
+					if (beingConnectionSet.size === 0) {
+						beingConnections.delete(beingId);
+					}
+				}
+			}
 		});
 
 		return new Response(stream, {

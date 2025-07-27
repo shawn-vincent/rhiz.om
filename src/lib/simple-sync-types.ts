@@ -1,10 +1,15 @@
 import type { Being, BeingId, Intention } from "~/server/db/types";
 
+// Extended being type with presence info
+export interface BeingWithPresence extends Being {
+	isOnline: boolean;
+}
+
 // Simple space data structure matching server
 export interface SpaceData {
 	version: number;
 	timestamp: string;
-	beings: Being[];
+	beings: BeingWithPresence[];
 	intentions: Intention[];
 	spaceId: BeingId;
 }

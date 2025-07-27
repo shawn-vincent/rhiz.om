@@ -63,9 +63,10 @@ export function Config() {
 		);
 
 	const { beings } = useSpaceDataContext();
-	// For now, we can't determine actual guest presence from sync data
-	// Only spaces and bots are always considered online
-	const presenceMap = new Map<string, boolean>();
+	// Create presence map from server-provided presence data
+	const presenceMap = new Map(
+		beings.map((being) => [being.id, being.isOnline]),
+	);
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;
 
@@ -159,8 +160,7 @@ export function Config() {
 					{orderedBeings.length > 0 ? (
 						<div className="space-y-2">
 							{orderedBeings.map((being) => {
-								const isSpace = being.type === "space" || being.type === "bot";
-								const isOnline = isSpace || presenceMap.get(being.id);
+								const isOnline = presenceMap.get(being.id) ?? false;
 
 								return (
 									<EntityCard

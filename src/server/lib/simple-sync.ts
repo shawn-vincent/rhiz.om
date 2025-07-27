@@ -2,12 +2,18 @@ import { eq } from "drizzle-orm";
 import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention } from "~/server/db/types";
+import { isBeingOnline } from "./presence";
+
+// Extended being type with presence info
+export interface BeingWithPresence extends Being {
+	isOnline: boolean;
+}
 
 // Simple space data structure
 export interface SpaceData {
 	version: number;
 	timestamp: string;
-	beings: Being[];
+	beings: BeingWithPresence[];
 	intentions: Intention[];
 	spaceId: BeingId;
 }
@@ -71,10 +77,16 @@ export async function fetchSpaceData(spaceId: BeingId): Promise<SpaceData> {
 		orderBy: (intentions, { asc }) => [asc(intentions.createdAt)],
 	});
 
+	// Add presence information to beings
+	const beingsWithPresence: BeingWithPresence[] = spaceBeings.map((being) => ({
+		...(being as Being),
+		isOnline: isBeingOnline(being.id, being.type),
+	}));
+
 	return {
 		version: getSpaceVersion(spaceId),
 		timestamp: new Date().toISOString(),
-		beings: spaceBeings as Being[],
+		beings: beingsWithPresence,
 		intentions: spaceIntentions as Intention[],
 		spaceId,
 	};
