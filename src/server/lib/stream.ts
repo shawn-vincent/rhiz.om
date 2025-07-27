@@ -150,8 +150,7 @@ async function getSpaceBeings(spaceId: string): Promise<Being[]> {
 async function getSpaceIntentions(spaceId: string): Promise<Intention[]> {
 	const intentionsData = await db.query.intentions.findMany({
 		where: eq(intentions.locationId, spaceId),
-		orderBy: (intentions, { desc }) => [desc(intentions.createdAt)],
-		limit: 50,
+		orderBy: (intentions, { asc }) => [asc(intentions.createdAt)],
 	});
 	return intentionsData.map((intention) =>
 		selectIntentionSchema.parse(intention),
