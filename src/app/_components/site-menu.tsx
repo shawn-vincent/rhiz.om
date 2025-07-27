@@ -164,14 +164,15 @@ export function SiteMenu() {
 							);
 
 							// Clear all auth-related cookies
-							document.cookie.split(";").forEach((c) => {
+							const cookies = document.cookie.split(";");
+							for (const c of cookies) {
 								document.cookie = c
 									.replace(/^ +/, "")
 									.replace(
 										/=.*/,
 										`=;expires=${new Date().toUTCString()};path=/`,
 									);
-							});
+							}
 
 							// Clear localStorage and sessionStorage
 							localStorage.clear();

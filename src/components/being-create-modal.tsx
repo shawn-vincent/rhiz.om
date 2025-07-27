@@ -9,8 +9,8 @@ import { Button } from "~/components/ui/button";
 import { ResponsiveModal } from "~/components/ui/responsive-modal";
 import { useBeingForm } from "~/hooks/use-being-form";
 import type { BeingFormData } from "~/hooks/use-being-form";
-import { api } from "~/trpc/react";
 import type { BeingType } from "~/lib/space-types";
+import { api } from "~/trpc/react";
 
 interface BeingCreateModalProps {
 	isOpen: boolean;
@@ -90,7 +90,7 @@ export function BeingCreateModal({
 	const content = (
 		<FormProvider {...methods}>
 			<form
-				onSubmit={methods.handleSubmit(handleSubmit as any)}
+				onSubmit={methods.handleSubmit(handleSubmit)}
 				className="space-y-6"
 			>
 				<BeingForm />

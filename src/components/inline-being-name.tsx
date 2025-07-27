@@ -4,10 +4,10 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
-import { api } from "~/trpc/react";
 import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
+import { api } from "~/trpc/react";
 
 const inlineBeingLogger = logger.child({ name: "InlineBeingName" });
 

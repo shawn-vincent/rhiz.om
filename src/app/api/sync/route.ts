@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
 						if (!beingConnections.has(beingId)) {
 							beingConnections.set(beingId, new Set());
 						}
-						beingConnections.get(beingId)!.add(connectionId);
+						beingConnections.get(beingId)?.add(connectionId);
 					}
 
 					// Send initial space data
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
 			},
 			cancel() {
 				// Clean up space connection
-				removeSpaceConnection(spaceId as BeingId, this as any);
+				removeSpaceConnection(spaceId as BeingId, controller);
 
 				// Clean up being connection
 				if (beingId) {
@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
 
 		// Clean up when the client closes the connection
 		request.signal.addEventListener("abort", () => {
-			removeSpaceConnection(spaceId as BeingId, stream as any);
+			// Space connection cleanup is handled in the stream's cancel method
 
 			// Clean up being connection
 			if (beingId) {

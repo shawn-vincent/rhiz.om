@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { type Page, type Route, expect, test } from "@playwright/test";
 
 // Test user data that matches auth setup
 const testUser = {
@@ -7,9 +7,9 @@ const testUser = {
 };
 
 // Setup comprehensive mocking for tests
-async function setupMocking(page: any) {
+async function setupMocking(page: Page) {
 	// Mock session API
-	await page.route("/api/auth/session", async (route: any) => {
+	await page.route("/api/auth/session", async (route: Route) => {
 		await route.fulfill({
 			status: 200,
 			contentType: "application/json",
@@ -26,7 +26,7 @@ async function setupMocking(page: any) {
 	});
 
 	// Mock all API endpoints
-	await page.route("**/api/**", async (route: any) => {
+	await page.route("**/api/**", async (route: Route) => {
 		const url = route.request().url();
 		const method = route.request().method();
 

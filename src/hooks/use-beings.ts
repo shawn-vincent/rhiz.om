@@ -1,9 +1,9 @@
 import { useDeferredValue, useMemo, useState } from "react";
+import type { BeingType, EntitySummary } from "~/lib/space-types";
+import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useRecents } from "./use-recents";
 import { useSpaceDataContext } from "./use-space-data-context";
-import type { Being } from "~/server/db/types";
-import type { BeingType, EntitySummary } from "~/lib/space-types";
 
 /**
  * Combined being management hook with caching, search, and recents
@@ -68,20 +68,20 @@ export function useBeings(initialType?: BeingType) {
 
 	// Cache access functions
 	const getBeing = (id: string): Being | undefined => beingMap.get(id);
-	const getBeings = (ids: string[]): (Being | undefined)[] => 
+	const getBeings = (ids: string[]): (Being | undefined)[] =>
 		ids.map((id) => beingMap.get(id));
 	const hasBeing = (id: string): boolean => beingMap.has(id);
 	const getAllBeings = (): Being[] => Array.from(beingMap.values());
 
-	return { 
+	return {
 		// Search/filter interface
-		query, 
-		setQuery, 
-		type, 
-		setType, 
-		...rq, 
-		items, 
-		recents, 
+		query,
+		setQuery,
+		type,
+		setType,
+		...rq,
+		items,
+		recents,
 		addRecent,
 		// Cache interface
 		getBeing,

@@ -1,12 +1,12 @@
 // src/server/api/routers/being.ts
 import { z } from "zod/v4";
+import { services } from "~/domain/services";
 import {
-	protectedProcedure,
 	createTRPCRouter,
+	protectedProcedure,
 	publicProcedure,
 } from "~/server/api/trpc";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
-import { services } from "~/domain/services";
 
 export const beingRouter = createTRPCRouter({
 	/**

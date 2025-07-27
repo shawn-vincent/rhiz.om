@@ -1,10 +1,10 @@
 import { z } from "zod/v4";
+import { services } from "~/domain/services";
 import {
 	createTRPCRouter,
 	protectedProcedure,
 	publicProcedure,
 } from "~/server/api/trpc";
-import { services } from "~/domain/services";
 
 export const intentionRouter = createTRPCRouter({
 	getAllUtterancesInBeing: publicProcedure

@@ -11,9 +11,9 @@ import { TRPCError, initTRPC } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod/v4";
 
+import { services } from "~/domain/services";
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
-import { services } from "~/domain/services";
 import { logger } from "~/server/lib/logger";
 
 /**

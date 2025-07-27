@@ -12,7 +12,7 @@ export function useRecents<T extends { id: string }>(
 	// Load recents from localStorage on mount
 	useEffect(() => {
 		if (typeof window === "undefined") return;
-		
+
 		try {
 			const stored = localStorage.getItem(`recents-${key}`);
 			if (stored) {
@@ -32,7 +32,7 @@ export function useRecents<T extends { id: string }>(
 				const filtered = prev.filter((r) => r.id !== item.id);
 				// Add to front and limit
 				const newRecents = [item, ...filtered].slice(0, maxItems);
-				
+
 				// Save to localStorage
 				if (typeof window !== "undefined") {
 					try {
@@ -41,7 +41,7 @@ export function useRecents<T extends { id: string }>(
 						console.warn(`Failed to save recents for ${key}:`, error);
 					}
 				}
-				
+
 				return newRecents;
 			});
 		},

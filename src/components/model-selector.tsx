@@ -465,13 +465,16 @@ export function ModelSelector({
 			open={open}
 			onOpenChange={setOpen}
 			trigger={
-				<div
+				<button
+					type="button"
 					className={cn(
 						"flex h-16 w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-md border bg-transparent p-2 text-left text-sm shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
 						!value && "text-muted-foreground",
 					)}
 					role="combobox"
 					aria-expanded={open}
+					aria-controls="model-select-panel"
+					aria-haspopup="listbox"
 				>
 					{selectedModel ? (
 						<ModelDisplay model={selectedModel} isCompact />
@@ -479,7 +482,7 @@ export function ModelSelector({
 						placeholder
 					)}
 					<ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-				</div>
+				</button>
 			}
 			panel={
 				<ModelSelectPanel

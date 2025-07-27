@@ -25,7 +25,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
 		>
 			<ol className="flex items-center space-x-1 overflow-hidden">
 				{items.map((item, index) => (
-					<Fragment key={index}>
+					<Fragment key={`${item.label}-${index}`}>
 						<li className="flex items-center">
 							{item.href && !item.current ? (
 								<Link

@@ -21,10 +21,12 @@ const activeConnections = new Map<string, EventSource>();
 
 // Update global cache when space data changes
 function updateGlobalCache(spaceData: SpaceData) {
-	spaceData.beings.forEach((being) => globalBeingCache.set(being.id, being));
-	spaceData.intentions.forEach((intention) =>
-		globalIntentionCache.set(intention.id, intention),
-	);
+	for (const being of spaceData.beings) {
+		globalBeingCache.set(being.id, being);
+	}
+	for (const intention of spaceData.intentions) {
+		globalIntentionCache.set(intention.id, intention);
+	}
 }
 
 // Internal hook for space data with real-time sync (not exported)

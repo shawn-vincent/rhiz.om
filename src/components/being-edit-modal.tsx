@@ -7,11 +7,11 @@ import { BeingForm } from "~/app/_components/being-form";
 import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import { ResponsiveModal } from "~/components/ui/responsive-modal";
-import { useBeing } from "~/hooks/use-beings";
 import { useBeingForm } from "~/hooks/use-being-form";
 import type { BeingFormData } from "~/hooks/use-being-form";
-import { api } from "~/trpc/react";
+import { useBeing } from "~/hooks/use-beings";
 import type { BeingType } from "~/lib/space-types";
+import { api } from "~/trpc/react";
 
 interface BeingEditModalProps {
 	beingId: string | null;
@@ -84,7 +84,7 @@ export function BeingEditModal({
 			) : being ? (
 				<FormProvider {...methods}>
 					<form
-						onSubmit={methods.handleSubmit(handleSubmit as any)}
+						onSubmit={methods.handleSubmit(handleSubmit)}
 						className="space-y-6"
 					>
 						<BeingForm />

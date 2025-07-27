@@ -1,13 +1,13 @@
 import { db } from "~/server/db";
+import { AuthService } from "./auth-service";
 import { BeingService } from "./being-service";
 import { IntentionService } from "./intention-service";
-import { AuthService } from "./auth-service";
 
 // Service factory - creates service instances with database dependency
 export const createServices = () => ({
-  being: new BeingService(db),
-  intention: new IntentionService(db),
-  auth: new AuthService(db),
+	being: new BeingService(db),
+	intention: new IntentionService(db),
+	auth: new AuthService(db),
 });
 
 // Type for the services object

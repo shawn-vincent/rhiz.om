@@ -6,12 +6,12 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RichContent } from "~/app/_components/rich-content";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { api } from "~/trpc/react";
 import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId, Intention } from "~/server/db/types";
+import { api } from "~/trpc/react";
 
 const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
 const chatLogger = logger.child({ name: "Chat" });
@@ -75,8 +75,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		if (bottomAnchorRef.current) {
 			bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [utterances]);
+	}, [utterances.length]);
 
 	// Mount-time scroll to bottom
 	useLayoutEffect(() => {

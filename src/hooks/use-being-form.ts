@@ -74,7 +74,7 @@ export function useBeingForm({
 	const initialValues = being ? getEditDefaults() : baseDefaults;
 
 	const methods = useForm<BeingFormData>({
-		resolver: zodResolver(beingFormSchema) as any,
+		resolver: zodResolver(beingFormSchema),
 		defaultValues: initialValues,
 	});
 
