@@ -64,7 +64,10 @@ export async function activateBot(
 
 		// Trigger space update to show the bot's initial "thinking" bubble
 		triggerSpaceUpdate(spaceId).catch((error) =>
-			botLogger.error({ error, spaceId }, "Failed to trigger space update for bot activation"),
+			botLogger.error(
+				{ error, spaceId },
+				"Failed to trigger space update for bot activation",
+			),
 		);
 
 		// Stream the bot's response
@@ -137,7 +140,7 @@ async function streamBotResponse(
 			messages,
 			stream: true,
 		};
-		
+
 		botLogger.info(
 			{ aiIntentionId, model, requestBody },
 			"Making OpenRouter API request",
@@ -158,7 +161,11 @@ async function streamBotResponse(
 		);
 
 		botLogger.info(
-			{ aiIntentionId, status: response.status, statusText: response.statusText },
+			{
+				aiIntentionId,
+				status: response.status,
+				statusText: response.statusText,
+			},
 			"Got OpenRouter API response",
 		);
 
@@ -191,7 +198,11 @@ async function streamBotResponse(
 			const { done, value } = await reader.read();
 			if (done) {
 				botLogger.info(
-					{ aiIntentionId, tokensReceived, responseLength: fullResponse.length },
+					{
+						aiIntentionId,
+						tokensReceived,
+						responseLength: fullResponse.length,
+					},
 					"Stream reading completed",
 				);
 				break;
@@ -199,14 +210,21 @@ async function streamBotResponse(
 
 			const chunk = decoder.decode(value, { stream: true });
 			botLogger.debug(
-				{ aiIntentionId, chunkLength: chunk.length, chunk: chunk.substring(0, 200) },
+				{
+					aiIntentionId,
+					chunkLength: chunk.length,
+					chunk: chunk.substring(0, 200),
+				},
 				"Received chunk from stream",
 			);
-			
+
 			// Handle different possible line endings and data formats
 			const lines = chunk
 				.split(/\r?\n/)
-				.filter((line) => line.trim().startsWith("data: ") || line.trim() === "data: [DONE]");
+				.filter(
+					(line) =>
+						line.trim().startsWith("data: ") || line.trim() === "data: [DONE]",
+				);
 
 			botLogger.debug(
 				{ aiIntentionId, linesCount: lines.length },
@@ -225,7 +243,7 @@ async function streamBotResponse(
 				try {
 					const parsed = JSON.parse(jsonStr);
 					const token = parsed.choices?.[0]?.delta?.content;
-					
+
 					if (token) {
 						tokensReceived++;
 						fullResponse += token;
@@ -233,15 +251,19 @@ async function streamBotResponse(
 							type: "token",
 							data: token,
 						});
-						
+
 						// Update the database periodically during streaming to show partial content
 						const now = Date.now();
 						if (now - lastUpdateTime > UPDATE_INTERVAL) {
 							botLogger.debug(
-								{ aiIntentionId, currentLength: fullResponse.length, tokensReceived },
+								{
+									aiIntentionId,
+									currentLength: fullResponse.length,
+									tokensReceived,
+								},
 								"Updating database with partial response",
 							);
-							
+
 							await db
 								.update(intentions)
 								.set({
@@ -249,12 +271,12 @@ async function streamBotResponse(
 									modifiedAt: new Date(),
 								})
 								.where(eq(intentions.id, aiIntentionId));
-							
+
 							// Trigger space update to show partial response
 							triggerSpaceUpdate(spaceId).catch((error) =>
 								botLogger.debug({ error }, "Failed to trigger partial update"),
 							);
-							
+
 							lastUpdateTime = now;
 						}
 					} else {
@@ -265,7 +287,11 @@ async function streamBotResponse(
 					}
 				} catch (error) {
 					botLogger.debug(
-						{ aiIntentionId, jsonStr, error: error instanceof Error ? error.message : "unknown" },
+						{
+							aiIntentionId,
+							jsonStr,
+							error: error instanceof Error ? error.message : "unknown",
+						},
 						"Failed to parse JSON from stream line",
 					);
 				}
@@ -276,14 +302,6 @@ async function streamBotResponse(
 			{ aiIntentionId, responseLength: fullResponse.length },
 			"Bot streaming completed, updating database",
 		);
-
-		// Log warning for truly empty responses but use them as-is for debugging
-		if (!fullResponse.trim()) {
-			botLogger.warn(
-				{ aiIntentionId, tokensReceived, originalResponse: fullResponse },
-				"🚨 EMPTY RESPONSE: No content received from AI - check API and streaming",
-			);
-		}
 
 		await db
 			.update(intentions)
@@ -296,7 +314,10 @@ async function streamBotResponse(
 
 		// Trigger space update to show the completed bot response
 		triggerSpaceUpdate(spaceId).catch((error) =>
-			botLogger.error({ error, spaceId }, "Failed to trigger space update after bot completion"),
+			botLogger.error(
+				{ error, spaceId },
+				"Failed to trigger space update after bot completion",
+			),
 		);
 
 		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
@@ -314,7 +335,10 @@ async function streamBotResponse(
 
 		// Trigger space update to show the error response
 		triggerSpaceUpdate(spaceId).catch((updateError) =>
-			botLogger.error({ error: updateError, spaceId }, "Failed to trigger space update after bot error"),
+			botLogger.error(
+				{ error: updateError, spaceId },
+				"Failed to trigger space update after bot error",
+			),
 		);
 	}
 }

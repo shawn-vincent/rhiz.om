@@ -1,9 +1,9 @@
 // src/app/_components/chat.tsx
 "use client";
 
-import { Send } from "lucide-react";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RichContent } from "~/app/_components/rich-content";
+import { ChatInput, type ChatInputRef } from "~/components/chat-input";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { getCachedBeing } from "~/hooks/use-space-data-context";
@@ -27,6 +27,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	const chatContainerRef = useRef<HTMLUListElement>(null);
 	const bottomAnchorRef = useRef<HTMLLIElement>(null);
+	const chatInputRef = useRef<ChatInputRef>(null);
 
 	// Use the shared space data context
 	const { utterances, error, refresh } = useSpaceDataContext();
@@ -36,12 +37,20 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		onSuccess: () => {
 			// Force refresh to get latest data immediately
 			refresh();
+			// Focus the input after successful submission
+			setTimeout(() => {
+				chatInputRef.current?.focus();
+			}, 100);
 		},
 		onError: (error) => {
 			console.error("Failed to send message:", error);
 			chatLogger.error(error, "Failed to send message");
 			// Force refresh to ensure we have latest state
 			refresh();
+			// Focus the input even after errors
+			setTimeout(() => {
+				chatInputRef.current?.focus();
+			}, 100);
 		},
 	});
 
@@ -62,8 +71,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	}, [utterances]);
 
 	// Handle message submission
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async () => {
 		if (!message.trim() || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -168,33 +176,39 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 									>
 										{group.messages.map((utterance) => {
 											const content = utterance.content as ContentNode[];
-											const isEmpty = !content || content.length === 0 || (content.length === 1 && content[0] === "");
+											const isEmpty =
+												!content ||
+												content.length === 0 ||
+												(content.length === 1 && content[0] === "");
 											const isError = utterance.state === "failed";
-											
-											// Log warning for empty responses
-											if (isEmpty && utterance.state === "complete" && !isError) {
-												console.warn("🚨 Empty response detected for utterance:", utterance.id, "content:", content);
-												chatLogger.warn({ utteranceId: utterance.id, content }, "Empty response detected");
-											}
-											
+
 											return (
 												<div
 													key={utterance.id}
 													className={`rounded-2xl px-4 py-2 shadow ${
-														isError 
-															? "bg-red-100 text-red-900 border border-red-200 dark:bg-red-900/20 dark:text-red-200 dark:border-red-500/30" 
-															: isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900 dark:bg-gray-700/60 dark:text-gray-50"
+														isError
+															? "border border-red-200 bg-red-100 text-red-900 dark:border-red-500/30 dark:bg-red-900/20 dark:text-red-200"
+															: isCurrentUser
+																? "bg-blue-500 text-white"
+																: "bg-gray-100 text-gray-900 dark:bg-gray-700/60 dark:text-gray-50"
 													}`}
 												>
 													{isError ? (
 														<div className="flex items-center gap-2">
 															<span className="text-red-500">⚠️</span>
-															<span>Error: {content && content.length > 0 ? String(content[0]) : "Failed to get response"}</span>
+															<span>
+																Error:{" "}
+																{content && content.length > 0
+																	? String(content[0])
+																	: "Failed to get response"}
+															</span>
 														</div>
 													) : isEmpty && utterance.state === "complete" ? (
 														<div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
 															<span>⚠️</span>
-															<span className="italic">Empty response received</span>
+															<span className="italic">
+																Empty response received
+															</span>
 														</div>
 													) : (
 														<RichContent nodes={content} />
@@ -216,27 +230,16 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				{/* Bottom shadow overlay */}
 				<div className="pointer-events-none absolute right-0 bottom-20 left-0 z-10 h-4 bg-gradient-to-t from-white/20 to-transparent" />
 
-				<form
-					onSubmit={handleSubmit}
-					className="sticky bottom-0 flex w-full min-w-0 items-center gap-2 border-gray-200 border-t bg-white px-3 py-3 sm:px-4 dark:border-gray-800 dark:bg-gray-900"
-				>
-					<input
-						type="text"
-						placeholder="Say something..."
+				<div className="sticky bottom-0 flex w-full min-w-0 items-center gap-2 border-gray-200 border-t bg-white px-3 py-3 sm:px-4 dark:border-gray-800 dark:bg-gray-900">
+					<ChatInput
+						ref={chatInputRef}
 						value={message}
-						onChange={(e) => setMessage(e.target.value)}
+						onChange={setMessage}
+						onSubmit={handleSubmit}
 						disabled={isSubmitting}
-						className="min-w-0 flex-1 rounded-full border border-gray-300 bg-white px-3 py-2 text-gray-900 focus:border-blue-500 focus:outline-none disabled:opacity-50 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+						placeholder="Say something..."
 					/>
-					<button
-						type="submit"
-						className="shrink-0 rounded-full bg-blue-500 p-2 text-white transition hover:bg-blue-600 disabled:opacity-50"
-						disabled={isSubmitting || !message.trim()}
-						aria-label={isSubmitting ? "Sending..." : "Send message"}
-					>
-						<Send className="size-4" />
-					</button>
-				</form>
+				</div>
 			</div>
 		</ErrorBoundary>
 	);

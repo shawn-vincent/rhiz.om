@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
 
 		// Validate types parameter
 		const validTypes = ["beings", "intentions", "beings,intentions"];
-		if (!validTypes.includes(types)) {
+		if (types && !validTypes.includes(types)) {
 			return new Response("Invalid types parameter", { status: 400 });
 		}
 
