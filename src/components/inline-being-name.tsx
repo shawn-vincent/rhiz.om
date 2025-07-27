@@ -4,7 +4,8 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
-import { callBeingAPI, getCachedBeing } from "~/hooks/use-simple-sync";
+import { callBeingAPI } from "~/hooks/use-simple-sync";
+import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
 

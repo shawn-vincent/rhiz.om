@@ -40,9 +40,7 @@ export function ResponsiveModal({
 					className="flex h-[90vh] flex-col overflow-hidden"
 				>
 					<SheetHeader>
-						<SheetTitle className="flex items-center gap-3">
-							{title}
-						</SheetTitle>
+						<SheetTitle className="flex items-center gap-3">{title}</SheetTitle>
 					</SheetHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{children}</div>
 				</SheetContent>
@@ -74,9 +72,7 @@ export function ResponsiveModal({
 				className="flex w-[90vw] max-w-4xl flex-col overflow-hidden sm:w-[60vw]"
 			>
 				<SheetHeader>
-					<SheetTitle className="flex items-center gap-3">
-						{title}
-					</SheetTitle>
+					<SheetTitle className="flex items-center gap-3">{title}</SheetTitle>
 				</SheetHeader>
 				<div className="mt-6 flex-1 overflow-y-auto">{children}</div>
 			</SheetContent>

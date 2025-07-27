@@ -1,8 +1,7 @@
-import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import type { Being, BeingId } from "~/server/db/types";
+import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
-import { useSpaceData } from "./use-simple-sync";
+import { useSpaceDataContext } from "./use-space-data-context";
 
 /**
  * A client-side being cache that:
@@ -11,13 +10,8 @@ import { useSpaceData } from "./use-simple-sync";
  * 3. Only makes individual being.getById queries as a last resort
  */
 export function useBeingCache() {
-	const params = useParams();
-	const currentSpaceId = params?.beingId
-		? (decodeURIComponent(params.beingId as string) as BeingId)
-		: undefined;
-
 	// Get beings from the sync store (current space)
-	const { beings } = useSpaceData(currentSpaceId ?? ("" as BeingId));
+	const { beings } = useSpaceDataContext();
 	const syncBeings = beings ?? [];
 
 	// Get all beings from the global cache (fallback)

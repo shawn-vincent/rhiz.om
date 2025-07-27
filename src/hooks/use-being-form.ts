@@ -94,13 +94,12 @@ export function useBeingForm({
 		if (being) {
 			// Edit mode: use existing ID
 			return { ...data, id: being.id };
-		} else {
-			// Create mode: generate ID if not provided
-			return {
-				...data,
-				id: data.id || `@new-being-${Math.random().toString(36).substring(2, 8)}`,
-			};
 		}
+		// Create mode: generate ID if not provided
+		return {
+			...data,
+			id: data.id || `@new-being-${Math.random().toString(36).substring(2, 8)}`,
+		};
 	};
 
 	return {

@@ -30,7 +30,11 @@ export default function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {
 	return (
-		<html lang="en" className={`${recursive.variable} dark`}>
+		<html
+			lang="en"
+			className={`${recursive.variable} dark`}
+			suppressHydrationWarning={true}
+		>
 			<body className="fixed inset-0 h-full w-full touch-none overflow-hidden overscroll-none bg-background">
 				<NextAuthSessionProvider>
 					<TRPCReactProvider>

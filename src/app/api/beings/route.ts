@@ -1,12 +1,12 @@
 import { and, eq } from "drizzle-orm";
 import { z } from "zod/v4";
 import { canEdit } from "~/lib/permissions";
-import { getAuthContext } from "~/server/lib/auth";
 import { getServerAuthSession } from "~/server/auth";
 import { db } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { BeingId } from "~/server/db/types";
+import { getAuthContext } from "~/server/lib/auth";
 import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
 
 // Request/Response schemas
@@ -102,7 +102,8 @@ export async function POST(request: Request) {
 					return Response.json(
 						{
 							success: false,
-							error: `You can only modify beings you own or have superuser access to`,
+							error:
+								"You can only modify beings you own or have superuser access to",
 						},
 						{ status: 403 },
 					);
@@ -206,7 +207,8 @@ export async function POST(request: Request) {
 					return Response.json(
 						{
 							success: false,
-							error: `You can only delete beings you own or have superuser access to`,
+							error:
+								"You can only delete beings you own or have superuser access to",
 						},
 						{ status: 403 },
 					);

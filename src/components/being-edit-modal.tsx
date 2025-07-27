@@ -20,7 +20,6 @@ interface BeingEditModalProps {
 	onSaved?: () => void;
 }
 
-
 export function BeingEditModal({
 	beingId,
 	isOpen,
@@ -51,7 +50,6 @@ export function BeingEditModal({
 			toast.error(`Failed to save being: ${err.message}`);
 		},
 	});
-
 
 	const handleSubmit = async (data: BeingFormData) => {
 		const finalData = prepareSubmitData(data);

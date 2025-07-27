@@ -6,10 +6,8 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RichContent } from "~/app/_components/rich-content";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import {
-	callIntentionAPI,
-	getCachedBeing,
-} from "~/hooks/use-simple-sync";
+import { callIntentionAPI } from "~/hooks/use-simple-sync";
+import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
@@ -79,6 +77,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		if (bottomAnchorRef.current) {
 			bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [utterances]);
 
 	// Mount-time scroll to bottom

@@ -42,6 +42,7 @@ export const authConfig = {
 	pages: {
 		signIn: "/auth/signin",
 	},
+	useSecureCookies: process.env.NODE_ENV === "production",
 	providers: [
 		GoogleProvider,
 		/**
@@ -61,6 +62,13 @@ export const authConfig = {
 		verificationTokensTable: verificationTokens,
 	}),
 	callbacks: {
+		async redirect({ url, baseUrl }) {
+			// Allows relative callback URLs
+			if (url.startsWith("/")) return `${baseUrl}${url}`;
+			// Allows callback URLs on the same origin
+			if (new URL(url).origin === baseUrl) return url;
+			return baseUrl;
+		},
 		async jwt({ token, user, account, profile }) {
 			// Handle dev mode authentication
 			if (process.env.NODE_ENV === "development") {
@@ -69,7 +77,7 @@ export const authConfig = {
 					return token;
 				}
 			}
-			
+
 			if (user) {
 				token.beingId = user.beingId;
 			}
@@ -77,7 +85,7 @@ export const authConfig = {
 		},
 		async session({ session, token, user }) {
 			// Handle dev mode sessions
-			if (process.env.NODE_ENV === "development" && token.devMode) {
+			if (process.env.NODE_ENV === "development" && token?.devMode) {
 				return {
 					...session,
 					user: {
@@ -92,8 +100,8 @@ export const authConfig = {
 				...session,
 				user: {
 					...session.user,
-					id: user?.id ?? token.sub as string,
-					beingId: user?.beingId ?? token.beingId as string,
+					id: user?.id ?? (token?.sub as string),
+					beingId: user?.beingId ?? (token?.beingId as string),
 				},
 			};
 		},
@@ -164,13 +172,5 @@ export const authConfig = {
 			}
 			return true; // Allow sign in
 		},
-		session: ({ session, user }) => ({
-			...session,
-			user: {
-				...session.user,
-				id: user.id,
-				beingId: user.beingId, // Ensure beingId is in the session
-			},
-		}),
 	},
 } satisfies NextAuthConfig;

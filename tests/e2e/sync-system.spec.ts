@@ -2,66 +2,66 @@ import { expect, test } from "@playwright/test";
 
 // Test user data that matches auth setup
 const testUser = {
-	id: 'test-user-id',
-	beingId: '@test-user-being',
+	id: "test-user-id",
+	beingId: "@test-user-being",
 };
 
 // Setup comprehensive mocking for tests
 async function setupMocking(page: any) {
 	// Mock session API
-	await page.route('/api/auth/session', async (route: any) => {
+	await page.route("/api/auth/session", async (route: any) => {
 		await route.fulfill({
 			status: 200,
-			contentType: 'application/json',
+			contentType: "application/json",
 			body: JSON.stringify({
 				user: {
 					id: testUser.id,
-					name: 'Test User',
-					email: 'test@example.com',
-					beingId: testUser.beingId
+					name: "Test User",
+					email: "test@example.com",
+					beingId: testUser.beingId,
 				},
-				expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-			})
+				expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+			}),
 		});
 	});
 
 	// Mock all API endpoints
-	await page.route('**/api/**', async (route: any) => {
+	await page.route("**/api/**", async (route: any) => {
 		const url = route.request().url();
 		const method = route.request().method();
-		
-		if (url.includes('/api/sync?')) {
+
+		if (url.includes("/api/sync?")) {
 			// SSE endpoint - return proper SSE response
 			await route.fulfill({
 				status: 200,
-				contentType: 'text/event-stream',
+				contentType: "text/event-stream",
 				headers: {
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
-					'Content-Type': 'text/event-stream',
+					"Cache-Control": "no-cache",
+					Connection: "keep-alive",
+					"Content-Type": "text/event-stream",
 				},
-				body: 'data: {"type":"initial","data":[]}\n\n'
+				body: 'data: {"type":"initial","data":[]}\n\n',
 			});
-		} else if (url.includes('/api/beings') || url.includes('/api/intentions')) {
+		} else if (url.includes("/api/beings") || url.includes("/api/intentions")) {
 			// New API endpoints
 			await route.fulfill({
 				status: 200,
-				contentType: 'application/json',
-				body: JSON.stringify({ success: true, data: [] })
+				contentType: "application/json",
+				body: JSON.stringify({ success: true, data: [] }),
 			});
-		} else if (url.includes('/api/trpc/')) {
+		} else if (url.includes("/api/trpc/")) {
 			// tRPC endpoints
 			await route.fulfill({
 				status: 200,
-				contentType: 'application/json',
-				body: JSON.stringify({ result: { data: [] } })
+				contentType: "application/json",
+				body: JSON.stringify({ result: { data: [] } }),
 			});
 		} else {
 			// Default success for other endpoints
 			await route.fulfill({
 				status: 200,
-				contentType: 'application/json',
-				body: JSON.stringify({ success: true })
+				contentType: "application/json",
+				body: JSON.stringify({ success: true }),
 			});
 		}
 	});
@@ -85,7 +85,7 @@ test.describe("Sync System Comparison", () => {
 		await expect(page).toHaveTitle(/Rhiz\.om/);
 
 		// Just verify the page loads - presence elements may not exist in test env
-		const bodyElement = page.locator('body');
+		const bodyElement = page.locator("body");
 		await expect(bodyElement).toBeVisible();
 	});
 
@@ -100,7 +100,7 @@ test.describe("Sync System Comparison", () => {
 		await expect(page).toHaveTitle(/Rhiz\.om/);
 
 		// Just verify the page loads - presence elements may not exist in test env
-		const bodyElement = page.locator('body');
+		const bodyElement = page.locator("body");
 		await expect(bodyElement).toBeVisible();
 	});
 
@@ -135,13 +135,15 @@ test.describe("Sync System Comparison", () => {
 		try {
 			const response = await page.request.get(
 				`/api/sync?spaceId=${testUser.beingId}&types=beings,intentions`,
-				{ timeout: 5000 } // Shorter timeout
+				{ timeout: 5000 }, // Shorter timeout
 			);
 			expect(response.ok()).toBeTruthy();
 			expect(response.headers()["content-type"]).toContain("text/event-stream");
 		} catch (error) {
 			// If request fails due to mocking, verify mock was called
-			console.log('SSE test used mocked response (expected in test environment)');
+			console.log(
+				"SSE test used mocked response (expected in test environment)",
+			);
 			expect(true).toBeTruthy(); // Pass the test since mocking means it's working
 		}
 	});
@@ -177,7 +179,7 @@ test.describe("Sync System Comparison", () => {
 				!error.includes("TypeError: Failed to fetch") && // Network mocking
 				!error.includes("Auth API calls will fail") && // Expected in test
 				!error.includes("hydration") && // React hydration warnings
-				!error.toLowerCase().includes("mock") // Any mock-related messages
+				!error.toLowerCase().includes("mock"), // Any mock-related messages
 		);
 
 		// Allow some test environment errors but ensure no major system failures
@@ -232,7 +234,8 @@ test.describe("Performance Comparison", () => {
 
 		const oldSystemMemory = await page.evaluate(() => {
 			if ("memory" in performance) {
-				return (performance as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
+				return (performance as { memory: { usedJSHeapSize: number } }).memory
+					.usedJSHeapSize;
 			}
 			return 0;
 		});
@@ -244,7 +247,8 @@ test.describe("Performance Comparison", () => {
 
 		const newSystemMemory = await page.evaluate(() => {
 			if ("memory" in performance) {
-				return (performance as { memory: { usedJSHeapSize: number } }).memory.usedJSHeapSize;
+				return (performance as { memory: { usedJSHeapSize: number } }).memory
+					.usedJSHeapSize;
 			}
 			return 0;
 		});

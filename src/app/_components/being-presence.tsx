@@ -6,7 +6,7 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
-import { getCachedBeing } from "~/hooks/use-simple-sync";
+import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";

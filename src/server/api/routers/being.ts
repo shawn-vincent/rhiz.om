@@ -51,10 +51,7 @@ export const beingRouter = createTRPCRouter({
 		.mutation(async ({ ctx, input }) => {
 			console.log("🐛 being.upsert - MUTATION CALLED with input:", input);
 			console.log("🐛 being.upsert - session:", ctx.session);
-			console.log(
-				"🐛 being.upsert - sessionBeingId:",
-				ctx.auth.sessionBeingId,
-			);
+			console.log("🐛 being.upsert - sessionBeingId:", ctx.auth.sessionBeingId);
 			const { sessionBeingId, isCurrentUserSuperuser } = ctx.auth;
 
 			// Authorization: Check if user can edit this being (owner or superuser)

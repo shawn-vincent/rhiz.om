@@ -40,7 +40,7 @@ export function addSpaceConnection(
 	if (!spaceConnections.has(spaceId)) {
 		spaceConnections.set(spaceId, new Set());
 	}
-	spaceConnections.get(spaceId)!.add(controller);
+	spaceConnections.get(spaceId)?.add(controller);
 }
 
 // Remove connection from space

@@ -162,4 +162,6 @@ export const protectedProcedure = t.procedure
  * Procedure with full authorization context
  * Use this when you need to check permissions or access current user's being data
  */
-export const authorizedProcedure = protectedProcedure.use(authorizationMiddleware);
+export const authorizedProcedure = protectedProcedure.use(
+	authorizationMiddleware,
+);

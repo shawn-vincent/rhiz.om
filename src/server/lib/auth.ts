@@ -14,7 +14,9 @@ export interface AuthContext {
  * Gets authorization context for a given session being ID
  * Used by both tRPC middleware and REST API routes
  */
-export async function getAuthContext(sessionBeingId: string): Promise<AuthContext> {
+export async function getAuthContext(
+	sessionBeingId: string,
+): Promise<AuthContext> {
 	// Get current user's being to check superuser status
 	const currentUserRaw = await db.query.beings.findFirst({
 		where: eq(beings.id, sessionBeingId),
