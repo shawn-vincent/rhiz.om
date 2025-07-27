@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 } from "~/components/ui/dialog";
@@ -20,6 +21,7 @@ interface ResponsiveModalProps {
 	onClose: () => void;
 	title: ReactNode;
 	children: ReactNode;
+	description?: string;
 }
 
 export function ResponsiveModal({
@@ -27,6 +29,7 @@ export function ResponsiveModal({
 	onClose,
 	title,
 	children,
+	description,
 }: ResponsiveModalProps) {
 	const isMobile = useMediaQuery("(max-width: 768px)");
 	const isTablet = useMediaQuery("(max-width: 1024px)");
@@ -57,6 +60,7 @@ export function ResponsiveModal({
 						<DialogTitle className="flex items-center gap-3">
 							{title}
 						</DialogTitle>
+						{description && <DialogDescription>{description}</DialogDescription>}
 					</DialogHeader>
 					<div className="mt-6 flex-1 overflow-y-auto">{children}</div>
 				</DialogContent>

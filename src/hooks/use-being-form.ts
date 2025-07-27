@@ -87,7 +87,7 @@ export function useBeingForm({
 			const valuesToUse = being ? getEditDefaults() : baseDefaults;
 			methods.reset(valuesToUse);
 		}
-	}, [isOpen, being, baseDefaults, methods]);
+	}, [isOpen, being?.id, being?.name, being?.type, being?.ownerId, being?.locationId]);
 
 	// Helper function to prepare submission data
 	const prepareSubmitData = (data: BeingFormData): InsertBeing => {

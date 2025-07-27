@@ -132,6 +132,7 @@ export function BeingEditModal({
 					{titleText}
 				</>
 			}
+			description="Edit being properties and configuration"
 		>
 			{content}
 		</ResponsiveModal>
