@@ -4,7 +4,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
-import { getCachedBeing } from "~/hooks/use-space-data-context";
+import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -28,28 +28,8 @@ export function InlineBeingName({
 		: undefined;
 
 	const [isUpdating, setIsUpdating] = useState(false);
-	const [being, setBeing] = useState(() =>
-		beingId ? getCachedBeing(beingId) : undefined,
-	);
-
-	// Update being from cache when it changes
-	useEffect(() => {
-		if (!beingId) return;
-
-		const updateBeing = () => {
-			const cachedBeing = getCachedBeing(beingId);
-			if (cachedBeing) {
-				setBeing(cachedBeing);
-			}
-		};
-
-		// Check immediately
-		updateBeing();
-
-		// Check periodically for cache updates
-		const interval = setInterval(updateBeing, 1000);
-		return () => clearInterval(interval);
-	}, [beingId]);
+	const { beings } = useSpaceDataContext();
+	const being = beingId ? beings.find((b) => b.id === beingId) : undefined;
 
 	const upsertBeing = api.being.upsert.useMutation();
 
@@ -72,8 +52,7 @@ export function InlineBeingName({
 				llmApiKey: being.llmApiKey ?? undefined,
 			});
 
-			// Update local state immediately for optimistic UI
-			setBeing({ ...being, name: newName });
+			// Optimistic update will be handled by the sync system
 		} catch (error) {
 			inlineBeingLogger.error(
 				error,

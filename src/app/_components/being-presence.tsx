@@ -6,7 +6,6 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
-import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
@@ -35,8 +34,8 @@ export function BeingPresence({
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
 
-	// Get current user's being from cache to check superuser status
-	const currentUserBeing = getCachedBeing(currentUserBeingId || "");
+	// Get current user's being from beings list to check superuser status
+	const currentUserBeing = beings.find((b) => b.id === currentUserBeingId);
 	const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
 
 	// Transform beings to match expected format
