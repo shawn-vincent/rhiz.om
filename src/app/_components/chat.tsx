@@ -31,8 +31,19 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	// Use the shared space data context
 	const { utterances, error, refresh } = useSpaceDataContext();
 
-	// tRPC mutation for creating utterances
-	const createUtterance = api.intention.createUtterance.useMutation();
+	// tRPC mutation for creating utterances with optimistic update
+	const createUtterance = api.intention.createUtterance.useMutation({
+		onSuccess: () => {
+			// Force refresh to get latest data immediately
+			refresh();
+		},
+		onError: (error) => {
+			console.error("Failed to send message:", error);
+			chatLogger.error(error, "Failed to send message");
+			// Force refresh to ensure we have latest state
+			refresh();
+		},
+	});
 
 	// Group messages by owner (consecutive messages from same user)
 	const groupedMessages = useMemo(() => {
@@ -62,9 +73,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				beingId,
 			});
 			setMessage("");
-		} catch (error) {
-			console.error("Failed to send message:", error);
-			chatLogger.error(error, "Failed to send message");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -158,19 +166,45 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 									<div
 										className={`flex flex-col gap-0.5 ${isCurrentUser ? "items-end" : "items-start"}`}
 									>
-										{group.messages.map((utterance) => (
-											<div
-												key={utterance.id}
-												className={`rounded-2xl px-4 py-2 shadow ${isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900 dark:bg-gray-700/60 dark:text-gray-50"}`}
-											>
-												<RichContent
-													nodes={utterance.content as ContentNode[]}
-												/>
-												{utterance.state === "active" && (
-													<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current" />
-												)}
-											</div>
-										))}
+										{group.messages.map((utterance) => {
+											const content = utterance.content as ContentNode[];
+											const isEmpty = !content || content.length === 0 || (content.length === 1 && content[0] === "");
+											const isError = utterance.state === "failed";
+											
+											// Log warning for empty responses
+											if (isEmpty && utterance.state === "complete" && !isError) {
+												console.warn("🚨 Empty response detected for utterance:", utterance.id, "content:", content);
+												chatLogger.warn({ utteranceId: utterance.id, content }, "Empty response detected");
+											}
+											
+											return (
+												<div
+													key={utterance.id}
+													className={`rounded-2xl px-4 py-2 shadow ${
+														isError 
+															? "bg-red-100 text-red-900 border border-red-200 dark:bg-red-900/20 dark:text-red-200 dark:border-red-500/30" 
+															: isCurrentUser ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900 dark:bg-gray-700/60 dark:text-gray-50"
+													}`}
+												>
+													{isError ? (
+														<div className="flex items-center gap-2">
+															<span className="text-red-500">⚠️</span>
+															<span>Error: {content && content.length > 0 ? String(content[0]) : "Failed to get response"}</span>
+														</div>
+													) : isEmpty && utterance.state === "complete" ? (
+														<div className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
+															<span>⚠️</span>
+															<span className="italic">Empty response received</span>
+														</div>
+													) : (
+														<RichContent nodes={content} />
+													)}
+													{utterance.state === "active" && (
+														<span className="inline-block h-2 w-2 animate-pulse rounded-full bg-current" />
+													)}
+												</div>
+											);
+										})}
 									</div>
 								</div>
 							</li>

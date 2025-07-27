@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 const syncParamsSchema = z.object({
 	spaceId: z.string(),
-	types: z.string().default("beings,intentions"),
+	types: z.string().nullish().default("beings,intentions"),
 });
 
 export async function GET(request: NextRequest) {
@@ -37,9 +37,11 @@ export async function GET(request: NextRequest) {
 
 		const encoder = new TextEncoder();
 		const connectionId = Math.random().toString(36).substring(7);
+		let streamController: ReadableStreamDefaultController | null = null;
 
 		const stream = new ReadableStream({
 			async start(controller) {
+				streamController = controller;
 				try {
 					// Add this connection to the space
 					addSpaceConnection(spaceId as BeingId, controller);
@@ -75,7 +77,9 @@ export async function GET(request: NextRequest) {
 			},
 			cancel() {
 				// Clean up space connection
-				removeSpaceConnection(spaceId as BeingId, controller);
+				if (streamController) {
+					removeSpaceConnection(spaceId as BeingId, streamController);
+				}
 
 				// Clean up being connection
 				if (beingId) {

@@ -84,7 +84,7 @@ export function BeingEditModal({
 			) : being ? (
 				<FormProvider {...methods}>
 					<form
-						onSubmit={methods.handleSubmit(handleSubmit)}
+						onSubmit={methods.handleSubmit(handleSubmit as any)}
 						className="space-y-6"
 					>
 						<BeingForm />

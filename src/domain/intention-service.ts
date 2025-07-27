@@ -11,6 +11,7 @@ import type {
 import { selectIntentionSchema } from "~/server/db/types";
 import { activateBots } from "~/server/lib/bots";
 import { logger } from "~/server/lib/logger";
+import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
 import type { AuthContext } from "./auth-service";
 
 const intentionLogger = logger.child({ name: "IntentionService" });
@@ -52,6 +53,11 @@ export class IntentionService {
 			locationId: input.beingId,
 			content: [input.content],
 		});
+
+		// Trigger space update to notify clients of new message
+		triggerSpaceUpdate(input.beingId as BeingId).catch((error) =>
+			intentionLogger.error({ error }, "Failed to trigger space update"),
+		);
 
 		// Activate all bots in the space (fire and forget)
 		activateBots(input.beingId as BeingId, userIntentionId).catch((error) =>
