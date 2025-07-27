@@ -20,7 +20,7 @@ import { BeingForm } from "~/app/_components/being-form";
 import { MobileBreadcrumb } from "~/components/ui/breadcrumb";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { useBeing } from "~/hooks/use-being-cache";
+import { useBeing } from "~/hooks/use-beings";
 import { logger } from "~/lib/logger.client";
 import { type InsertBeing, insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";

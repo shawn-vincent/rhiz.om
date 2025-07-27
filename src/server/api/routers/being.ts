@@ -1,7 +1,7 @@
 // src/server/api/routers/being.ts
 import { z } from "zod/v4";
 import {
-	authorizedProcedure,
+	protectedProcedure,
 	createTRPCRouter,
 	publicProcedure,
 } from "~/server/api/trpc";
@@ -24,7 +24,7 @@ export const beingRouter = createTRPCRouter({
 	 * This is a protected procedure, requiring the user to be authenticated.
 	 * It also verifies that the user is the owner of the being they are trying to modify.
 	 */
-	upsert: authorizedProcedure
+	upsert: protectedProcedure
 		.input(insertBeingSchema)
 		.mutation(async ({ ctx, input }) => {
 			return services.being.upsertBeing(input, ctx.auth);

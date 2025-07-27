@@ -13,7 +13,7 @@ import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
-import { useBeing } from "~/hooks/use-being-cache";
+import { useBeing } from "~/hooks/use-beings";
 
 function NavigationSelector() {
 	const router = useRouter();

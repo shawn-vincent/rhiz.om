@@ -16,6 +16,6 @@ export const intentionRouter = createTRPCRouter({
 	createUtterance: protectedProcedure
 		.input(z.object({ content: z.string().min(1), beingId: z.string() }))
 		.mutation(async ({ ctx, input }) => {
-			return services.intention.createUtterance(input, ctx.session);
+			return services.intention.createUtterance(input, ctx.auth);
 		}),
 });

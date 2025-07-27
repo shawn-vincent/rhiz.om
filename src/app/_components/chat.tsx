@@ -6,7 +6,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { RichContent } from "~/app/_components/rich-content";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { callIntentionAPI } from "~/hooks/use-simple-sync";
+import { api } from "~/trpc/react";
 import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { useSpaceDataContext } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
@@ -31,6 +31,9 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	// Use the shared space data context
 	const { utterances, error, refresh } = useSpaceDataContext();
 
+	// tRPC mutation for creating utterances
+	const createUtterance = api.intention.createUtterance.useMutation();
+
 	// Group messages by owner (consecutive messages from same user)
 	const groupedMessages = useMemo(() => {
 		const groups: Array<{ ownerId: string; messages: Intention[] }> = [];
@@ -54,14 +57,9 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 		setIsSubmitting(true);
 		try {
-			await callIntentionAPI({
-				action: "create",
-				spaceId: beingId,
-				data: {
-					content: [message.trim()],
-					type: "utterance",
-					state: "complete",
-				},
+			await createUtterance.mutateAsync({
+				content: message.trim(),
+				beingId,
 			});
 			setMessage("");
 		} catch (error) {

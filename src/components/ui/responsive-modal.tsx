@@ -13,7 +13,7 @@ import {
 	SheetHeader,
 	SheetTitle,
 } from "~/components/ui/sheet";
-import { useMediaQuery } from "../../../packages/entity-kit/src/hooks/use-media-query";
+import { useMediaQuery } from "~/hooks/use-media-query";
 
 interface ResponsiveModalProps {
 	isOpen: boolean;

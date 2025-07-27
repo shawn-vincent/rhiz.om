@@ -126,26 +126,10 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 /**
- * Protected procedure that requires basic authentication
- * Use this when you only need to ensure user is logged in
+ * Protected procedure that requires authentication with full being context
+ * This is the single authorization pattern for all authenticated operations
  */
 export const protectedProcedure = t.procedure
-	.use(loggingMiddleware)
-	.use(async ({ ctx, next }) => {
-		const session = services.auth.validateBasicSession(ctx.session);
-		return next({
-			ctx: {
-				...ctx,
-				session,
-			},
-		});
-	});
-
-/**
- * Authorized procedure with full auth context including being data
- * Use this when you need permissions or access to current user's being
- */
-export const authorizedProcedure = t.procedure
 	.use(loggingMiddleware)
 	.use(async ({ ctx, next }) => {
 		const auth = await services.auth.validateSession(ctx.session);

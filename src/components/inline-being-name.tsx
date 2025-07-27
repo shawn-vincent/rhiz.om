@@ -4,7 +4,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
-import { callBeingAPI } from "~/hooks/use-simple-sync";
+import { api } from "~/trpc/react";
 import { getCachedBeing } from "~/hooks/use-space-data-context";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
@@ -51,18 +51,25 @@ export function InlineBeingName({
 		return () => clearInterval(interval);
 	}, [beingId]);
 
+	const upsertBeing = api.being.upsert.useMutation();
+
 	const handleSave = async (newName: string) => {
 		if (!being || !beingId || isUpdating) return;
 
 		setIsUpdating(true);
 		try {
-			await callBeingAPI({
-				action: "update",
-				beingId,
-				data: {
-					...being,
-					name: newName,
-				},
+			await upsertBeing.mutateAsync({
+				...being,
+				name: newName,
+				// Convert null values to undefined for insertBeingSchema compatibility
+				extIds: being.extIds ?? undefined,
+				idHistory: being.idHistory ?? undefined,
+				metadata: being.metadata ?? undefined,
+				properties: being.properties ?? undefined,
+				content: being.content ?? undefined,
+				botModel: being.botModel ?? undefined,
+				botPrompt: being.botPrompt ?? undefined,
+				llmApiKey: being.llmApiKey ?? undefined,
 			});
 
 			// Update local state immediately for optimistic UI

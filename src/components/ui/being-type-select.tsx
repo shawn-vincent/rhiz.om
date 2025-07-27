@@ -7,7 +7,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "~/components/ui/select";
-import type { BeingType } from "../../../packages/entity-kit/src/types";
+import type { BeingType } from "~/lib/space-types";
 
 interface BeingTypeSelectProps {
 	value?: string;

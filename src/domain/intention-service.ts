@@ -6,7 +6,7 @@ import type { BeingId, IntentionId, Intention, InsertIntention } from "~/server/
 import { selectIntentionSchema } from "~/server/db/types";
 import { activateBots } from "~/server/lib/bots";
 import { logger } from "~/server/lib/logger";
-import type { Session } from "next-auth";
+import type { AuthContext } from "./auth-service";
 
 const intentionLogger = logger.child({ name: "IntentionService" });
 
@@ -32,26 +32,15 @@ export class IntentionService {
   /**
    * Create a new utterance (chat message) from a user
    */
-  async createUtterance(input: CreateUtteranceInput, session: Session): Promise<{ success: boolean }> {
-    const userRecord = await this.db.query.users.findFirst({
-      where: eq(users.id, session.user.id),
-    });
-    
-    if (!userRecord?.beingId) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: "User does not have an associated Being.",
-      });
-    }
-
+  async createUtterance(input: CreateUtteranceInput, auth: AuthContext): Promise<{ success: boolean }> {
     const userIntentionId: IntentionId = `/${crypto.randomUUID()}`;
     
     await this.db.insert(intentions).values({
       id: userIntentionId,
-      name: `Utterance by ${session.user.name ?? "user"}`,
+      name: `Utterance by ${auth.currentUser?.name ?? "user"}`,
       type: "utterance",
       state: "complete",
-      ownerId: userRecord.beingId,
+      ownerId: auth.sessionBeingId,
       locationId: input.beingId,
       content: [input.content],
     });

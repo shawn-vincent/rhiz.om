@@ -10,7 +10,7 @@ import { ResponsiveModal } from "~/components/ui/responsive-modal";
 import { useBeingForm } from "~/hooks/use-being-form";
 import type { BeingFormData } from "~/hooks/use-being-form";
 import { api } from "~/trpc/react";
-import type { BeingType } from "../../packages/entity-kit/src/types";
+import type { BeingType } from "~/lib/space-types";
 
 interface BeingCreateModalProps {
 	isOpen: boolean;

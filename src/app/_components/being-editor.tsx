@@ -13,7 +13,7 @@ import type { z } from "zod/v4";
 import { Button } from "~/components/ui/button";
 import { DialogFooter } from "~/components/ui/dialog";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { useBeing } from "~/hooks/use-being-cache";
+import { useBeing } from "~/hooks/use-beings";
 import { logger } from "~/lib/logger.client";
 import {
 	type Being,

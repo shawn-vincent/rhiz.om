@@ -1,6 +1,6 @@
 import { Bot, FileText, MapPinned, UserRound } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { useBeing } from "~/hooks/use-being-cache";
+import { useBeing } from "~/hooks/use-beings";
 import { isSuperuser } from "~/lib/permissions";
 import { cn } from "~/lib/utils";
 import { SuperuserBadge } from "./superuser-badge";

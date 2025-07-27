@@ -9,7 +9,7 @@ import {
 	useRef,
 	useState,
 } from "react";
-import type { ConnectionState, SpaceData } from "~/lib/simple-sync-types";
+import type { ConnectionState, SpaceData } from "~/lib/space-types";
 import type { Being, BeingId, Intention } from "~/server/db/types";
 
 // Global cache - simple Map storage
