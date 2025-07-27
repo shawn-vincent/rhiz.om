@@ -63,9 +63,9 @@ export function Config() {
 		);
 
 	const { beings } = useSpaceDataContext();
-	const presenceMap = new Map(
-		beings.map((being) => [being.id, true]), // All beings from simple sync are considered "present"
-	);
+	// For now, we can't determine actual guest presence from sync data
+	// Only spaces and bots are always considered online
+	const presenceMap = new Map<string, boolean>();
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;
 

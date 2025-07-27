@@ -56,7 +56,11 @@ export function EntityCard({
 					<div
 						className={cn(
 							"-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-background",
-							isOnline ? "bg-green-400" : "bg-gray-500",
+							isOnline
+								? entity.type === "space" || entity.type === "bot"
+									? "bg-blue-400"
+									: "bg-green-400"
+								: "bg-gray-500",
 						)}
 					/>
 				)}

@@ -44,8 +44,7 @@ export function BeingPresence({
 		id: being.id,
 		name: being.name,
 		type: being.type as BeingType,
-		isOnline:
-			being.type === "space" || being.type === "bot" || being.type === "guest",
+		isOnline: being.type === "space" || being.type === "bot",
 		ownerId: being.ownerId,
 	}));
 
