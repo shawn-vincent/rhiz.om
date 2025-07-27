@@ -13,7 +13,7 @@ import { ZodError } from "zod/v4";
 
 import { auth } from "~/server/auth";
 import { db } from "~/server/db";
-import { getAuthContext } from "~/server/lib/auth";
+import { services } from "~/domain/services";
 import { logger } from "~/server/lib/logger";
 
 /**
@@ -126,42 +126,34 @@ export const publicProcedure = t.procedure.use(loggingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 /**
- * Authorization middleware that fetches current user's being data
- * and provides auth context including superuser status
+ * Protected procedure that requires basic authentication
+ * Use this when you only need to ensure user is logged in
  */
-const authorizationMiddleware = t.middleware(async ({ ctx, next }) => {
-	if (!ctx.session?.user?.beingId) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
-	}
-
-	const auth = await getAuthContext(ctx.session.user.beingId);
-
-	return next({
-		ctx: {
-			...ctx,
-			auth,
-		},
-	});
-});
-
 export const protectedProcedure = t.procedure
 	.use(loggingMiddleware)
-	.use(({ ctx, next }) => {
-		if (!ctx.session?.user) {
-			throw new TRPCError({ code: "UNAUTHORIZED" });
-		}
+	.use(async ({ ctx, next }) => {
+		const session = services.auth.validateBasicSession(ctx.session);
 		return next({
 			ctx: {
-				// infers the `session` as non-nullable
-				session: { ...ctx.session, user: ctx.session.user },
+				...ctx,
+				session,
 			},
 		});
 	});
 
 /**
- * Procedure with full authorization context
- * Use this when you need to check permissions or access current user's being data
+ * Authorized procedure with full auth context including being data
+ * Use this when you need permissions or access to current user's being
  */
-export const authorizedProcedure = protectedProcedure.use(
-	authorizationMiddleware,
-);
+export const authorizedProcedure = t.procedure
+	.use(loggingMiddleware)
+	.use(async ({ ctx, next }) => {
+		const auth = await services.auth.validateSession(ctx.session);
+		return next({
+			ctx: {
+				...ctx,
+				session: ctx.session!, // We know it's valid from validateSession
+				auth,
+			},
+		});
+	});

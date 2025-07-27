@@ -1,24 +1,12 @@
 // src/server/api/routers/being.ts
-import { and, asc, desc, eq, gt, ilike } from "drizzle-orm";
 import { z } from "zod/v4";
-import type {
-	BeingType,
-	EntitySummary,
-} from "../../../../packages/entity-kit/src/types";
-
-import { TRPCError } from "@trpc/server";
-import { emitter } from "~/lib/events";
-import { canEdit } from "~/lib/permissions";
 import {
 	authorizedProcedure,
 	createTRPCRouter,
-	protectedProcedure,
 	publicProcedure,
 } from "~/server/api/trpc";
-import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
-import type { BeingId } from "~/server/db/types";
-import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
+import { services } from "~/domain/services";
 
 export const beingRouter = createTRPCRouter({
 	/**
@@ -27,17 +15,8 @@ export const beingRouter = createTRPCRouter({
 	getById: publicProcedure
 		.input(z.object({ id: z.string() }))
 		.output(selectBeingSchema)
-		.query(async ({ ctx, input }) => {
-			const being = await ctx.db.query.beings.findFirst({
-				where: eq(beings.id, input.id),
-			});
-			if (!being) {
-				throw new TRPCError({
-					code: "NOT_FOUND",
-					message: `Being with ID "${input.id}" not found.`,
-				});
-			}
-			return selectBeingSchema.parse(being);
+		.query(async ({ input }) => {
+			return services.being.getBeing(input.id);
 		}),
 
 	/**
@@ -48,91 +27,14 @@ export const beingRouter = createTRPCRouter({
 	upsert: authorizedProcedure
 		.input(insertBeingSchema)
 		.mutation(async ({ ctx, input }) => {
-			console.log("🐛 being.upsert - MUTATION CALLED with input:", input);
-			console.log("🐛 being.upsert - session:", ctx.session);
-			console.log("🐛 being.upsert - sessionBeingId:", ctx.auth.sessionBeingId);
-			const { sessionBeingId, isCurrentUserSuperuser } = ctx.auth;
-
-			// Authorization: Check if user can edit this being (owner or superuser)
-			if (!canEdit(sessionBeingId, input.ownerId, isCurrentUserSuperuser)) {
-				throw new TRPCError({
-					code: "FORBIDDEN",
-					message: `You can only save beings that you own or have superuser access to [Tried to modify ${input.id} owned by ${input.ownerId || "UNDEFINED"}, you=${sessionBeingId || "UNDEFINED"}, superuser=${isCurrentUserSuperuser}.]`,
-				});
-			}
-
-			// Check if locationId changed to broadcast presence update
-			const existingBeing = await ctx.db.query.beings.findFirst({
-				where: eq(beings.id, input.id),
-			});
-
-			// Use Drizzle's ON CONFLICT for an atomic upsert operation.
-			// This is the best practice for create-or-update logic.
-			await ctx.db
-				.insert(beings)
-				.values({
-					...input,
-					modifiedAt: new Date(),
-				})
-				.onConflictDoUpdate({
-					target: beings.id,
-					set: {
-						...input,
-						modifiedAt: new Date(),
-					},
-				});
-
-			// Fetch the upserted being to return proper data
-			const result = await ctx.db.query.beings.findFirst({
-				where: eq(beings.id, input.id),
-			});
-
-			console.log("🐛 being.upsert - result from DB:", result);
-			console.log("🐛 being.upsert - result.id:", result?.id);
-
-			if (!result) {
-				throw new TRPCError({
-					code: "INTERNAL_SERVER_ERROR",
-					message: "Failed to create or update being",
-				});
-			}
-
-			// Trigger sync updates for affected spaces
-			if (existingBeing?.locationId) {
-				await triggerSpaceUpdate(existingBeing.locationId as BeingId);
-			}
-			if (
-				result.locationId &&
-				result.locationId !== existingBeing?.locationId
-			) {
-				await triggerSpaceUpdate(result.locationId as BeingId);
-			}
-
-			// Emit bot location change event for server-side agents
-			if (input.type === "bot") {
-				emitter.emit("bot-location-change", {
-					beingId: input.id,
-					spaceId: input.locationId,
-					oldSpaceId: existingBeing?.locationId || null,
-				});
-			}
-
-			// Parse the result through the schema to ensure proper typing
-			const parsedResult = selectBeingSchema.parse(result);
-			console.log("🐛 being.upsert - parsedResult:", parsedResult);
-			console.log("🐛 being.upsert - parsedResult.id:", parsedResult.id);
-
-			return parsedResult;
+			return services.being.upsertBeing(input, ctx.auth);
 		}),
 
 	/**
 	 * Fetches all beings, ordered by name.
 	 */
-	getAll: publicProcedure.query(async ({ ctx }) => {
-		const beings = await ctx.db.query.beings.findMany({
-			orderBy: (beings, { asc }) => [asc(beings.name)],
-		});
-		return beings.map((being) => selectBeingSchema.parse(being));
+	getAll: publicProcedure.query(async () => {
+		return services.being.getAllBeings();
 	}),
 
 	/**
@@ -140,11 +42,8 @@ export const beingRouter = createTRPCRouter({
 	 */
 	getByLocation: publicProcedure
 		.input(z.object({ locationId: z.string() }))
-		.query(async ({ ctx, input }) => {
-			return ctx.db.query.beings.findMany({
-				where: eq(beings.locationId, input.locationId),
-				orderBy: (beings, { asc }) => [asc(beings.name)],
-			});
+		.query(async ({ input }) => {
+			return services.being.getBeingsByLocation(input.locationId);
 		}),
 
 	/**
@@ -160,53 +59,13 @@ export const beingRouter = createTRPCRouter({
 				cursor: z.string().nullish(),
 			}),
 		)
-		.query(
-			async ({
-				ctx,
-				input,
-			}): Promise<{ items: EntitySummary[]; nextCursor: string | null }> => {
-				const limit = input.limit;
-				const orderBy =
-					input.sort === "name" ? asc(beings.name) : desc(beings.createdAt);
-
-				const whereClause = and(
-					input.q ? ilike(beings.name, `%${input.q}%`) : undefined,
-					input.kind ? eq(beings.type, input.kind) : undefined,
-					input.cursor
-						? input.sort === "name"
-							? gt(beings.name, input.cursor)
-							: gt(
-									beings.createdAt,
-									(
-										await ctx.db.query.beings.findFirst({
-											where: eq(beings.id, input.cursor),
-										})
-									)?.createdAt || new Date(0),
-								)
-						: undefined,
-				);
-
-				const fetchedBeings = await ctx.db.query.beings.findMany({
-					where: whereClause,
-					orderBy: [orderBy],
-					limit: limit + 1,
-				});
-
-				let nextCursor: string | null = null;
-				if (fetchedBeings.length > limit) {
-					const nextItem = fetchedBeings.pop();
-					if (nextItem) {
-						nextCursor = nextItem.id;
-					}
-				}
-
-				const items: EntitySummary[] = fetchedBeings.map((b) => ({
-					id: b.id,
-					name: b.name,
-					type: b.type as BeingType,
-				}));
-
-				return { items, nextCursor };
-			},
-		),
+		.query(async ({ input }) => {
+			return services.being.searchBeings({
+				q: input.q,
+				kind: input.kind,
+				sort: input.sort,
+				limit: input.limit,
+				cursor: input.cursor ?? undefined,
+			});
+		}),
 });
