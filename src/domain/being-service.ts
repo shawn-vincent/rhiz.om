@@ -6,7 +6,7 @@ import type { DrizzleDB } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { Being, BeingId, InsertBeing } from "~/server/db/types";
-import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
+import { notifyBeingUpdate } from "~/server/lib/stream";
 import type {
 	BeingType,
 	EntitySummary,
@@ -169,12 +169,12 @@ export class BeingService {
 			});
 		}
 
-		// Trigger sync updates for affected spaces
+		// Trigger stream updates for affected spaces
 		if (existingBeing?.locationId) {
-			await triggerSpaceUpdate(existingBeing.locationId as BeingId);
+			notifyBeingUpdate(result.id, existingBeing.locationId);
 		}
 		if (result.locationId && result.locationId !== existingBeing?.locationId) {
-			await triggerSpaceUpdate(result.locationId as BeingId);
+			notifyBeingUpdate(result.id, result.locationId);
 		}
 
 		// Emit bot location change event for server-side agents

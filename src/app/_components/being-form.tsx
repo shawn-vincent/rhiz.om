@@ -34,6 +34,38 @@ export function BeingForm() {
 	/* ---------- render ---------- */
 	return (
 		<div className="space-y-6">
+			{/* Form-level errors for fields not visible in UI */}
+			{Object.keys(errors).length > 0 && (
+				<div className="rounded-md border border-red-200 bg-red-50 p-4">
+					<div className="flex">
+						<div className="ml-3">
+							<h3 className="font-medium text-red-800 text-sm">
+								Form validation errors:
+							</h3>
+							<div className="mt-2 text-red-700 text-sm">
+								<ul className="list-disc space-y-1 pl-5">
+									{Object.entries(errors).map(([field, error]) => {
+										let errorMessage = "Invalid value";
+										if (
+											error &&
+											typeof error === "object" &&
+											"message" in error
+										) {
+											errorMessage = String(error.message);
+										}
+										return (
+											<li key={field}>
+												<strong>{field}:</strong> {errorMessage}
+											</li>
+										);
+									})}
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			)}
+
 			{/* ----- Simple scalars ----- */}
 			<div className="space-y-4">
 				{/* ID field hidden - generated on save */}

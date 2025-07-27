@@ -5,8 +5,7 @@ import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
 import { logger } from "~/server/lib/logger";
-import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
-// Note: removed old state-sync dependency
+import { notifyIntentionCreated } from "~/server/lib/stream";
 
 const botLogger = logger.child({ name: "Bots" });
 
@@ -62,13 +61,8 @@ export async function activateBot(
 			content: [""],
 		});
 
-		// Trigger space update to show the bot's initial "thinking" bubble
-		triggerSpaceUpdate(spaceId).catch((error) =>
-			botLogger.error(
-				{ error, spaceId },
-				"Failed to trigger space update for bot activation",
-			),
-		);
+		// Notify that the bot intention was created
+		notifyIntentionCreated(aiIntentionId, spaceId);
 
 		// Stream the bot's response
 		await streamBotResponse(
@@ -135,6 +129,30 @@ async function streamBotResponse(
 		// Determine the API key
 		const apiKey = bot.llmApiKey ?? env.OPENROUTER_API_KEY;
 
+		// Check if API key is empty or missing
+		if (!apiKey || apiKey.trim() === "") {
+			const errorMessage =
+				"LLM API key is missing or empty. Please configure OPENROUTER_API_KEY in your environment or provide an API key for the bot.";
+			botLogger.error({ botId }, errorMessage);
+
+			// Update the intention with the error
+			await db
+				.update(intentions)
+				.set({
+					state: "failed",
+					content: [errorMessage],
+					modifiedAt: new Date(),
+				})
+				.where(eq(intentions.id, aiIntentionId));
+
+			// Error will be visible via intention update
+
+			// Trigger space update to show the error
+			notifyIntentionCreated(aiIntentionId, spaceId);
+
+			return;
+		}
+
 		const requestBody = {
 			model,
 			messages,
@@ -156,7 +174,7 @@ async function streamBotResponse(
 					"HTTP-Referer": "http://localhost:3000",
 					"X-Title": "Rhiz.om",
 				},
-				body: JSON.stringify(requestBody),
+				body: JSON.stringify(requestBody), // External API - must use standard JSON
 			},
 		);
 
@@ -175,7 +193,23 @@ async function streamBotResponse(
 				{ aiIntentionId, status: response.status, errorText },
 				"OpenRouter API error response",
 			);
-			throw new Error(`OpenRouter API error: ${response.status} ${errorText}`);
+
+			// Try to parse error as JSON for more structured error info
+			let errorDetails = errorText;
+			try {
+				const errorJson = JSON.parse(errorText);
+				if (errorJson.error?.message) {
+					errorDetails = errorJson.error.message;
+				} else if (errorJson.message) {
+					errorDetails = errorJson.message;
+				}
+			} catch {
+				// If parsing fails, use the raw text
+			}
+
+			throw new Error(
+				`OpenRouter API error (${response.status}): ${errorDetails}`,
+			);
 		}
 
 		if (!response.body) {
@@ -241,16 +275,13 @@ async function streamBotResponse(
 				if (!jsonStr) continue;
 
 				try {
-					const parsed = JSON.parse(jsonStr);
+					const parsed = JSON.parse(jsonStr); // External API response - standard JSON
 					const token = parsed.choices?.[0]?.delta?.content;
 
 					if (token) {
 						tokensReceived++;
 						fullResponse += token;
-						emitter.emit(`update.${aiIntentionId}`, {
-							type: "token",
-							data: token,
-						});
+						// Token updates handled via intention updates
 
 						// Update the database periodically during streaming to show partial content
 						const now = Date.now();
@@ -272,10 +303,8 @@ async function streamBotResponse(
 								})
 								.where(eq(intentions.id, aiIntentionId));
 
-							// Trigger space update to show partial response
-							triggerSpaceUpdate(spaceId).catch((error) =>
-								botLogger.debug({ error }, "Failed to trigger partial update"),
-							);
+							// Trigger intention update to show partial response
+							notifyIntentionCreated(aiIntentionId, spaceId);
 
 							lastUpdateTime = now;
 						}
@@ -312,33 +341,39 @@ async function streamBotResponse(
 			})
 			.where(eq(intentions.id, aiIntentionId));
 
-		// Trigger space update to show the completed bot response
-		triggerSpaceUpdate(spaceId).catch((error) =>
-			botLogger.error(
-				{ error, spaceId },
-				"Failed to trigger space update after bot completion",
-			),
-		);
+		// Trigger intention update to show the completed bot response
+		notifyIntentionCreated(aiIntentionId, spaceId);
 
-		emitter.emit(`update.${aiIntentionId}`, { type: "end" });
+		// Completion handled via intention update
 		botLogger.info({ aiIntentionId }, "Bot response stream fully completed");
 	} catch (error) {
 		botLogger.error(error, "Bot response generation failed");
-		emitter.emit(`update.${aiIntentionId}`, {
-			type: "error",
-			data: "Failed to get response from AI.",
-		});
+
+		// Extract detailed error message
+		let errorMessage = "Failed to get response from AI";
+
+		if (error instanceof Error) {
+			errorMessage = error.message;
+
+			// If this is an HTTP error with a response body, include it
+			if (error.message.includes("OpenRouter API error:")) {
+				errorMessage = error.message;
+			}
+		} else if (typeof error === "string") {
+			errorMessage = error;
+		} else if (error && typeof error === "object" && "message" in error) {
+			errorMessage = String(error.message);
+		}
+
+		// Error will be visible via intention update
+
+		// Store the detailed error in the database
 		await db
 			.update(intentions)
-			.set({ state: "failed", content: ["AI failed to respond."] })
+			.set({ state: "failed", content: [errorMessage] })
 			.where(eq(intentions.id, aiIntentionId));
 
-		// Trigger space update to show the error response
-		triggerSpaceUpdate(spaceId).catch((updateError) =>
-			botLogger.error(
-				{ error: updateError, spaceId },
-				"Failed to trigger space update after bot error",
-			),
-		);
+		// Trigger intention update to show the error response
+		notifyIntentionCreated(aiIntentionId, spaceId);
 	}
 }

@@ -51,25 +51,27 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
 		// Create keymap for Enter/Shift+Enter handling with proper dependencies
 		const chatKeymap = useMemo(() => {
-			return Prec.high(keymap.of([
-				{
-					key: "Enter",
-					run: (view) => {
-						if (!disabled && value.trim()) {
-							onSubmit();
-							return true; // Prevent default newline insertion
-						}
-						return false; // Allow default behavior if no text
+			return Prec.high(
+				keymap.of([
+					{
+						key: "Enter",
+						run: (view) => {
+							if (!disabled && value.trim()) {
+								onSubmit();
+								return true; // Prevent default newline insertion
+							}
+							return false; // Allow default behavior if no text
+						},
 					},
-				},
-				{
-					key: "Shift-Enter",
-					run: (view) => {
-						// Let CodeMirror handle the newline insertion
-						return false;
+					{
+						key: "Shift-Enter",
+						run: (view) => {
+							// Let CodeMirror handle the newline insertion
+							return false;
+						},
 					},
-				},
-			]));
+				]),
+			);
 		}, [disabled, value, onSubmit]);
 
 		// Create custom dark theme using createTheme

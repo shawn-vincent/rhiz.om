@@ -1,4 +1,3 @@
-
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -100,3 +99,5 @@ When committing: Use emoji, detailed descriptions, and end with Buddhist Sutta q
 ## Database Access
 You can read the project database using the DATABASE_URL in .env using psql
 
+## Serialization Guidelines
+- Always use superjson instead of JSON for serialization and deserialization. Avoid type-stripping bugs.

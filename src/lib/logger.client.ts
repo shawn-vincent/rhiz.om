@@ -1,5 +1,6 @@
 import pino from "pino";
 import type { ExternalToast } from "sonner";
+import superjson from "superjson";
 import { toast } from "./toast";
 
 const DEBUG_LOGGING = false;
@@ -101,7 +102,7 @@ export const logger = pino({
 					console.info("Sending to /api/_log", rec);
 				}
 
-				postLog(JSON.stringify(rec));
+				postLog(superjson.stringify(rec));
 			},
 		},
 	},

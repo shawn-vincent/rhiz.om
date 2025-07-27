@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import superjson from "superjson";
 
 /**
  * Hook for managing recent items in localStorage
@@ -16,7 +17,7 @@ export function useRecents<T extends { id: string }>(
 		try {
 			const stored = localStorage.getItem(`recents-${key}`);
 			if (stored) {
-				const parsed = JSON.parse(stored) as T[];
+				const parsed = superjson.parse(stored) as T[];
 				setRecents(parsed);
 			}
 		} catch (error) {
@@ -36,7 +37,10 @@ export function useRecents<T extends { id: string }>(
 				// Save to localStorage
 				if (typeof window !== "undefined") {
 					try {
-						localStorage.setItem(`recents-${key}`, JSON.stringify(newRecents));
+						localStorage.setItem(
+							`recents-${key}`,
+							superjson.stringify(newRecents),
+						);
 					} catch (error) {
 						console.warn(`Failed to save recents for ${key}:`, error);
 					}

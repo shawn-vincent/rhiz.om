@@ -5,7 +5,7 @@ import { httpBatchStreamLink, loggerLink } from "@trpc/client";
 import { createTRPCReact } from "@trpc/react-query";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import { useState } from "react";
-import SuperJSON from "superjson";
+import superjson from "superjson";
 
 import type { AppRouter } from "~/server/api/root";
 import { createQueryClient } from "./query-client";
@@ -41,10 +41,23 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 								input: opts.input,
 							});
 						}
+						// Debug SuperJSON transformation
+						if (
+							opts.direction === "down" &&
+							opts.path?.includes("being.getById")
+						) {
+							console.log("🐛 tRPC SuperJSON debug:", {
+								path: opts.path,
+								result: opts.result,
+								type: typeof (opts.result as any)?.data?.createdAt,
+								isDate: (opts.result as any)?.data?.createdAt instanceof Date,
+								raw: (opts.result as any)?.data?.createdAt,
+							});
+						}
 					},
 				}),
 				httpBatchStreamLink({
-					transformer: SuperJSON,
+					transformer: superjson,
 					url: `${getBaseUrl()}/api/trpc`,
 					headers: () => {
 						const headers = new Headers();
