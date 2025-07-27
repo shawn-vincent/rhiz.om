@@ -18,8 +18,7 @@ import {
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { BeingId } from "~/server/db/types";
-import { broadcastPresenceUpdate } from "~/server/lib/presence";
-// Note: removed old state-sync dependency
+import { triggerSpaceUpdate } from "~/server/lib/simple-sync";
 
 export const beingRouter = createTRPCRouter({
 	/**
@@ -98,25 +97,24 @@ export const beingRouter = createTRPCRouter({
 				});
 			}
 
-			// Broadcast presence update if location changed
-			if (existingBeing?.locationId !== input.locationId) {
-				// Legacy presence system
-				broadcastPresenceUpdate({
-					type: "location_change",
+			// Trigger sync updates for affected spaces
+			if (existingBeing?.locationId) {
+				await triggerSpaceUpdate(existingBeing.locationId as BeingId);
+			}
+			if (
+				result.locationId &&
+				result.locationId !== existingBeing?.locationId
+			) {
+				await triggerSpaceUpdate(result.locationId as BeingId);
+			}
+
+			// Emit bot location change event for server-side agents
+			if (input.type === "bot") {
+				emitter.emit("bot-location-change", {
 					beingId: input.id,
-					locationId: input.locationId,
+					spaceId: input.locationId,
+					oldSpaceId: existingBeing?.locationId || null,
 				});
-
-				// Note: removed old state sync system calls - new simple sync handles this automatically
-
-				// Emit bot location change event for server-side agents
-				if (input.type === "bot") {
-					emitter.emit("bot-location-change", {
-						beingId: input.id,
-						spaceId: input.locationId,
-						oldSpaceId: existingBeing?.locationId || null,
-					});
-				}
 			}
 
 			// Parse the result through the schema to ensure proper typing
