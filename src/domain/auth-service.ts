@@ -38,7 +38,7 @@ export class AuthService {
 		if (!session.user.beingId) {
 			throw new TRPCError({
 				code: "UNAUTHORIZED",
-				message: `Authentication incomplete - user ${session.user.id || 'unknown'} missing beingId. Please sign out and sign in again.`,
+				message: `Authentication incomplete - user ${session.user.id || "unknown"} missing beingId. Please sign out and sign in again.`,
 			});
 		}
 

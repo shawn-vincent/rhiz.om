@@ -146,7 +146,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		if (isNearBottom && bottomAnchorRef.current) {
 			bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
 		}
-	}, [utterances.length]);
+	}, [utterances]);
 
 	// Mount-time scroll to bottom (immediate, no animation)
 	useLayoutEffect(() => {
