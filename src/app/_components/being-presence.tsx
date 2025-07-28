@@ -3,7 +3,7 @@
 
 import { useSession } from "next-auth/react";
 import type { BeingType } from "packages/entity-kit/src/types";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { useSync } from "~/hooks/use-stream";
@@ -155,7 +155,7 @@ export function BeingPresence({
 			return () =>
 				document.removeEventListener("mousedown", handleClickOutside);
 		}
-	}, [showPopover]);
+	}, [showPopover, handleClosePopover]);
 
 	// Compact mode for mobile/narrow screens
 	if (compact) {
