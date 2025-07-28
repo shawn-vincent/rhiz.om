@@ -49,14 +49,15 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 			},
 		}));
 
-		// Create keymap for Enter/Shift+Enter handling with proper dependencies
+		// Create keymap for Enter/Shift+Enter handling - memoize to avoid recreating on value changes
 		const chatKeymap = useMemo(() => {
 			return Prec.high(
 				keymap.of([
 					{
 						key: "Enter",
 						run: (view) => {
-							if (!disabled && value.trim()) {
+							const currentValue = view.state.doc.toString();
+							if (!disabled && currentValue.trim()) {
 								onSubmit();
 								return true; // Prevent default newline insertion
 							}
@@ -72,10 +73,10 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 					},
 				]),
 			);
-		}, [disabled, value, onSubmit]);
+		}, [disabled, onSubmit]); // Remove 'value' dependency to reduce recreation
 
-		// Create custom dark theme using createTheme
-		const customDarkTheme = createTheme({
+		// Create custom dark theme using createTheme - memoize to avoid recreation
+		const customDarkTheme = useMemo(() => createTheme({
 			theme: "dark",
 			settings: {
 				background: "#1f2937", // gray-800
@@ -105,10 +106,10 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 				{ tag: t.tagName, color: "#f472b6" },
 				{ tag: t.attributeName, color: "#fbbf24" },
 			],
-		});
+		}), []);
 
-		// Additional styling for border radius and layout with forced dark background
-		const borderRadiusTheme = EditorView.theme(
+		// Additional styling for border radius and layout with forced dark background - memoize
+		const borderRadiusTheme = useMemo(() => EditorView.theme(
 			{
 				"&": {
 					borderRadius: "9999px",
@@ -150,16 +151,21 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 				},
 			},
 			{ dark: true },
-		);
+		), []);
 
-		// CodeMirror extensions
-		const extensions = [
+		// CodeMirror extensions - memoize to avoid recreation
+		const extensions = useMemo(() => [
 			markdown(),
 			customDarkTheme,
 			borderRadiusTheme,
 			chatKeymap,
 			EditorView.lineWrapping,
-		];
+		], [customDarkTheme, borderRadiusTheme, chatKeymap]);
+
+		// Optimize onChange to avoid excessive re-renders
+		const handleChange = useCallback((val: string) => {
+			onChange(val);
+		}, [onChange]);
 
 		return (
 			<div className="flex w-full min-w-0 items-end gap-2">
@@ -167,7 +173,7 @@ export const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 					<CodeMirror
 						ref={editorRef}
 						value={value}
-						onChange={onChange}
+						onChange={handleChange}
 						placeholder={placeholder}
 						theme="dark"
 						extensions={extensions}

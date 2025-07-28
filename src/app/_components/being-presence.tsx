@@ -94,17 +94,50 @@ export function BeingPresence({
 	const [editingBeingId, setEditingBeingId] = useState<string | null>(null);
 	const popoverRef = useRef<HTMLDivElement>(null);
 
-	// Check if current user can edit a being
-	const canEdit = useMemo(
-		() => (being: BeingPresenceData) => {
-			return canEditPermission(
-				currentUserBeingId,
-				being.ownerId,
-				isCurrentUserSuperuser,
+	// Check if current user can edit a being - memoize the function and create a map for O(1) lookup
+	const canEditMap = useMemo(() => {
+		const map = new Map<string, boolean>();
+		for (const being of beingPresenceData) {
+			map.set(
+				being.id,
+				canEditPermission(
+					currentUserBeingId,
+					being.ownerId,
+					isCurrentUserSuperuser,
+				),
 			);
-		},
-		[currentUserBeingId, isCurrentUserSuperuser],
+		}
+		return map;
+	}, [beingPresenceData, currentUserBeingId, isCurrentUserSuperuser]);
+
+	const canEdit = useCallback(
+		(being: BeingPresenceData) => canEditMap.get(being.id) ?? false,
+		[canEditMap],
 	);
+
+	// Memoize event handlers to prevent unnecessary re-renders
+	const handleTogglePopover = useCallback(() => {
+		setShowPopover(!showPopover);
+	}, [showPopover]);
+
+	const handleClosePopover = useCallback(() => {
+		setShowPopover(false);
+		setSelectedBeingId(null);
+	}, []);
+
+	const handleEditBeing = useCallback((beingId: string) => {
+		setEditingBeingId(beingId);
+		setShowPopover(false);
+	}, []);
+
+	const handleCloseEditModal = useCallback(() => {
+		setEditingBeingId(null);
+	}, []);
+
+	const handleSelectBeing = useCallback((beingId: string) => {
+		setSelectedBeingId(beingId);
+		setShowPopover(true);
+	}, []);
 
 	// Click outside handler
 	useEffect(() => {
@@ -113,8 +146,7 @@ export function BeingPresence({
 				popoverRef.current &&
 				!popoverRef.current.contains(event.target as Node)
 			) {
-				setShowPopover(false);
-				setSelectedBeingId(null);
+				handleClosePopover();
 			}
 		}
 
@@ -137,11 +169,11 @@ export function BeingPresence({
 			<div className="relative">
 				<div
 					className="relative flex cursor-pointer items-center"
-					onClick={() => setShowPopover(!showPopover)}
+					onClick={handleTogglePopover}
 					onKeyDown={(e) => {
 						if (e.key === "Enter" || e.key === " ") {
 							e.preventDefault();
-							setShowPopover(!showPopover);
+							handleTogglePopover();
 						}
 					}}
 					tabIndex={0}
