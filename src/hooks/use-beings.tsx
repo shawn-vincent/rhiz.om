@@ -1,10 +1,16 @@
-import { useDeferredValue, useMemo, useState, createContext, useContext, type ReactNode } from "react";
+import {
+	type ReactNode,
+	createContext,
+	useContext,
+	useDeferredValue,
+	useMemo,
+	useState,
+} from "react";
 import type { BeingType, EntitySummary } from "~/lib/space-types";
 import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useRecents } from "./use-recents";
-import { useSpaceDataContext } from "./use-space-data-context";
-import { useSpaceStream } from "./use-stream";
+import { useSync } from "./use-stream";
 
 // Global being cache context to prevent multiple stream connections
 interface BeingCacheContextType {
@@ -24,7 +30,7 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 	const qDeferred = useDeferredValue(query); // avoids instant refetch
 
 	// Get beings from stream (current space)
-	const { beings: streamBeings } = useSpaceStream(spaceId);
+	const { beings: streamBeings } = useSync(spaceId, ["beings"]);
 
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(undefined, {
@@ -104,10 +110,13 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 /**
  * Provider to share being cache across the app and prevent multiple stream connections
  */
-export function BeingCacheProvider({ children, spaceId }: { children: ReactNode; spaceId?: string }) {
+export function BeingCacheProvider({
+	children,
+	spaceId,
+}: { children: ReactNode; spaceId?: string }) {
 	// This is the single source of truth for being data
-	const { beings: streamBeings } = useSpaceStream(spaceId);
-	
+	const { beings: streamBeings } = useSync(spaceId, ["beings"]);
+
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
@@ -137,10 +146,13 @@ export function BeingCacheProvider({ children, spaceId }: { children: ReactNode;
 
 	const getBeing = useMemo(() => (id: string) => beingMap.get(id), [beingMap]);
 
-	const contextValue = useMemo(() => ({
-		beingMap,
-		getBeing,
-	}), [beingMap, getBeing]);
+	const contextValue = useMemo(
+		() => ({
+			beingMap,
+			getBeing,
+		}),
+		[beingMap, getBeing],
+	);
 
 	return (
 		<BeingCacheContext.Provider value={contextValue}>
@@ -158,17 +170,16 @@ export function useBeing(
 		enabled?: boolean;
 	},
 ) {
-	// Try to use SpaceDataContext first (preferred)
-	const spaceContext = useSpaceDataContext();
+	// Try to use BeingCacheContext first
 	const beingCacheContext = useContext(BeingCacheContext);
-	
-	// Prefer SpaceDataContext, then BeingCacheContext, then fallback
-	const getBeing = spaceContext?.getBeing || beingCacheContext?.getBeing;
-	
+
+	// Use BeingCacheContext, then fallback
+	const getBeing = beingCacheContext?.getBeing;
+
 	// Only create fallback if no context available (for backward compatibility)
 	const fallback = !getBeing ? useBeings() : { getBeing: () => undefined };
 	const finalGetBeing = getBeing || fallback.getBeing;
-	
+
 	const cachedBeing = id ? finalGetBeing(id) : undefined;
 
 	const shouldFetchFromServer =

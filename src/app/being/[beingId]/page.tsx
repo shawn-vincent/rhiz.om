@@ -4,7 +4,6 @@ import { BeingPresence } from "~/app/_components/being-presence";
 import { BottomBar } from "~/app/_components/bottom-bar";
 import { Chat } from "~/app/_components/chat";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { SpaceDataProvider } from "~/hooks/use-space-data-context";
 import { auth } from "~/server/auth";
 import type { BeingId } from "~/server/db/types";
 import { HydrateClient, api } from "~/trpc/server";
@@ -25,42 +24,40 @@ export default async function SpacePage({
 
 	return (
 		<HydrateClient>
-			<SpaceDataProvider spaceId={beingId as BeingId}>
-				<div className="grid h-dvh grid-rows-[1fr_auto] overflow-hidden bg-black text-white">
-					<ErrorBoundary>
-						<main className="relative overflow-hidden">
-							<BeingBackground />
-							<div className="relative z-10 flex h-full">
-								<div className="hidden sm:block">
-									<BeingPresence currentSpaceId={beingId} />
-								</div>
-								{/* Main chat area */}
-								<div className="flex flex-1 justify-center">
-									<div className="w-full max-w-2xl">
-										{session?.user?.beingId ? (
-											<Suspense fallback={<ChatLoading />}>
-												<Chat
-													currentUserBeingId={session.user.beingId}
-													beingId={beingId}
-												/>
-											</Suspense>
-										) : (
-											<div className="flex h-full items-center justify-center">
-												<p className="text-white/70 text-xl">
-													{session?.user
-														? "Initializing your being..."
-														: "Please sign in to join the being."}
-												</p>
-											</div>
-										)}
-									</div>
+			<div className="grid h-dvh grid-rows-[1fr_auto] overflow-hidden bg-black text-white">
+				<ErrorBoundary>
+					<main className="relative overflow-hidden">
+						<BeingBackground />
+						<div className="relative z-10 flex h-full">
+							<div className="hidden sm:block">
+								<BeingPresence currentSpaceId={beingId} />
+							</div>
+							{/* Main chat area */}
+							<div className="flex flex-1 justify-center">
+								<div className="w-full max-w-2xl">
+									{session?.user?.beingId ? (
+										<Suspense fallback={<ChatLoading />}>
+											<Chat
+												currentUserBeingId={session.user.beingId}
+												beingId={beingId}
+											/>
+										</Suspense>
+									) : (
+										<div className="flex h-full items-center justify-center">
+											<p className="text-white/70 text-xl">
+												{session?.user
+													? "Initializing your being..."
+													: "Please sign in to join the being."}
+											</p>
+										</div>
+									)}
 								</div>
 							</div>
-						</main>
-					</ErrorBoundary>
-					<BottomBar session={session} />
-				</div>
-			</SpaceDataProvider>
+						</div>
+					</main>
+				</ErrorBoundary>
+				<BottomBar session={session} />
+			</div>
 		</HydrateClient>
 	);
 }

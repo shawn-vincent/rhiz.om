@@ -53,12 +53,7 @@ export function useSync(spaceId?: string, types?: string[]) {
 				clearInterval(checkInterval.current);
 			}
 		};
-	}, [spaceId, types?.join(",")]);
+	}, [spaceId, types]);
 
 	return { beings, intentions, isConnected: connected };
-}
-
-// Legacy compatibility hook
-export function useSpaceStream(spaceId: string | undefined) {
-	return useSync(spaceId, ["beings", "intentions"]);
 }

@@ -4,7 +4,7 @@
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { InlineText } from "~/components/ui/inline-editable";
-import { useSpaceDataContext } from "~/hooks/use-space-data-context";
+import { useSync } from "~/hooks/use-stream";
 import { logger } from "~/lib/logger.client";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
@@ -28,8 +28,18 @@ export function InlineBeingName({
 		: undefined;
 
 	const [isUpdating, setIsUpdating] = useState(false);
-	const { beings } = useSpaceDataContext();
-	const being = beingId ? beings.find((b) => b.id === beingId) : undefined;
+
+	// Get beings from sync (for current space) and global query (for other beings)
+	const { beings: spaceBeings } = useSync(beingId, ["beings"]);
+	const beingsQuery = api.being.getAll.useQuery(undefined, {
+		staleTime: 5 * 60 * 1000,
+	});
+
+	// Find being in sync data first, then fall back to global data
+	const being = beingId
+		? spaceBeings.find((b) => b.id === beingId) ||
+			beingsQuery.data?.find((b) => b.id === beingId)
+		: undefined;
 
 	const upsertBeing = api.being.upsert.useMutation();
 

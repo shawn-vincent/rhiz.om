@@ -14,7 +14,7 @@ import { RichContent } from "~/app/_components/rich-content";
 import { ChatInput, type ChatInputRef } from "~/components/chat-input";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { useSpaceDataContext } from "~/hooks/use-space-data-context";
+import { useSync } from "~/hooks/use-stream";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId, Intention } from "~/server/db/types";
@@ -38,16 +38,23 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const bottomAnchorRef = useRef<HTMLLIElement>(null);
 	const chatInputRef = useRef<ChatInputRef>(null);
 
-	// Use the shared space data context
-	const { utterances, beings, error, refresh } = useSpaceDataContext();
+	// Use sync for real-time data
+	const {
+		beings,
+		intentions: utterances,
+		isConnected,
+	} = useSync(beingId, ["beings", "intentions"]);
+
+	// Get being data from tRPC for comprehensive lookup
+	const beingsQuery = api.being.getAll.useQuery(undefined, {
+		staleTime: 5 * 60 * 1000,
+	});
 
 	// Utterances come directly from sync system with real-time updates
 
 	// tRPC mutation for creating utterances with optimistic update
 	const createUtterance = api.intention.createUtterance.useMutation({
 		onSuccess: () => {
-			// Force refresh to get latest data immediately
-			refresh();
 			// Focus the input after successful submission
 			setTimeout(() => {
 				chatInputRef.current?.focus();
@@ -56,8 +63,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		onError: (error) => {
 			console.error("Failed to send message:", error);
 			chatLogger.error(error, "Failed to send message");
-			// Force refresh to ensure we have latest state
-			refresh();
 			// Focus the input even after errors
 			setTimeout(() => {
 				chatInputRef.current?.focus();
@@ -136,7 +141,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		if (isNearBottom && bottomAnchorRef.current) {
 			bottomAnchorRef.current.scrollIntoView({ behavior: "smooth" });
 		}
-	}, [utterances]);
+	}, [utterances.length]);
 
 	// Mount-time scroll to bottom (immediate, no animation)
 	useLayoutEffect(() => {
@@ -171,17 +176,10 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				{/* Top shadow overlay */}
 				<div className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 bg-gradient-to-b from-black/30 to-transparent" />
 
-				{/* Error indicator */}
-				{error && (
-					<div className="bg-red-500/20 px-4 py-2 text-red-100 text-sm">
-						Connection issue: {error}
-						<button
-							type="button"
-							onClick={refresh}
-							className="ml-2 underline hover:no-underline"
-						>
-							Retry
-						</button>
+				{/* Connection indicator */}
+				{!isConnected && (
+					<div className="bg-yellow-500/20 px-4 py-2 text-sm text-yellow-100">
+						Connecting...
 					</div>
 				)}
 
@@ -191,7 +189,10 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
-						const beingData = beings.find((b) => b.id === group.ownerId);
+						// Look in sync beings first, then fall back to global beings
+						const beingData =
+							beings.find((b) => b.id === group.ownerId) ||
+							beingsQuery.data?.find((b) => b.id === group.ownerId);
 						const knownBeingType =
 							group.ownerId === AI_AGENT_BEING_ID
 								? "bot"

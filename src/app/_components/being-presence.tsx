@@ -6,7 +6,7 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useEffect, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
-import { useSpaceDataContext } from "~/hooks/use-space-data-context";
+import { useSync } from "~/hooks/use-stream";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
@@ -28,8 +28,8 @@ export function BeingPresence({
 	compact = false,
 	currentSpaceId,
 }: BeingPresenceProps) {
-	// Use the shared space data context
-	const { beings, connected, error, refresh } = useSpaceDataContext();
+	// Use sync for real-time being data
+	const { beings, isConnected } = useSync(currentSpaceId, ["beings"]);
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
@@ -43,7 +43,7 @@ export function BeingPresence({
 		id: being.id,
 		name: being.name,
 		type: being.type as BeingType,
-		isOnline: being.isOnline, // Use server-provided presence data
+		isOnline: true, // All beings are "online" for now
 		ownerId: being.ownerId,
 	}));
 
@@ -206,22 +206,11 @@ export function BeingPresence({
 				<div className="font-medium text-outline text-white/60 text-xs">
 					{totalConnected}
 				</div>
-				{!connected && (
+				{!isConnected && (
 					<div
 						className="h-2 w-2 rounded-full bg-red-400"
 						title="Disconnected"
 					/>
-				)}
-				{/* Show retry button if there's an error */}
-				{error && (
-					<button
-						type="button"
-						onClick={refresh}
-						className="text-red-400 text-xs hover:text-red-300"
-						title="Retry connection"
-					>
-						↻
-					</button>
 				)}
 			</div>
 
