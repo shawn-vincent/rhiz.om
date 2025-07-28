@@ -33,7 +33,7 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
 
 	// Get all beings from global cache
-	const rq = api.being.getAll.useQuery(undefined, {
+	const rq = api.being.getAll.useQuery(void 0, {
 		staleTime: 5 * 60 * 1000,
 		enabled: typeof window !== "undefined",
 	});
@@ -118,7 +118,7 @@ export function BeingCacheProvider({
 	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
 
 	// Get all beings from global cache
-	const rq = api.being.getAll.useQuery(undefined, {
+	const rq = api.being.getAll.useQuery(void 0, {
 		staleTime: 5 * 60 * 1000,
 		enabled: typeof window !== "undefined",
 	});

@@ -42,7 +42,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const { beings, intentions: utterances, isConnected } = useSync(beingId);
 
 	// Get being data from tRPC for comprehensive lookup
-	const beingsQuery = api.being.getAll.useQuery(undefined, {
+	const beingsQuery = api.being.getAll.useQuery(void 0, {
 		staleTime: 5 * 60 * 1000,
 	});
 
