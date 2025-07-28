@@ -33,7 +33,7 @@ export const beingRouter = createTRPCRouter({
 	/**
 	 * Fetches all beings, ordered by name.
 	 */
-	getAll: publicProcedure.input(z.void().optional()).query(async () => {
+	getAll: publicProcedure.query(async () => {
 		return services.being.getAllBeings();
 	}),
 
