@@ -65,7 +65,7 @@ export function Config() {
 	const { beings } = beingId ? useSync(beingId) : { beings: [] };
 	// Create presence map (all beings are "online" for now)
 	const presenceMap = new Map<string, boolean>(
-		beings.map((being) => [being.id, true] as const)
+		beings.map((being) => [being.id, true] as const),
 	);
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;

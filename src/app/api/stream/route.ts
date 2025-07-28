@@ -30,7 +30,7 @@ const paramsSchema = z.object({
 export async function GET(request: NextRequest) {
 	const url = request.nextUrl;
 	const spaceIdParam = url.searchParams.get("spaceId");
-	
+
 	if (!spaceIdParam) {
 		return new Response("spaceId parameter is required", { status: 400 });
 	}

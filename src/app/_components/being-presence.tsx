@@ -3,7 +3,7 @@
 
 import { useSession } from "next-auth/react";
 import type { BeingType } from "packages/entity-kit/src/types";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { useSync } from "~/hooks/use-stream";
@@ -29,41 +29,64 @@ export function BeingPresence({
 	currentSpaceId,
 }: BeingPresenceProps) {
 	// Use sync for real-time being data
-	const { beings, isConnected } = currentSpaceId ? useSync(currentSpaceId) : { beings: [], isConnected: false };
+	const { beings, isConnected } = currentSpaceId
+		? useSync(currentSpaceId)
+		: { beings: [], isConnected: false };
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
 
-	// Get current user's being from beings list to check superuser status
-	const currentUserBeing = beings.find((b) => b.id === currentUserBeingId);
-	const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
+	// Memoize expensive computations
+	const {
+		beingPresenceData,
+		currentUserBeing,
+		isCurrentUserSuperuser,
+		spacesAndBots,
+		connectedGuests,
+		disconnectedGuests,
+		orderedBeings,
+	} = useMemo(() => {
+		// Get current user's being from beings list to check superuser status
+		const currentUserBeing = beings.find((b) => b.id === currentUserBeingId);
+		const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
 
-	// Transform beings to match expected format
-	const beingPresenceData: BeingPresenceData[] = beings.map((being) => ({
-		id: being.id,
-		name: being.name,
-		type: being.type as BeingType,
-		isOnline: true, // All beings are "online" for now
-		ownerId: being.ownerId,
-	}));
+		// Transform beings to match expected format
+		const beingPresenceData: BeingPresenceData[] = beings.map((being) => ({
+			id: being.id,
+			name: being.name,
+			type: being.type as BeingType,
+			isOnline: true, // All beings are "online" for now
+			ownerId: being.ownerId,
+		}));
 
-	// Separate beings by type and connection status
-	const spacesAndBots = beingPresenceData.filter(
-		(being) => being.type === "space" || being.type === "bot",
-	);
-	const connectedGuests = beingPresenceData.filter(
-		(being) => being.type === "guest" && being.isOnline,
-	);
-	const disconnectedGuests = beingPresenceData.filter(
-		(being) => being.type === "guest" && !being.isOnline,
-	);
+		// Separate beings by type and connection status
+		const spacesAndBots = beingPresenceData.filter(
+			(being) => being.type === "space" || being.type === "bot",
+		);
+		const connectedGuests = beingPresenceData.filter(
+			(being) => being.type === "guest" && being.isOnline,
+		);
+		const disconnectedGuests = beingPresenceData.filter(
+			(being) => being.type === "guest" && !being.isOnline,
+		);
 
-	// Consistent ordering
-	const orderedBeings = [
-		...spacesAndBots,
-		...connectedGuests,
-		...disconnectedGuests,
-	];
+		// Consistent ordering
+		const orderedBeings = [
+			...spacesAndBots,
+			...connectedGuests,
+			...disconnectedGuests,
+		];
+
+		return {
+			beingPresenceData,
+			currentUserBeing,
+			isCurrentUserSuperuser,
+			spacesAndBots,
+			connectedGuests,
+			disconnectedGuests,
+			orderedBeings,
+		};
+	}, [beings, currentUserBeingId]);
 
 	// State for showing popover and editing
 	const [showPopover, setShowPopover] = useState(false);
@@ -72,13 +95,16 @@ export function BeingPresence({
 	const popoverRef = useRef<HTMLDivElement>(null);
 
 	// Check if current user can edit a being
-	const canEdit = (being: BeingPresenceData) => {
-		return canEditPermission(
-			currentUserBeingId,
-			being.ownerId,
-			isCurrentUserSuperuser,
-		);
-	};
+	const canEdit = useMemo(
+		() => (being: BeingPresenceData) => {
+			return canEditPermission(
+				currentUserBeingId,
+				being.ownerId,
+				isCurrentUserSuperuser,
+			);
+		},
+		[currentUserBeingId, isCurrentUserSuperuser],
+	);
 
 	// Click outside handler
 	useEffect(() => {
