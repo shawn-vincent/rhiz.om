@@ -21,10 +21,24 @@ export class AuthService {
 	 * Throws UNAUTHORIZED if session is invalid
 	 */
 	async validateSession(session: Session | null): Promise<AuthContext> {
-		if (!session?.user?.beingId) {
+		if (!session) {
 			throw new TRPCError({
 				code: "UNAUTHORIZED",
-				message: "Authentication required",
+				message: "No session found - please log in",
+			});
+		}
+
+		if (!session.user) {
+			throw new TRPCError({
+				code: "UNAUTHORIZED",
+				message: "Invalid session - no user data",
+			});
+		}
+
+		if (!session.user.beingId) {
+			throw new TRPCError({
+				code: "UNAUTHORIZED",
+				message: `Authentication incomplete - user ${session.user.id || 'unknown'} missing beingId. Please sign out and sign in again.`,
 			});
 		}
 

@@ -59,6 +59,12 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 		onError: (error) => {
 			console.error("Failed to send message:", error);
 			chatLogger.error(error, "Failed to send message");
+			
+			// Show specific error message to user
+			if (error.message.includes("missing beingId")) {
+				console.warn("Authentication issue - user needs to re-login:", error.message);
+			}
+			
 			// Focus the input even after errors
 			setTimeout(() => {
 				chatInputRef.current?.focus();
