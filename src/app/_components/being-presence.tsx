@@ -9,6 +9,7 @@ import { Avatar } from "~/components/ui/avatar";
 import { useSync } from "~/hooks/use-stream";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
+import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 
 interface BeingPresenceData {
@@ -28,10 +29,13 @@ export function BeingPresence({
 	compact = false,
 	currentSpaceId,
 }: BeingPresenceProps) {
-	// Use sync for real-time being data
-	const { beings, isConnected } = currentSpaceId
+	// Use sync for real-time being and intention updates
+	const { beings: syncBeings, isConnected } = currentSpaceId
 		? useSync(currentSpaceId)
 		: { beings: [], isConnected: false };
+
+	// Filter beings to current space (beings from sync are already filtered)
+	const beings = syncBeings;
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;

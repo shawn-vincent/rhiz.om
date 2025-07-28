@@ -56,16 +56,18 @@ export function Config() {
 	const { data: currentSpace, isLoading: isLoadingCurrentSpace } =
 		api.being.getById.useQuery({ id: beingId ?? "" }, { enabled: !!beingId });
 
-	const { data: beingsInSpace, isLoading: isLoadingBeings } =
-		api.being.getByLocation.useQuery(
-			{ locationId: beingId ?? "" },
-			{ enabled: !!beingId },
-		);
+	// Get all beings and filter to current space
+	const { data: allBeings, isLoading: isLoadingBeings } =
+		api.being.getAll.useQuery();
 
-	const { beings } = beingId ? useSync(beingId) : { beings: [] };
-	// Create presence map (all beings are "online" for now)
+	// Filter beings to current space
+	const beingsInSpace = allBeings
+		? allBeings.filter((b) => b.locationId === beingId)
+		: [];
+
+	// Create presence map (no real presence tracking - just show all beings)
 	const presenceMap = new Map<string, boolean>(
-		beings.map((being) => [being.id, true] as const),
+		beingsInSpace.map((being) => [being.id, true] as const),
 	);
 
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;
@@ -90,8 +92,7 @@ export function Config() {
 	}
 
 	// Get beings in space and sort them consistently
-	const otherBeingsInSpace =
-		beingsInSpace?.filter((b) => b.id !== beingId) ?? [];
+	const otherBeingsInSpace = beingsInSpace.filter((b) => b.id !== beingId);
 
 	// Separate and order beings: spaces/bots first, then connected guests, then disconnected
 	const spacesAndBots = otherBeingsInSpace.filter(

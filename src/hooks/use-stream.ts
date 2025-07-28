@@ -1,9 +1,9 @@
 /**
- * Simple React sync hooks
+ * React sync hook with real-time being and intention updates
  *
- * Direct state management. No complex state machines.
+ * Returns both beings and intentions with delta sync for efficiency.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
 	type SyncEvent,
 	connect,
@@ -13,27 +13,76 @@ import {
 } from "~/lib/stream";
 import type { Being, Intention } from "~/server/db/types";
 
-// Single unified sync hook
+// Sync hook returns both beings and intentions
 export function useSync(spaceId: string) {
-	const [beings, setBeings] = useState<Being[]>([]);
 	const [intentions, setIntentions] = useState<Intention[]>([]);
+	const [beings, setBeings] = useState<Being[]>([]);
 	const [connected, setConnected] = useState(false);
 	const connectionId = useRef<string | null>(null);
 	const checkInterval = useRef<number | null>(null);
+
+	// Apply delta to both intentions and beings
+	const applyDelta = useCallback((delta: SyncEvent) => {
+		// Update intentions
+		setIntentions((current) => {
+			const intentionMap = new Map(current.map((i) => [i.id, i]));
+
+			// Apply deletions
+			for (const deletedId of delta.intentions.deleted) {
+				intentionMap.delete(deletedId);
+			}
+
+			// Apply created intentions
+			for (const intention of delta.intentions.created) {
+				intentionMap.set(intention.id, intention);
+			}
+
+			// Apply updated intentions
+			for (const intention of delta.intentions.updated) {
+				intentionMap.set(intention.id, intention);
+			}
+
+			// Convert back to sorted array
+			return Array.from(intentionMap.values()).sort(
+				(a, b) =>
+					new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+			);
+		});
+
+		// Update beings
+		setBeings((current) => {
+			const beingMap = new Map(current.map((b) => [b.id, b]));
+
+			// Apply deletions
+			for (const deletedId of delta.beings.deleted) {
+				beingMap.delete(deletedId);
+			}
+
+			// Apply created beings
+			for (const being of delta.beings.created) {
+				beingMap.set(being.id, being);
+			}
+
+			// Apply updated beings  
+			for (const being of delta.beings.updated) {
+				beingMap.set(being.id, being);
+			}
+
+			// Convert back to sorted array
+			return Array.from(beingMap.values()).sort(
+				(a, b) => a.name.localeCompare(b.name),
+			);
+		});
+	}, []);
 
 	useEffect(() => {
 		// Connect
 		connectionId.current = connect(spaceId);
 
-		// Subscribe to all events
+		// Subscribe to space-delta events
 		const unsubscribe = subscribe(connectionId.current, (event: SyncEvent) => {
-			switch (event.type) {
-				case "beings":
-					setBeings(event.data);
-					break;
-				case "intentions":
-					setIntentions(event.data);
-					break;
+			if (event.type === "space-delta") {
+				applyDelta(event);
 			}
 		});
 
@@ -53,7 +102,8 @@ export function useSync(spaceId: string) {
 				clearInterval(checkInterval.current);
 			}
 		};
-	}, [spaceId]);
+	}, [spaceId, applyDelta]);
 
+	// Return both beings and intentions for real-time updates
 	return { beings, intentions, isConnected: connected };
 }

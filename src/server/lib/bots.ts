@@ -189,8 +189,21 @@ async function streamBotResponse(
 
 		if (!response.ok) {
 			const errorText = await response.text();
+			// Parse error for logging to help with debugging
+			let parsedError;
+			try {
+				parsedError = JSON.parse(errorText);
+			} catch {
+				parsedError = { raw: errorText };
+			}
+
 			botLogger.error(
-				{ aiIntentionId, status: response.status, errorText },
+				{ 
+					aiIntentionId, 
+					status: response.status, 
+					errorText, 
+					parsedError 
+				},
 				"OpenRouter API error response",
 			);
 
@@ -198,8 +211,41 @@ async function streamBotResponse(
 			let errorDetails = errorText;
 			try {
 				const errorJson = JSON.parse(errorText);
-				if (errorJson.error?.message) {
-					errorDetails = errorJson.error.message;
+				
+				// Extract nested error details with provider information
+				if (errorJson.error) {
+					const error = errorJson.error;
+					const parts: string[] = [];
+					
+					// Main error message
+					if (error.message) {
+						parts.push(error.message);
+					}
+					
+					// Add provider-specific details if available
+					if (error.metadata) {
+						if (error.metadata.provider_name) {
+							parts.push(`Provider: ${error.metadata.provider_name}`);
+						}
+						
+						// If there's a raw HTML error, try to extract the meaningful part
+						if (error.metadata.raw && typeof error.metadata.raw === 'string') {
+							const htmlMatch = error.metadata.raw.match(/<title>(.*?)<\/title>/);
+							if (htmlMatch) {
+								parts.push(`Raw error: ${htmlMatch[1]}`);
+							} else if (error.metadata.raw.length < 200) {
+								// Only include short raw errors to avoid HTML spam
+								parts.push(`Raw: ${error.metadata.raw.trim()}`);
+							}
+						}
+					}
+					
+					// Add error code if different from HTTP status
+					if (error.code && error.code !== response.status) {
+						parts.push(`Code: ${error.code}`);
+					}
+					
+					errorDetails = parts.length > 0 ? parts.join(' | ') : errorText;
 				} else if (errorJson.message) {
 					errorDetails = errorJson.message;
 				}

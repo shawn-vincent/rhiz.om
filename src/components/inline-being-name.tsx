@@ -29,16 +29,14 @@ export function InlineBeingName({
 
 	const [isUpdating, setIsUpdating] = useState(false);
 
-	// Get beings from sync (for current space) and global query (for other beings)
-	const { beings: spaceBeings } = beingId ? useSync(beingId) : { beings: [] };
+	// Get beings from tRPC only (no more sync beings)
 	const beingsQuery = api.being.getAll.useQuery(void 0, {
 		staleTime: 5 * 60 * 1000,
 	});
 
-	// Find being in sync data first, then fall back to global data
+	// Find being in global data
 	const being = beingId
-		? spaceBeings.find((b) => b.id === beingId) ||
-			beingsQuery.data?.find((b) => b.id === beingId)
+		? beingsQuery.data?.find((b) => b.id === beingId)
 		: undefined;
 
 	const upsertBeing = api.being.upsert.useMutation();

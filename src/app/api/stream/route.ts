@@ -1,12 +1,8 @@
 /**
- * Unified Server-Sent Events endpoint
+ * Ultra-minimal Server-Sent Events endpoint
  *
- * ONE endpoint for ALL real-time updates:
- * - Space data changes (beings, intentions)
- * - Chat message tokens
- * - Presence updates
- *
- * Simple, reliable, debuggable.
+ * Single space-delta event with timestamp-based catch-up.
+ * No being sync, no presence - maximum simplicity.
  */
 import type { NextRequest } from "next/server";
 import superjson from "superjson";
@@ -25,11 +21,14 @@ export const dynamic = "force-dynamic";
 const paramsSchema = z.object({
 	// Required space ID - every sync connection is for a specific space
 	spaceId: z.string().min(1),
+	// Optional timestamp for catch-up
+	since: z.string().nullish(),
 });
 
 export async function GET(request: NextRequest) {
 	const url = request.nextUrl;
 	const spaceIdParam = url.searchParams.get("spaceId");
+	const sinceParam = url.searchParams.get("since");
 
 	if (!spaceIdParam) {
 		return new Response("spaceId parameter is required", { status: 400 });
@@ -37,6 +36,7 @@ export async function GET(request: NextRequest) {
 
 	const params = paramsSchema.parse({
 		spaceId: spaceIdParam,
+		since: sinceParam || undefined, // Convert null to undefined for Zod
 	});
 
 	const session = await auth();
@@ -72,8 +72,8 @@ export async function GET(request: NextRequest) {
 				"SSE connection established",
 			);
 
-			// Send initial data immediately
-			sendInitialData(connectionId);
+			// Send initial data or catch-up delta
+			sendInitialData(connectionId, params.since ?? undefined);
 		},
 
 		cancel() {

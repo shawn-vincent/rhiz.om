@@ -6,7 +6,7 @@ import type { DrizzleDB } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
 import type { Being, BeingId, InsertBeing } from "~/server/db/types";
-import { notifyBeingUpdate } from "~/server/lib/stream";
+// No more being sync notifications - beings use tRPC cache invalidation
 import type {
 	BeingType,
 	EntitySummary,
@@ -169,12 +169,29 @@ export class BeingService {
 			});
 		}
 
-		// Trigger stream updates for affected spaces
-		if (existingBeing?.locationId) {
-			notifyBeingUpdate(result.id, existingBeing.locationId);
-		}
-		if (result.locationId && result.locationId !== existingBeing?.locationId) {
-			notifyBeingUpdate(result.id, result.locationId);
+		// Notify sync system for real-time updates
+		if (!existingBeing) {
+			// New being created - notify the space they're joining
+			if (input.locationId) {
+				const { notifyBeingCreated } = await import("~/server/lib/stream");
+				notifyBeingCreated(input.id, input.locationId);
+			}
+		} else {
+			// Being updated - notify both old and new spaces if location changed
+			const oldSpaceId = existingBeing.locationId;
+			const newSpaceId = input.locationId;
+			
+			const { notifyBeingUpdated } = await import("~/server/lib/stream");
+			
+			if (oldSpaceId && oldSpaceId !== newSpaceId) {
+				// Notify old space that being left
+				notifyBeingUpdated(input.id, oldSpaceId);
+			}
+			
+			if (newSpaceId) {
+				// Notify new space that being joined/updated
+				notifyBeingUpdated(input.id, newSpaceId);
+			}
 		}
 
 		// Emit bot location change event for server-side agents

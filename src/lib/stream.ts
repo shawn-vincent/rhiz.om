@@ -1,16 +1,31 @@
 /**
- * Simple client-side sync
+ * Real-time client-side sync
  *
- * Direct EventSource → callbacks. No queues, no classes, no complexity.
+ * Single space-delta event with timestamp-based catch-up.
+ * Includes both beings and intentions for real-time updates.
  */
 import superjson from "superjson";
 import type { Being, Intention } from "~/server/db/types";
 import { logger } from "./logger.client";
 
-// Sync event types
-export type SyncEvent =
-	| { type: "beings"; data: Being[] }
-	| { type: "intentions"; data: Intention[] };
+// Sync event with both intention and being deltas
+export type SyncEvent = {
+	type: "space-delta";
+	intentions: {
+		created: Intention[];
+		updated: Intention[];
+		deleted: string[];
+	};
+	beings: {
+		created: Being[];
+		updated: Being[];
+		deleted: string[];
+	};
+	timestamp: string;
+};
+
+// Timestamp tracking per space
+const spaceTimestamps = new Map<string, string>();
 
 // Active connections by spaceId (shared)
 const connections = new Map<
@@ -25,7 +40,7 @@ const connections = new Map<
 // Connection ID to spaceId mapping
 const connectionToSpaceId = new Map<string, string>();
 
-// Connect to sync stream (reuses existing connections)
+// Connect to sync stream with timestamp catch-up
 export function connect(spaceId: string): string {
 	const connectionId = crypto.randomUUID();
 	connectionToSpaceId.set(connectionId, spaceId);
@@ -37,8 +52,13 @@ export function connect(spaceId: string): string {
 		return connectionId;
 	}
 
-	// Create new connection
-	const url = `/api/stream?spaceId=${encodeURIComponent(spaceId)}`;
+	// Create new connection with timestamp catch-up
+	const lastTimestamp = spaceTimestamps.get(spaceId);
+	const sinceParam = lastTimestamp
+		? `&since=${encodeURIComponent(lastTimestamp)}`
+		: "";
+	const url = `/api/stream?spaceId=${encodeURIComponent(spaceId)}${sinceParam}`;
+
 	const eventSource = new EventSource(url);
 	const callbacks = new Set<(event: SyncEvent) => void>();
 	const subscribers = new Set([connectionId]);
@@ -49,6 +69,10 @@ export function connect(spaceId: string): string {
 	eventSource.onmessage = (event) => {
 		try {
 			const syncEvent = superjson.parse(event.data) as SyncEvent;
+
+			// Track latest timestamp for catch-up
+			spaceTimestamps.set(spaceId, syncEvent.timestamp);
+
 			for (const callback of callbacks) {
 				callback(syncEvent);
 			}
@@ -58,7 +82,7 @@ export function connect(spaceId: string): string {
 	};
 
 	eventSource.onerror = () => {
-		logger.warn("Sync connection error");
+		logger.warn("Sync connection error - will attempt reconnect");
 	};
 
 	return connectionId;

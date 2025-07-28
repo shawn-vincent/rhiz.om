@@ -10,7 +10,6 @@ import type { BeingType, EntitySummary } from "~/lib/space-types";
 import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useRecents } from "./use-recents";
-import { useSync } from "./use-stream";
 
 // Global being cache context to prevent multiple stream connections
 interface BeingCacheContextType {
@@ -29,8 +28,7 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 	const [type, setType] = useState<BeingType | undefined>(initialType);
 	const qDeferred = useDeferredValue(query); // avoids instant refetch
 
-	// Get beings from stream (current space) - only if spaceId provided
-	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
+	// No more stream beings - use tRPC only
 
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(void 0, {
@@ -38,26 +36,19 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 		enabled: typeof window !== "undefined",
 	});
 
-	// Create combined being cache
+	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
 		const map = new Map<string, Being>();
 
-		// Add global beings first
+		// Add all beings from tRPC
 		if (rq.data) {
 			for (const being of rq.data) {
 				map.set(being.id, being);
 			}
 		}
 
-		// Overlay stream beings (more up-to-date)
-		if (streamBeings) {
-			for (const being of streamBeings) {
-				map.set(being.id, being);
-			}
-		}
-
 		return map;
-	}, [rq.data, streamBeings]);
+	}, [rq.data]);
 
 	// Filter and search items
 	const items = useMemo(() => {
@@ -115,7 +106,7 @@ export function BeingCacheProvider({
 	spaceId,
 }: { children: ReactNode; spaceId?: string }) {
 	// This is the single source of truth for being data
-	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
+	// No more stream beings - using tRPC only
 
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(void 0, {
@@ -123,26 +114,19 @@ export function BeingCacheProvider({
 		enabled: typeof window !== "undefined",
 	});
 
-	// Create combined being cache
+	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
 		const map = new Map<string, Being>();
 
-		// Add global beings first
+		// Add all beings from tRPC
 		if (rq.data) {
 			for (const being of rq.data) {
 				map.set(being.id, being);
 			}
 		}
 
-		// Overlay stream beings (more up-to-date)
-		if (streamBeings) {
-			for (const being of streamBeings) {
-				map.set(being.id, being);
-			}
-		}
-
 		return map;
-	}, [rq.data, streamBeings]);
+	}, [rq.data]);
 
 	const getBeing = useMemo(() => (id: string) => beingMap.get(id), [beingMap]);
 

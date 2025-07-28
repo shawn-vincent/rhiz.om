@@ -11,11 +11,11 @@ import {
 	forwardRef,
 	memo,
 	useCallback,
+	useEffect,
 	useImperativeHandle,
 	useMemo,
 	useRef,
 	useState,
-	useEffect,
 } from "react";
 
 interface ChatInputProps {
@@ -182,12 +182,12 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 
 		// Add debounced onChange to reduce performance impact
 		const [localValue, setLocalValue] = useState(value);
-		
+
 		// Sync local value with prop value when it changes externally
 		useEffect(() => {
 			setLocalValue(value);
 		}, [value]);
-		
+
 		// Debounce onChange calls to reduce performance impact
 		useEffect(() => {
 			const timer = setTimeout(() => {
@@ -195,17 +195,14 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 					onChange(localValue);
 				}
 			}, 50); // 50ms debounce
-			
+
 			return () => clearTimeout(timer);
 		}, [localValue, value, onChange]);
 
 		// Optimize onChange to avoid excessive re-renders
-		const handleChange = useCallback(
-			(val: string) => {
-				setLocalValue(val);
-			},
-			[],
-		);
+		const handleChange = useCallback((val: string) => {
+			setLocalValue(val);
+		}, []);
 
 		return (
 			<div className="flex w-full min-w-0 items-end gap-2">

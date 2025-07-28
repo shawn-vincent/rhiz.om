@@ -38,13 +38,8 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const bottomAnchorRef = useRef<HTMLLIElement>(null);
 	const chatInputRef = useRef<ChatInputRef>(null);
 
-	// Use sync for real-time data
-	const { beings, intentions: utterances, isConnected } = useSync(beingId);
-
-	// Get being data from tRPC for comprehensive lookup
-	const beingsQuery = api.being.getAll.useQuery(void 0, {
-		staleTime: 5 * 60 * 1000,
-	});
+	// Use sync for real-time intentions and beings
+	const { beings: syncBeings, intentions: utterances, isConnected } = useSync(beingId);
 
 	// Utterances come directly from sync system with real-time updates
 
@@ -194,10 +189,10 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				>
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
-						// Look in sync beings first, then fall back to global beings
-						const beingData =
-							beings.find((b) => b.id === group.ownerId) ||
-							beingsQuery.data?.find((b) => b.id === group.ownerId);
+						// Use sync beings for real-time updates
+						const beingData = syncBeings.find(
+							(b) => b.id === group.ownerId,
+						);
 						const knownBeingType =
 							group.ownerId === AI_AGENT_BEING_ID
 								? "bot"
