@@ -39,11 +39,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const chatInputRef = useRef<ChatInputRef>(null);
 
 	// Use sync for real-time data
-	const {
-		beings,
-		intentions: utterances,
-		isConnected,
-	} = useSync(beingId, ["beings", "intentions"]);
+	const { beings, intentions: utterances, isConnected } = useSync(beingId);
 
 	// Get being data from tRPC for comprehensive lookup
 	const beingsQuery = api.being.getAll.useQuery(undefined, {

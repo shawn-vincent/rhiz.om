@@ -21,8 +21,7 @@ export type SyncEvent =
 interface Connection {
 	controller: ReadableStreamDefaultController;
 	beingId?: string;
-	spaceId?: string;
-	types: string[];
+	spaceId: string;
 }
 
 // Active connections
@@ -57,26 +56,15 @@ export async function sendInitialData(connectionId: string) {
 	if (!connection) return;
 
 	try {
-		if (connection.spaceId) {
-			if (
-				connection.types.length === 0 ||
-				connection.types.includes("beings")
-			) {
-				const spaceBeings = await getSpaceBeings(connection.spaceId);
-				sendToConnection(connectionId, { type: "beings", data: spaceBeings });
-			}
+		// Always send both beings and intentions for the space
+		const spaceBeings = await getSpaceBeings(connection.spaceId);
+		sendToConnection(connectionId, { type: "beings", data: spaceBeings });
 
-			if (
-				connection.types.length === 0 ||
-				connection.types.includes("intentions")
-			) {
-				const spaceIntentions = await getSpaceIntentions(connection.spaceId);
-				sendToConnection(connectionId, {
-					type: "intentions",
-					data: spaceIntentions,
-				});
-			}
-		}
+		const spaceIntentions = await getSpaceIntentions(connection.spaceId);
+		sendToConnection(connectionId, {
+			type: "intentions",
+			data: spaceIntentions,
+		});
 
 		logger.debug(
 			{ connectionId, spaceId: connection.spaceId },
@@ -106,7 +94,6 @@ export function broadcast(
 	event: SyncEvent,
 	filter?: {
 		spaceId?: string;
-		types?: string[];
 		beingId?: string;
 	},
 ) {
@@ -115,12 +102,6 @@ export function broadcast(
 		// Apply filters
 		if (filter?.spaceId && connection.spaceId !== filter.spaceId) continue;
 		if (filter?.beingId && connection.beingId !== filter.beingId) continue;
-		if (
-			filter?.types &&
-			connection.types.length > 0 &&
-			!filter.types.some((type) => connection.types.includes(type))
-		)
-			continue;
 
 		sendToConnection(connectionId, event);
 		sent++;
@@ -158,14 +139,10 @@ async function getSpaceIntentions(spaceId: string): Promise<Intention[]> {
 }
 
 // Setup event listeners
-emitter.on("being:updated", async (beingId: string, spaceId?: string) => {
-	if (!spaceId) return;
+emitter.on("being:updated", async (beingId: string, spaceId: string) => {
 	try {
 		const spaceBeings = await getSpaceBeings(spaceId);
-		broadcast(
-			{ type: "beings", data: spaceBeings },
-			{ spaceId, types: ["beings"] },
-		);
+		broadcast({ type: "beings", data: spaceBeings }, { spaceId });
 	} catch (error) {
 		logger.error({ beingId, spaceId, error }, "Failed to handle being update");
 	}
@@ -176,10 +153,7 @@ emitter.on(
 	async (intentionId: string, spaceId: string) => {
 		try {
 			const spaceIntentions = await getSpaceIntentions(spaceId);
-			broadcast(
-				{ type: "intentions", data: spaceIntentions },
-				{ spaceId, types: ["intentions"] },
-			);
+			broadcast({ type: "intentions", data: spaceIntentions }, { spaceId });
 		} catch (error) {
 			logger.error(
 				{ intentionId, spaceId, error },
@@ -190,7 +164,7 @@ emitter.on(
 );
 
 // Direct notification functions
-export function notifyBeingUpdate(beingId: string, spaceId?: string) {
+export function notifyBeingUpdate(beingId: string, spaceId: string) {
 	emitter.emit("being:updated", beingId, spaceId);
 }
 

@@ -30,7 +30,7 @@ export function InlineBeingName({
 	const [isUpdating, setIsUpdating] = useState(false);
 
 	// Get beings from sync (for current space) and global query (for other beings)
-	const { beings: spaceBeings } = useSync(beingId, ["beings"]);
+	const { beings: spaceBeings } = beingId ? useSync(beingId) : { beings: [] };
 	const beingsQuery = api.being.getAll.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 	});

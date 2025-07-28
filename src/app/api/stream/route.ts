@@ -23,16 +23,20 @@ import {
 export const dynamic = "force-dynamic";
 
 const paramsSchema = z.object({
-	// Optional filters - if not provided, gets all updates
-	spaceId: z.string().optional(),
-	types: z.string().optional(), // "beings,intentions,chat,presence"
+	// Required space ID - every sync connection is for a specific space
+	spaceId: z.string().min(1),
 });
 
 export async function GET(request: NextRequest) {
 	const url = request.nextUrl;
+	const spaceIdParam = url.searchParams.get("spaceId");
+	
+	if (!spaceIdParam) {
+		return new Response("spaceId parameter is required", { status: 400 });
+	}
+
 	const params = paramsSchema.parse({
-		spaceId: url.searchParams.get("spaceId") || undefined,
-		types: url.searchParams.get("types") || undefined,
+		spaceId: spaceIdParam,
 	});
 
 	const session = await auth();
@@ -57,7 +61,6 @@ export async function GET(request: NextRequest) {
 				controller,
 				beingId,
 				spaceId: params.spaceId,
-				types: params.types?.split(",") || [],
 			});
 
 			logger.info(

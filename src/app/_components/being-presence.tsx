@@ -29,7 +29,7 @@ export function BeingPresence({
 	currentSpaceId,
 }: BeingPresenceProps) {
 	// Use sync for real-time being data
-	const { beings, isConnected } = useSync(currentSpaceId, ["beings"]);
+	const { beings, isConnected } = currentSpaceId ? useSync(currentSpaceId) : { beings: [], isConnected: false };
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;

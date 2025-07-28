@@ -12,27 +12,39 @@ export type SyncEvent =
 	| { type: "beings"; data: Being[] }
 	| { type: "intentions"; data: Intention[] };
 
-// Active connections
+// Active connections by spaceId (shared)
 const connections = new Map<
 	string,
 	{
 		eventSource: EventSource;
 		callbacks: Set<(event: SyncEvent) => void>;
+		subscribers: Set<string>; // Track who's using this connection
 	}
 >();
 
-// Connect to sync stream
-export function connect(spaceId?: string, types?: string[]): string {
-	const params = new URLSearchParams();
-	if (spaceId) params.set("spaceId", spaceId);
-	if (types?.length) params.set("types", types.join(","));
+// Connection ID to spaceId mapping
+const connectionToSpaceId = new Map<string, string>();
 
+// Connect to sync stream (reuses existing connections)
+export function connect(spaceId: string): string {
 	const connectionId = crypto.randomUUID();
-	const url = `/api/stream?${params.toString()}`;
+	connectionToSpaceId.set(connectionId, spaceId);
+
+	// Reuse existing connection for same spaceId
+	let connection = connections.get(spaceId);
+	if (connection) {
+		connection.subscribers.add(connectionId);
+		return connectionId;
+	}
+
+	// Create new connection
+	const url = `/api/stream?spaceId=${encodeURIComponent(spaceId)}`;
 	const eventSource = new EventSource(url);
 	const callbacks = new Set<(event: SyncEvent) => void>();
+	const subscribers = new Set([connectionId]);
 
-	connections.set(connectionId, { eventSource, callbacks });
+	connection = { eventSource, callbacks, subscribers };
+	connections.set(spaceId, connection);
 
 	eventSource.onmessage = (event) => {
 		try {
@@ -54,10 +66,20 @@ export function connect(spaceId?: string, types?: string[]): string {
 
 // Disconnect from sync stream
 export function disconnect(connectionId: string) {
-	const connection = connections.get(connectionId);
-	if (connection) {
+	const spaceId = connectionToSpaceId.get(connectionId);
+	if (!spaceId) return;
+
+	const connection = connections.get(spaceId);
+	if (!connection) return;
+
+	// Remove this subscriber
+	connection.subscribers.delete(connectionId);
+	connectionToSpaceId.delete(connectionId);
+
+	// If no more subscribers, close the connection
+	if (connection.subscribers.size === 0) {
 		connection.eventSource.close();
-		connections.delete(connectionId);
+		connections.delete(spaceId);
 	}
 }
 
@@ -66,12 +88,15 @@ export function subscribe(
 	connectionId: string,
 	callback: (event: SyncEvent) => void,
 ) {
-	const connection = connections.get(connectionId);
+	const spaceId = connectionToSpaceId.get(connectionId);
+	if (!spaceId) return () => {};
+
+	const connection = connections.get(spaceId);
 	if (connection) {
 		connection.callbacks.add(callback);
 	}
 	return () => {
-		const connection = connections.get(connectionId);
+		const connection = connections.get(spaceId);
 		if (connection) {
 			connection.callbacks.delete(callback);
 		}
@@ -80,6 +105,9 @@ export function subscribe(
 
 // Get connection state
 export function isConnected(connectionId: string): boolean {
-	const connection = connections.get(connectionId);
+	const spaceId = connectionToSpaceId.get(connectionId);
+	if (!spaceId) return false;
+
+	const connection = connections.get(spaceId);
 	return connection?.eventSource.readyState === EventSource.OPEN || false;
 }

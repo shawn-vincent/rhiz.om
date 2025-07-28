@@ -14,7 +14,7 @@ import {
 import type { Being, Intention } from "~/server/db/types";
 
 // Single unified sync hook
-export function useSync(spaceId?: string, types?: string[]) {
+export function useSync(spaceId: string) {
 	const [beings, setBeings] = useState<Being[]>([]);
 	const [intentions, setIntentions] = useState<Intention[]>([]);
 	const [connected, setConnected] = useState(false);
@@ -23,7 +23,7 @@ export function useSync(spaceId?: string, types?: string[]) {
 
 	useEffect(() => {
 		// Connect
-		connectionId.current = connect(spaceId, types);
+		connectionId.current = connect(spaceId);
 
 		// Subscribe to all events
 		const unsubscribe = subscribe(connectionId.current, (event: SyncEvent) => {
@@ -53,7 +53,7 @@ export function useSync(spaceId?: string, types?: string[]) {
 				clearInterval(checkInterval.current);
 			}
 		};
-	}, [spaceId, types]);
+	}, [spaceId]);
 
 	return { beings, intentions, isConnected: connected };
 }

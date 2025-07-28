@@ -29,8 +29,8 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 	const [type, setType] = useState<BeingType | undefined>(initialType);
 	const qDeferred = useDeferredValue(query); // avoids instant refetch
 
-	// Get beings from stream (current space)
-	const { beings: streamBeings } = useSync(spaceId, ["beings"]);
+	// Get beings from stream (current space) - only if spaceId provided
+	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
 
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(undefined, {
@@ -115,7 +115,7 @@ export function BeingCacheProvider({
 	spaceId,
 }: { children: ReactNode; spaceId?: string }) {
 	// This is the single source of truth for being data
-	const { beings: streamBeings } = useSync(spaceId, ["beings"]);
+	const { beings: streamBeings } = spaceId ? useSync(spaceId) : { beings: [] };
 
 	// Get all beings from global cache
 	const rq = api.being.getAll.useQuery(undefined, {
