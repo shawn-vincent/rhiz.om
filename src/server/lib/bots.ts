@@ -1,10 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { env } from "~/env";
-import { emitter } from "~/lib/events";
 import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
-import { broadcastSyncEvent } from "~/server/lib/livekit";
 import { logger } from "~/server/lib/logger";
 
 const botLogger = logger.child({ name: "Bots" });
@@ -51,22 +49,25 @@ export async function activateBot(
 
 		// Create AI intention for this bot
 		const aiIntentionId = `/utterance-ai-${crypto.randomUUID()}`;
-		await db.insert(intentions).values({
-			id: aiIntentionId,
-			name: `AI Response from ${botId}`,
-			type: "utterance",
-			state: "active",
-			ownerId: botId,
-			locationId: spaceId,
-			content: [""],
-		});
+		const { createIntention } = await import("~/lib/being-operations");
 
-		// Notify that the bot intention was created
-		broadcastSyncEvent(spaceId, {
-			type: "intention-created",
-			data: { id: aiIntentionId },
-			timestamp: new Date().toISOString(),
-		});
+		await createIntention(
+			db,
+			{
+				id: aiIntentionId,
+				name: `AI Response from ${botId}`,
+				type: "utterance",
+				state: "active",
+				ownerId: botId,
+				locationId: spaceId,
+				content: [""],
+			},
+			{
+				sessionBeingId: botId,
+				currentUser: null,
+				isCurrentUserSuperuser: false,
+			},
+		);
 
 		// Stream the bot's response
 		await streamBotResponse(
@@ -140,23 +141,21 @@ async function streamBotResponse(
 			botLogger.error({ botId }, errorMessage);
 
 			// Update the intention with the error
-			await db
-				.update(intentions)
-				.set({
+			const { updateIntention } = await import("~/lib/being-operations");
+
+			await updateIntention(
+				db,
+				{
+					id: aiIntentionId,
 					state: "failed",
 					content: [errorMessage],
-					modifiedAt: new Date(),
-				})
-				.where(eq(intentions.id, aiIntentionId));
-
-			// Error will be visible via intention update
-
-			// Trigger space update to show the error
-			broadcastSyncEvent(spaceId, {
-				type: "intention-updated",
-				data: { id: aiIntentionId },
-				timestamp: new Date().toISOString(),
-			});
+				},
+				{
+					sessionBeingId: botId,
+					currentUser: null,
+					isCurrentUserSuperuser: false,
+				},
+			);
 
 			return;
 		}
@@ -351,20 +350,22 @@ async function streamBotResponse(
 								"Updating database with partial response",
 							);
 
-							await db
-								.update(intentions)
-								.set({
-									content: [fullResponse],
-									modifiedAt: new Date(),
-								})
-								.where(eq(intentions.id, aiIntentionId));
+							const { updateIntention } = await import(
+								"~/lib/being-operations"
+							);
 
-							// Trigger intention update to show partial response
-							broadcastSyncEvent(spaceId, {
-								type: "intention-updated",
-								data: { id: aiIntentionId },
-								timestamp: new Date().toISOString(),
-							});
+							await updateIntention(
+								db,
+								{
+									id: aiIntentionId,
+									content: [fullResponse],
+								},
+								{
+									sessionBeingId: botId,
+									currentUser: null,
+									isCurrentUserSuperuser: false,
+								},
+							);
 
 							lastUpdateTime = now;
 						}
@@ -392,21 +393,21 @@ async function streamBotResponse(
 			"Bot streaming completed, updating database",
 		);
 
-		await db
-			.update(intentions)
-			.set({
+		const { updateIntention } = await import("~/lib/being-operations");
+
+		await updateIntention(
+			db,
+			{
+				id: aiIntentionId,
 				content: [fullResponse],
 				state: "complete",
-				modifiedAt: new Date(),
-			})
-			.where(eq(intentions.id, aiIntentionId));
-
-		// Trigger intention update to show the completed bot response
-		broadcastSyncEvent(spaceId, {
-			type: "intention-updated",
-			data: { id: aiIntentionId },
-			timestamp: new Date().toISOString(),
-		});
+			},
+			{
+				sessionBeingId: botId,
+				currentUser: null,
+				isCurrentUserSuperuser: false,
+			},
+		);
 
 		// Completion handled via intention update
 		botLogger.info({ aiIntentionId }, "Bot response stream fully completed");
@@ -432,16 +433,20 @@ async function streamBotResponse(
 		// Error will be visible via intention update
 
 		// Store the detailed error in the database
-		await db
-			.update(intentions)
-			.set({ state: "failed", content: [errorMessage] })
-			.where(eq(intentions.id, aiIntentionId));
+		const { updateIntention } = await import("~/lib/being-operations");
 
-		// Trigger intention update to show the error response
-		broadcastSyncEvent(spaceId, {
-			type: "intention-updated",
-			data: { id: aiIntentionId },
-			timestamp: new Date().toISOString(),
-		});
+		await updateIntention(
+			db,
+			{
+				id: aiIntentionId,
+				state: "failed",
+				content: [errorMessage],
+			},
+			{
+				sessionBeingId: botId,
+				currentUser: null,
+				isCurrentUserSuperuser: false,
+			},
+		);
 	}
 }

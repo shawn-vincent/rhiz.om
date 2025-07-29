@@ -1,12 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, desc, eq, gt, ilike } from "drizzle-orm";
-import { emitter } from "~/lib/events";
-import { canEdit } from "~/lib/permissions";
 import type { DrizzleDB } from "~/server/db";
 import { beings } from "~/server/db/schema";
-import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
+import { selectBeingSchema } from "~/server/db/types";
 import type { Being, BeingId, InsertBeing } from "~/server/db/types";
-// No more being sync notifications - beings use tRPC cache invalidation
 import type {
 	BeingType,
 	EntitySummary,
@@ -127,94 +124,7 @@ export class BeingService {
 	 * Create or update a being with proper authorization and side effects
 	 */
 	async upsertBeing(input: InsertBeing, auth: AuthContext): Promise<Being> {
-		const { sessionBeingId, isCurrentUserSuperuser } = auth;
-
-		// Authorization: Check if user can edit this being (owner or superuser)
-		if (!canEdit(sessionBeingId, input.ownerId, isCurrentUserSuperuser)) {
-			throw new TRPCError({
-				code: "FORBIDDEN",
-				message: `You can only save beings that you own or have superuser access to [Tried to modify ${input.id} owned by ${input.ownerId || "UNDEFINED"}, you=${sessionBeingId || "UNDEFINED"}, superuser=${isCurrentUserSuperuser}.]`,
-			});
-		}
-
-		// Check if locationId changed to broadcast presence update
-		const existingBeing = await this.db.query.beings.findFirst({
-			where: eq(beings.id, input.id),
-		});
-
-		// Use Drizzle's ON CONFLICT for an atomic upsert operation
-		await this.db
-			.insert(beings)
-			.values({
-				...input,
-				modifiedAt: new Date(),
-			})
-			.onConflictDoUpdate({
-				target: beings.id,
-				set: {
-					...input,
-					modifiedAt: new Date(),
-				},
-			});
-
-		// Fetch the upserted being to return proper data
-		const result = await this.db.query.beings.findFirst({
-			where: eq(beings.id, input.id),
-		});
-
-		if (!result) {
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to create or update being",
-			});
-		}
-
-		// Notify sync system for real-time updates
-		if (!existingBeing) {
-			// New being created - notify the space they're joining
-			if (input.locationId) {
-				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
-				broadcastSyncEvent(input.locationId, {
-					type: "being-created",
-					data: { id: input.id },
-					timestamp: new Date().toISOString(),
-				});
-			}
-		} else {
-			// Being updated - notify both old and new spaces if location changed
-			const oldSpaceId = existingBeing.locationId;
-			const newSpaceId = input.locationId;
-
-			if (oldSpaceId && oldSpaceId !== newSpaceId) {
-				// Notify old space that being left
-				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
-				broadcastSyncEvent(oldSpaceId, {
-					type: "being-updated",
-					data: { id: input.id },
-					timestamp: new Date().toISOString(),
-				});
-			}
-
-			if (newSpaceId) {
-				// Notify new space that being joined/updated
-				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
-				broadcastSyncEvent(newSpaceId, {
-					type: "being-updated",
-					data: { id: input.id },
-					timestamp: new Date().toISOString(),
-				});
-			}
-		}
-
-		// Emit bot location change event for server-side agents
-		if (input.type === "bot") {
-			emitter.emit("bot-location-change", {
-				beingId: input.id,
-				spaceId: input.locationId,
-				oldSpaceId: existingBeing?.locationId || null,
-			});
-		}
-
-		return selectBeingSchema.parse(result);
+		const { updateBeing } = await import("~/lib/being-operations");
+		return await updateBeing(this.db, input, auth);
 	}
 }

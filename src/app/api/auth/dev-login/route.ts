@@ -26,16 +26,23 @@ export async function GET(request: Request) {
 
 		if (!being) {
 			// Create the being
-			await db.insert(beings).values({
-				id: beingId,
-				name: `Test User (${beingId})`,
-				type: "guest",
-				extIds: [],
-			});
+			const { createBeing } = await import("~/lib/being-operations");
 
-			being = await db.query.beings.findFirst({
-				where: eq(beings.id, beingId),
-			});
+			being = await createBeing(
+				db,
+				{
+					id: beingId,
+					name: `Test User (${beingId})`,
+					type: "guest",
+					extIds: [],
+					ownerId: beingId, // Self-owned
+				},
+				{
+					sessionBeingId: beingId,
+					currentUser: null,
+					isCurrentUserSuperuser: true, // System operation
+				},
+			);
 		}
 
 		// Check if user exists, if not create it

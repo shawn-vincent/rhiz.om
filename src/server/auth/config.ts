@@ -124,12 +124,23 @@ export const authConfig = {
 					? [{ provider: account.provider, id: account.providerAccountId }]
 					: [];
 
-				await db.insert(beings).values({
-					id: newBeingId,
-					name: user.name || "Unnamed Being",
-					type: "guest", // Default type for user-associated beings
-					extIds: extIds,
-				});
+				const { createBeing } = await import("~/lib/being-operations");
+
+				await createBeing(
+					db,
+					{
+						id: newBeingId,
+						name: user.name || "Unnamed Being",
+						type: "guest", // Default type for user-associated beings
+						extIds: extIds,
+						ownerId: newBeingId, // Self-owned
+					},
+					{
+						sessionBeingId: newBeingId,
+						currentUser: null,
+						isCurrentUserSuperuser: true, // System operation
+					},
+				);
 
 				// Update the user with the new beingId
 				await db
@@ -163,10 +174,21 @@ export const authConfig = {
 					if (!extIdExists) {
 						// Add the new extId to the existing Being's extIds
 						const updatedExtIds = [...existingExtIds, currentExtId];
-						await db
-							.update(beings)
-							.set({ extIds: updatedExtIds })
-							.where(eq(beings.id, userBeingId));
+						const { updateBeing } = await import("~/lib/being-operations");
+
+						await updateBeing(
+							db,
+							{
+								id: userBeingId,
+								extIds: updatedExtIds,
+								ownerId: userBeingId, // Required field
+							},
+							{
+								sessionBeingId: userBeingId,
+								currentUser: null,
+								isCurrentUserSuperuser: true, // System operation
+							},
+						);
 					}
 				}
 			}

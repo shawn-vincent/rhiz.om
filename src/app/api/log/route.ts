@@ -1,10 +1,12 @@
 // src/app/api/log/route.ts
 import { type NextRequest, NextResponse } from "next/server";
+import superjson from "superjson";
 import { logger } from "~/server/lib/logger";
 
 export async function POST(req: NextRequest) {
 	try {
-		const body = await req.json();
+		const rawBody = await req.text();
+		const body = superjson.parse(rawBody);
 		const { level, msg, ...context } = body;
 
 		// Validate log level

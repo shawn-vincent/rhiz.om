@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import type { DrizzleDB } from "~/server/db";
-import { intentions, users } from "~/server/db/schema";
+import { intentions } from "~/server/db/schema";
 import type {
 	BeingId,
 	InsertIntention,
@@ -9,12 +9,7 @@ import type {
 	IntentionId,
 } from "~/server/db/types";
 import { selectIntentionSchema } from "~/server/db/types";
-import { activateBots } from "~/server/lib/bots";
-import { broadcastSyncEvent } from "~/server/lib/livekit";
-import { logger } from "~/server/lib/logger";
 import type { AuthContext } from "./auth-service";
-
-const intentionLogger = logger.child({ name: "IntentionService" });
 
 export interface CreateUtteranceInput {
 	content: string;
@@ -44,26 +39,20 @@ export class IntentionService {
 	): Promise<{ success: boolean }> {
 		const userIntentionId: IntentionId = `/${crypto.randomUUID()}`;
 
-		await this.db.insert(intentions).values({
-			id: userIntentionId,
-			name: `Utterance by ${auth.currentUser?.name ?? "user"}`,
-			type: "utterance",
-			state: "complete",
-			ownerId: auth.sessionBeingId,
-			locationId: input.beingId,
-			content: [input.content],
-		});
+		const { createIntention } = await import("~/lib/being-operations");
 
-		// Trigger sync update to notify clients of new message
-		broadcastSyncEvent(input.beingId, {
-			type: "intention-created",
-			data: { id: userIntentionId },
-			timestamp: new Date().toISOString(),
-		});
-
-		// Activate all bots in the space (fire and forget)
-		activateBots(input.beingId as BeingId, userIntentionId).catch((error) =>
-			intentionLogger.error({ error }, "Bot activation failed"),
+		await createIntention(
+			this.db,
+			{
+				id: userIntentionId,
+				name: `Utterance by ${auth.currentUser?.name ?? "user"}`,
+				type: "utterance",
+				state: "complete",
+				ownerId: auth.sessionBeingId,
+				locationId: input.beingId,
+				content: [input.content],
+			},
+			auth,
 		);
 
 		return { success: true };
@@ -87,31 +76,19 @@ export class IntentionService {
 		updates: Partial<InsertIntention>,
 		actorId: BeingId,
 	): Promise<Intention> {
-		// For now, simple implementation - could add authorization logic here
-		const existing = await this.getIntention(id);
-		if (!existing) {
-			throw new TRPCError({
-				code: "NOT_FOUND",
-				message: `Intention with ID "${id}" not found.`,
-			});
-		}
+		const { updateIntention } = await import("~/lib/being-operations");
 
-		await this.db
-			.update(intentions)
-			.set({
+		return await updateIntention(
+			this.db,
+			{
+				id,
 				...updates,
-				modifiedAt: new Date(),
-			})
-			.where(eq(intentions.id, id));
-
-		const updated = await this.getIntention(id);
-		if (!updated) {
-			throw new TRPCError({
-				code: "INTERNAL_SERVER_ERROR",
-				message: "Failed to update intention",
-			});
-		}
-
-		return updated;
+			},
+			{
+				sessionBeingId: actorId,
+				currentUser: null,
+				isCurrentUserSuperuser: false,
+			},
+		);
 	}
 }
