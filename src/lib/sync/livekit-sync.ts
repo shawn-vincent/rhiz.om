@@ -21,14 +21,20 @@ export class LiveKitSync implements SyncClient {
 
 	async connect(locationId: string): Promise<void> {
 		if (this.currentLocationId === locationId && this.isConnected) {
-			return;
+			return; // Already connected to this room
 		}
 
 		if (!this.getTokenFn) {
 			throw new Error("Token function not set. Call setTokenFunction first.");
 		}
 
-		await this.disconnect();
+		// Only disconnect if we're connecting to a different room
+		if (this.currentLocationId && this.currentLocationId !== locationId) {
+			await this.disconnect();
+		} else if (this.currentLocationId === locationId && this._room) {
+			// Same room but not connected - don't disconnect, just reconnect
+			return;
+		}
 
 		try {
 			const { token, wsUrl } = await this.getTokenFn(locationId);

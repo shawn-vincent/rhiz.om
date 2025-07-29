@@ -25,10 +25,14 @@ export function useSync(spaceId: string) {
 	refetchBeingsRef.current = refetchBeings;
 	refetchIntentionsRef.current = refetchIntentions;
 
+	// Store the mutation in a ref to avoid recreating the token function
+	const getJoinTokenRef = useRef(getJoinToken);
+	getJoinTokenRef.current = getJoinToken;
+
 	// Token function that can be used by the sync client
 	const getTokenFn = useCallback(async (roomBeingId: string) => {
-		return await getJoinToken.mutateAsync({ roomBeingId });
-	}, [getJoinToken]);
+		return await getJoinTokenRef.current.mutateAsync({ roomBeingId });
+	}, []); // No dependencies - stable function
 
 	// Initialize sync client
 	useEffect(() => {
@@ -57,7 +61,7 @@ export function useSync(spaceId: string) {
 			unsubscribe();
 			setIsConnected(false);
 		};
-	}, [spaceId, getTokenFn]);
+	}, [spaceId]); // getTokenFn is now stable, removed from dependencies
 
 	return {
 		beings: beings || [],
