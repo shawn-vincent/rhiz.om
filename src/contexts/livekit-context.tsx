@@ -1,11 +1,13 @@
 "use client";
 
+import type { Room } from "livekit-client";
 import { createContext, useContext } from "react";
 
 interface LiveKitContextValue {
 	isConnected: boolean;
 	isConnecting: boolean;
 	currentRoomId?: string;
+	room: Room | null;
 }
 
 const LiveKitContext = createContext<LiveKitContextValue | null>(null);

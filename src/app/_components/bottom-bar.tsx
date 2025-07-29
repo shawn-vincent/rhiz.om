@@ -15,7 +15,6 @@ import {
 import type { Session } from "next-auth";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
 import { InlineBeingName } from "~/components/inline-being-name";
 import { Button } from "~/components/ui/button";
 import {
@@ -34,14 +33,15 @@ import {
 	SheetTrigger,
 } from "~/components/ui/sheet";
 import { Toggle } from "~/components/ui/toggle";
+import { useLiveKitContext } from "~/contexts/livekit-context";
+import { useLiveKitMediaControls } from "~/hooks/useLiveKitMediaControls";
 import { BeingPresence } from "./being-presence";
 import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
 export function BottomBar({ session }: { session?: Session | null }) {
-	const [videoOn, setVideoOn] = useState(false);
-	const [audioOn, setAudioOn] = useState(false);
-	const [sharing, setSharing] = useState(false);
+	const livekit = useLiveKitContext();
+	const mediaControls = useLiveKitMediaControls(livekit.room);
 	const params = useParams();
 	const currentSpaceId = params?.beingId
 		? decodeURIComponent(params.beingId as string)
@@ -99,13 +99,24 @@ export function BottomBar({ session }: { session?: Session | null }) {
 				{/* Right section - Controls and Overflow Menu */}
 				<div className="flex shrink-0 items-center gap-1">
 					<Toggle
-						pressed={videoOn}
-						onPressedChange={setVideoOn}
-						aria-label={videoOn ? "Turn camera off" : "Turn camera on"}
-						title={videoOn ? "Turn camera off" : "Turn camera on"}
+						pressed={mediaControls.isCameraEnabled}
+						onPressedChange={() => mediaControls.toggleCamera()}
+						disabled={
+							mediaControls.isCameraPending || !mediaControls.hasPermissions
+						}
+						aria-label={
+							mediaControls.isCameraEnabled
+								? "Turn camera off"
+								: "Turn camera on"
+						}
+						title={
+							mediaControls.isCameraEnabled
+								? "Turn camera off"
+								: "Turn camera on"
+						}
 						className={`${base} h-10 w-10`}
 					>
-						{videoOn ? (
+						{mediaControls.isCameraEnabled ? (
 							<Video className="size-6" />
 						) : (
 							<VideoOff className="size-6" />
@@ -113,13 +124,24 @@ export function BottomBar({ session }: { session?: Session | null }) {
 					</Toggle>
 
 					<Toggle
-						pressed={audioOn}
-						onPressedChange={setAudioOn}
-						aria-label={audioOn ? "Mute microphone" : "Unmute microphone"}
-						title={audioOn ? "Mute microphone" : "Unmute microphone"}
+						pressed={mediaControls.isMicrophoneEnabled}
+						onPressedChange={() => mediaControls.toggleMicrophone()}
+						disabled={
+							mediaControls.isMicrophonePending || !mediaControls.hasPermissions
+						}
+						aria-label={
+							mediaControls.isMicrophoneEnabled
+								? "Mute microphone"
+								: "Unmute microphone"
+						}
+						title={
+							mediaControls.isMicrophoneEnabled
+								? "Mute microphone"
+								: "Unmute microphone"
+						}
 						className={`${base} h-10 w-10`}
 					>
-						{audioOn ? (
+						{mediaControls.isMicrophoneEnabled ? (
 							<Mic className="size-6" />
 						) : (
 							<MicOff className="size-6" />
@@ -141,15 +163,21 @@ export function BottomBar({ session }: { session?: Session | null }) {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-48">
 								<DropdownMenuItem
-									onClick={() => setSharing(!sharing)}
+									onClick={() => mediaControls.toggleScreenShare()}
+									disabled={
+										mediaControls.isScreenSharePending ||
+										!mediaControls.hasPermissions
+									}
 									className="flex items-center gap-2 text-base"
 								>
-									{sharing ? (
+									{mediaControls.isScreenShareEnabled ? (
 										<MonitorX className="size-5" />
 									) : (
 										<MonitorUp className="size-5" />
 									)}
-									{sharing ? "Stop Share" : "Share Screen"}
+									{mediaControls.isScreenShareEnabled
+										? "Stop Share"
+										: "Share Screen"}
 								</DropdownMenuItem>
 								<Sheet>
 									<SheetTrigger asChild>

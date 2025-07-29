@@ -92,5 +92,6 @@ export function useLiveKitSync() {
 		disconnect,
 		isConnected,
 		isConnecting,
+		room: roomRef.current,
 	};
 }

@@ -41,11 +41,11 @@ export async function createJoinToken(opts: JoinTokenOptions) {
 
 	if (name) at.name = name;
 
-	// Grant permissions for data-only chat (no audio/video for now)
+	// Grant permissions for full media publishing
 	const grant: VideoGrant = {
 		roomJoin: true,
 		room: roomId,
-		canPublish: false, // No audio/video publishing
+		canPublish: true, // Allow audio/video publishing
 		canPublishData: true, // Allow data publishing
 		canSubscribe: true, // Allow data subscription
 		...grants,

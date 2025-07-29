@@ -11,7 +11,7 @@ export function useSync(spaceId: string) {
 	// Store refetch functions in refs to avoid dependency issues
 	const refetchBeingsRef = useRef(refetchBeings);
 	const refetchIntentionsRef = useRef(refetchIntentions);
-	
+
 	// Update refs when functions change
 	refetchBeingsRef.current = refetchBeings;
 	refetchIntentionsRef.current = refetchIntentions;
@@ -22,7 +22,7 @@ export function useSync(spaceId: string) {
 			refetchBeingsRef.current();
 			refetchIntentionsRef.current();
 		};
-		
+
 		window.addEventListener("sync-change", handleSync);
 		return () => window.removeEventListener("sync-change", handleSync);
 	}, []); // Empty dependency array - no re-registering!

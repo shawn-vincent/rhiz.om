@@ -23,6 +23,7 @@ export function SpaceLiveKitProvider({
 		isConnected: livekit.isConnected,
 		isConnecting: livekit.isConnecting,
 		currentRoomId: spaceBeingId,
+		room: livekit.room,
 	};
 
 	return <LiveKitProvider value={contextValue}>{children}</LiveKitProvider>;
