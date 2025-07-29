@@ -19,7 +19,6 @@ import type {
 	Intention,
 	IntentionId,
 } from "~/server/db/types";
-import { activateBots } from "~/server/lib/bots";
 import { broadcastSyncEvent } from "~/server/lib/livekit";
 
 export interface UpdateBeingInput extends Partial<InsertBeing> {
@@ -228,14 +227,8 @@ export async function createIntention(
 		});
 	}
 
-	// Activate bots if this is an utterance (fire and forget)
-	if (input.type === "utterance" && input.locationId) {
-		activateBots(input.locationId as BeingId, input.id as IntentionId).catch(
-			() => {
-				// Silently handle bot activation errors - they shouldn't block the main operation
-			},
-		);
-	}
+	// NOTE: Bot activation is NOT done here - it's only done for user utterances
+	// in the IntentionService.createUtterance method to avoid infinite loops
 
 	return newIntention;
 }

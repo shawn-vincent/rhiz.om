@@ -55,6 +55,12 @@ export class IntentionService {
 			auth,
 		);
 
+		// Activate all bots in the space (fire and forget) - only for user utterances
+		const { activateBots } = await import("~/server/lib/bots");
+		activateBots(input.beingId as BeingId, userIntentionId).catch(() => {
+			// Silently handle bot activation errors - they shouldn't block the main operation
+		});
+
 		return { success: true };
 	}
 
