@@ -6,7 +6,7 @@ import { logger } from "~/server/lib/logger";
 export async function POST(req: NextRequest) {
 	try {
 		const rawBody = await req.text();
-		const body = superjson.parse(rawBody);
+		const body = superjson.parse(rawBody) as any;
 		const { level, msg, ...context } = body;
 
 		// Validate log level

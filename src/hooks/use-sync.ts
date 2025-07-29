@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { api } from "~/trpc/react";
 
 export function useSync(spaceId: string) {
@@ -8,15 +8,24 @@ export function useSync(spaceId: string) {
 	const { data: intentions, refetch: refetchIntentions } =
 		api.intention.getAllUtterancesInBeing.useQuery({ beingId: spaceId });
 
+	// Store refetch functions in refs to avoid dependency issues
+	const refetchBeingsRef = useRef(refetchBeings);
+	const refetchIntentionsRef = useRef(refetchIntentions);
+	
+	// Update refs when functions change
+	refetchBeingsRef.current = refetchBeings;
+	refetchIntentionsRef.current = refetchIntentions;
+
 	// Listen for sync events and refetch
 	useEffect(() => {
 		const handleSync = () => {
-			refetchBeings();
-			refetchIntentions();
+			refetchBeingsRef.current();
+			refetchIntentionsRef.current();
 		};
+		
 		window.addEventListener("sync-change", handleSync);
 		return () => window.removeEventListener("sync-change", handleSync);
-	}, [refetchBeings, refetchIntentions]);
+	}, []); // Empty dependency array - no re-registering!
 
 	return {
 		beings: beings || [],
