@@ -1,8 +1,9 @@
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import type { AuthContext } from "~/domain/auth-service";
-import { emitter } from "~/lib/events";
 import { canEdit } from "~/lib/permissions";
+import { syncEmitter } from "~/lib/sync";
+import { ServerSync } from "~/lib/sync/server-sync";
 import type { DrizzleDB } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import {
@@ -19,7 +20,8 @@ import type {
 	Intention,
 	IntentionId,
 } from "~/server/db/types";
-import { broadcastSyncEvent } from "~/server/lib/livekit";
+
+const serverSync = new ServerSync();
 
 export interface UpdateBeingInput extends Partial<InsertBeing> {
 	id: string;
@@ -73,16 +75,17 @@ export async function createBeing(
 
 	// Sync notification - new being created
 	if (input.locationId) {
-		broadcastSyncEvent(input.locationId, {
+		await serverSync.broadcast({
 			type: "being-created",
 			data: { id: input.id },
 			timestamp: new Date().toISOString(),
+			locationId: input.locationId,
 		});
 	}
 
 	// Bot location change event for server-side agents
 	if (input.type === "bot") {
-		emitter.emit("bot-location-change", {
+		syncEmitter.emit("bot-location-change", {
 			beingId: input.id,
 			spaceId: input.locationId,
 			oldSpaceId: null,
@@ -147,10 +150,11 @@ export async function updateBeing(
 	if (!existingBeing) {
 		// New being created - notify the space they're joining
 		if (input.locationId) {
-			broadcastSyncEvent(input.locationId, {
+			await serverSync.broadcast({
 				type: "being-created",
 				data: { id: input.id },
 				timestamp: new Date().toISOString(),
+				locationId: input.locationId,
 			});
 		}
 	} else {
@@ -160,26 +164,28 @@ export async function updateBeing(
 
 		if (oldSpaceId && oldSpaceId !== newSpaceId) {
 			// Notify old space that being left
-			broadcastSyncEvent(oldSpaceId, {
+			await serverSync.broadcast({
 				type: "being-updated",
 				data: { id: input.id },
 				timestamp: new Date().toISOString(),
+				locationId: oldSpaceId,
 			});
 		}
 
 		if (newSpaceId) {
 			// Notify new space that being joined/updated
-			broadcastSyncEvent(newSpaceId, {
+			await serverSync.broadcast({
 				type: "being-updated",
 				data: { id: input.id },
 				timestamp: new Date().toISOString(),
+				locationId: newSpaceId,
 			});
 		}
 	}
 
 	// Emit bot location change event for server-side agents
 	if (input.type === "bot") {
-		emitter.emit("bot-location-change", {
+		syncEmitter.emit("bot-location-change", {
 			beingId: input.id,
 			spaceId: input.locationId,
 			oldSpaceId: existingBeing?.locationId || null,
@@ -220,10 +226,11 @@ export async function createIntention(
 
 	// Sync notification
 	if (input.locationId) {
-		broadcastSyncEvent(input.locationId, {
+		await serverSync.broadcast({
 			type: "intention-created",
 			data: { id: input.id },
 			timestamp: new Date().toISOString(),
+			locationId: input.locationId,
 		});
 	}
 
@@ -278,10 +285,11 @@ export async function updateIntention(
 
 	// Sync notification
 	if (updatedIntention.locationId) {
-		broadcastSyncEvent(updatedIntention.locationId, {
+		await serverSync.broadcast({
 			type: "intention-updated",
 			data: { id: input.id },
 			timestamp: new Date().toISOString(),
+			locationId: updatedIntention.locationId,
 		});
 	}
 
