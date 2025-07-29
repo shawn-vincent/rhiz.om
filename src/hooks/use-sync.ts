@@ -63,5 +63,6 @@ export function useSync(spaceId: string) {
 		beings: beings || [],
 		intentions: intentions || [],
 		isConnected,
+		room: syncClient?.room || null,
 	};
 }

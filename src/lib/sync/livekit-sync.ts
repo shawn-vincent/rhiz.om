@@ -2,7 +2,7 @@ import { type RemoteParticipant, Room, RoomEvent } from "livekit-client";
 import type { SyncClient, SyncEvent } from "../sync";
 
 export class LiveKitSync implements SyncClient {
-	private room: Room | null = null;
+	private _room: Room | null = null;
 	private currentLocationId: string | null = null;
 	private subscribers = new Set<(event: SyncEvent) => void>();
 	private getTokenFn: ((roomBeingId: string) => Promise<{ token: string; wsUrl: string }>) | null = null;
@@ -12,7 +12,11 @@ export class LiveKitSync implements SyncClient {
 	}
 
 	get isConnected(): boolean {
-		return this.room?.state === "connected";
+		return this._room?.state === "connected";
+	}
+
+	get room(): Room | null {
+		return this._room;
 	}
 
 	async connect(locationId: string): Promise<void> {
@@ -29,23 +33,23 @@ export class LiveKitSync implements SyncClient {
 		try {
 			const { token, wsUrl } = await this.getTokenFn(locationId);
 
-			this.room = new Room();
+			this._room = new Room();
 			this.currentLocationId = locationId;
 
-			this.room.on(RoomEvent.DataReceived, this.handleDataReceived.bind(this));
+			this._room.on(RoomEvent.DataReceived, this.handleDataReceived.bind(this));
 
-			await this.room.connect(wsUrl, token);
+			await this._room.connect(wsUrl, token);
 		} catch (error) {
-			this.room = null;
+			this._room = null;
 			this.currentLocationId = null;
 			throw error;
 		}
 	}
 
 	async disconnect(): Promise<void> {
-		if (this.room) {
-			await this.room.disconnect();
-			this.room = null;
+		if (this._room) {
+			await this._room.disconnect();
+			this._room = null;
 		}
 		this.currentLocationId = null;
 	}

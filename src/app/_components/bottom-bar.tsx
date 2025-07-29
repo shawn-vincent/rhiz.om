@@ -33,19 +33,20 @@ import {
 	SheetTrigger,
 } from "~/components/ui/sheet";
 import { Toggle } from "~/components/ui/toggle";
-import { useLiveKitContext } from "~/contexts/livekit-context";
+import { useSync } from "~/hooks/use-sync";
 import { useLiveKitMediaControls } from "~/hooks/useLiveKitMediaControls";
 import { BeingPresence } from "./being-presence";
 import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
 export function BottomBar({ session }: { session?: Session | null }) {
-	const livekit = useLiveKitContext();
-	const mediaControls = useLiveKitMediaControls(livekit.room);
 	const params = useParams();
 	const currentSpaceId = params?.beingId
 		? decodeURIComponent(params.beingId as string)
 		: undefined;
+
+	const sync = useSync(currentSpaceId || "");
+	const mediaControls = useLiveKitMediaControls(sync.room);
 
 	const base =
 		"rounded-full transition-colors text-white data-[state=on]:bg-white/20 hover:bg-white/10";
