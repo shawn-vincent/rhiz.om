@@ -1,5 +1,3 @@
-import { EventEmitter } from "node:events";
-
 // Unified sync event types
 export interface SyncEvent {
 	type: "being-created" | "being-updated" | "intention-created" | "intention-updated";
@@ -8,16 +6,25 @@ export interface SyncEvent {
 	locationId: string;
 }
 
-// Server-side singleton event emitter
-const globalForSyncEmitter = globalThis as unknown as {
-	syncEmitter: EventEmitter | undefined;
-};
+// Server-side singleton event emitter (only available on server)
+let serverEventEmitter: any = null;
 
-export const syncEmitter = globalForSyncEmitter.syncEmitter ?? new EventEmitter();
+if (typeof window === "undefined") {
+	// Only import EventEmitter on server side
+	const { EventEmitter } = require("node:events");
+	
+	const globalForSyncEmitter = globalThis as unknown as {
+		syncEmitter: any | undefined;
+	};
 
-if (process.env.NODE_ENV !== "production") {
-	globalForSyncEmitter.syncEmitter = syncEmitter;
+	serverEventEmitter = globalForSyncEmitter.syncEmitter ?? new EventEmitter();
+
+	if (process.env.NODE_ENV !== "production") {
+		globalForSyncEmitter.syncEmitter = serverEventEmitter;
+	}
 }
+
+export const syncEmitter = serverEventEmitter;
 
 // Client-side sync interface
 export interface SyncClient {

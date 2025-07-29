@@ -84,7 +84,7 @@ export async function createBeing(
 	}
 
 	// Bot location change event for server-side agents
-	if (input.type === "bot") {
+	if (input.type === "bot" && syncEmitter) {
 		syncEmitter.emit("bot-location-change", {
 			beingId: input.id,
 			spaceId: input.locationId,
@@ -184,7 +184,7 @@ export async function updateBeing(
 	}
 
 	// Emit bot location change event for server-side agents
-	if (input.type === "bot") {
+	if (input.type === "bot" && syncEmitter) {
 		syncEmitter.emit("bot-location-change", {
 			beingId: input.id,
 			spaceId: input.locationId,

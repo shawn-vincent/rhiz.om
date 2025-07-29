@@ -42,7 +42,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const {
 		beings: syncBeings,
 		intentions: utterances,
-		isConnected,
 	} = useSync(beingId);
 
 	// Utterances come directly from sync system with real-time updates
@@ -180,12 +179,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 				{/* Top shadow overlay */}
 				<div className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 bg-gradient-to-b from-black/30 to-transparent" />
 
-				{/* Connection indicator */}
-				{!isConnected && (
-					<div className="bg-yellow-500/20 px-4 py-2 text-sm text-yellow-100">
-						Connecting...
-					</div>
-				)}
 
 				<ul
 					ref={chatContainerRef}

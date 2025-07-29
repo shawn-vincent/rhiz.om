@@ -52,7 +52,8 @@ export function useSync(spaceId: string) {
 
 		// Connect to space
 		syncClient.connect(spaceId).then(() => {
-			setIsConnected(syncClient?.isConnected || false);
+			// Give the room a moment to fully connect
+			setTimeout(() => setIsConnected(syncClient?.isConnected || false), 100);
 		}).catch(() => {
 			setIsConnected(false);
 		});
