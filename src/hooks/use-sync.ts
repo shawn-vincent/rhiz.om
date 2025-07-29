@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { LiveKitSync } from "~/lib/sync/livekit-sync";
 import { api } from "~/trpc/react";
+import { useBeingsInLocation } from "./use-beings-in-location";
+import { useIntentionsInLocation } from "./use-intentions-in-location";
 
 // Singleton sync client instance
 let syncClient: LiveKitSync | null = null;
@@ -8,22 +10,24 @@ let syncClient: LiveKitSync | null = null;
 export function useSync(spaceId: string) {
 	const [isConnected, setIsConnected] = useState(false);
 
-	// Get initial data and refetch capability
-	const { data: beings, refetch: refetchBeings } =
-		api.being.getByLocation.useQuery({ locationId: spaceId });
-	const { data: intentions, refetch: refetchIntentions } =
-		api.intention.getAllUtterancesInBeing.useQuery({ beingId: spaceId });
+	// Use focused data hooks for cleaner separation of concerns
+	const beings = useBeingsInLocation(spaceId);
+	const intentions = useIntentionsInLocation(spaceId);
+
+	// Get refetch functions from the existing data queries (avoiding duplication)
+	const beingsQuery = api.being.getByLocation.useQuery({ locationId: spaceId }, { enabled: false });
+	const intentionsQuery = api.intention.getAllUtterancesInBeing.useQuery({ beingId: spaceId }, { enabled: false });
 
 	// tRPC mutation for getting join tokens
 	const getJoinToken = api.livekit.getJoinToken.useMutation();
 
 	// Store refetch functions in refs to avoid dependency issues
-	const refetchBeingsRef = useRef(refetchBeings);
-	const refetchIntentionsRef = useRef(refetchIntentions);
+	const refetchBeingsRef = useRef(beingsQuery.refetch);
+	const refetchIntentionsRef = useRef(intentionsQuery.refetch);
 
 	// Update refs when functions change
-	refetchBeingsRef.current = refetchBeings;
-	refetchIntentionsRef.current = refetchIntentions;
+	refetchBeingsRef.current = beingsQuery.refetch;
+	refetchIntentionsRef.current = intentionsQuery.refetch;
 
 	// Store the mutation in a ref to avoid recreating the token function
 	const getJoinTokenRef = useRef(getJoinToken);
@@ -65,8 +69,8 @@ export function useSync(spaceId: string) {
 	}, [spaceId]); // getTokenFn is now stable, removed from dependencies
 
 	return {
-		beings: beings || [],
-		intentions: intentions || [],
+		beings,
+		intentions,
 		isConnected,
 		room: syncClient?.room || null,
 	};
