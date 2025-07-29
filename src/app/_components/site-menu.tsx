@@ -8,6 +8,7 @@ import { useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { BeingCreateModal } from "~/components/being-create-modal";
 import { BeingSelectField } from "~/components/being-selector";
+import { LiveKitTestButton } from "~/components/livekit-test-button";
 import { PWAInstallButton } from "~/components/pwa-install-button";
 import { Avatar } from "~/components/ui/avatar";
 import { Button } from "~/components/ui/button";
@@ -83,7 +84,7 @@ function UserCard() {
 	);
 }
 
-export function SiteMenu() {
+export function SiteMenu({ currentSpaceId }: { currentSpaceId?: string }) {
 	const router = useRouter();
 	const { data: session } = useSession();
 	const [isCreatingSpace, setIsCreatingSpace] = useState(false);
@@ -122,6 +123,11 @@ export function SiteMenu() {
 						<Plus className="h-4 w-4" />
 						Create New Space
 					</Button>
+				</div>
+				<Separator className="bg-white/20" />
+				<div className="p-4">
+					<h3 className="mb-4 font-medium text-white/80">LiveKit Test</h3>
+					<LiveKitTestButton />
 				</div>
 				<div className="mt-auto space-y-4 p-4">
 					<PWAInstallButton />

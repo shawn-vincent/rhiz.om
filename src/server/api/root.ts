@@ -1,6 +1,7 @@
 import { authRouter } from "~/server/api/routers/auth";
 import { beingRouter } from "~/server/api/routers/being"; // 1. Import router
 import { intentionRouter } from "~/server/api/routers/intention";
+import { livekitRouter } from "~/server/api/routers/livekit";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
 	intention: intentionRouter,
 	being: beingRouter, // 2. Add router
 	auth: authRouter,
+	livekit: livekitRouter,
 });
 
 // export type definition of API

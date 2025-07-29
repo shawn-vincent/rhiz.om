@@ -77,7 +77,7 @@ export function BottomBar({ session }: { session?: Session | null }) {
 										Navigate to different parts of the site.
 									</SheetDescription>
 								</SheetHeader>
-								<SiteMenu />
+								<SiteMenu currentSpaceId={currentSpaceId} />
 							</SheetContent>
 						</Sheet>
 					)}

@@ -6,6 +6,8 @@ import { appRouter } from "~/server/api/root";
 import { createTRPCContext } from "~/server/api/trpc";
 import { logger } from "~/server/lib/logger";
 
+export const runtime = "nodejs"; // Required for LiveKit server SDK
+
 const trpcLogger = logger.child({ name: "tRPC" });
 
 /**
