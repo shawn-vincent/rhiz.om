@@ -4,8 +4,8 @@ import { emitter } from "~/lib/events";
 import { db } from "~/server/db";
 import { beings, intentions } from "~/server/db/schema";
 import type { Being, BeingId, Intention, IntentionId } from "~/server/db/types";
+import { broadcastSyncEvent } from "~/server/lib/livekit";
 import { logger } from "~/server/lib/logger";
-import { notifyIntentionCreated } from "~/server/lib/stream";
 
 const botLogger = logger.child({ name: "Bots" });
 
@@ -62,7 +62,11 @@ export async function activateBot(
 		});
 
 		// Notify that the bot intention was created
-		notifyIntentionCreated(aiIntentionId, spaceId);
+		broadcastSyncEvent(spaceId, {
+			type: "intention-created",
+			data: { id: aiIntentionId },
+			timestamp: new Date().toISOString(),
+		});
 
 		// Stream the bot's response
 		await streamBotResponse(
@@ -148,7 +152,11 @@ async function streamBotResponse(
 			// Error will be visible via intention update
 
 			// Trigger space update to show the error
-			notifyIntentionCreated(aiIntentionId, spaceId);
+			broadcastSyncEvent(spaceId, {
+				type: "intention-updated",
+				data: { id: aiIntentionId },
+				timestamp: new Date().toISOString(),
+			});
 
 			return;
 		}
@@ -198,11 +206,11 @@ async function streamBotResponse(
 			}
 
 			botLogger.error(
-				{ 
-					aiIntentionId, 
-					status: response.status, 
-					errorText, 
-					parsedError 
+				{
+					aiIntentionId,
+					status: response.status,
+					errorText,
+					parsedError,
 				},
 				"OpenRouter API error response",
 			);
@@ -211,26 +219,28 @@ async function streamBotResponse(
 			let errorDetails = errorText;
 			try {
 				const errorJson = JSON.parse(errorText);
-				
+
 				// Extract nested error details with provider information
 				if (errorJson.error) {
 					const error = errorJson.error;
 					const parts: string[] = [];
-					
+
 					// Main error message
 					if (error.message) {
 						parts.push(error.message);
 					}
-					
+
 					// Add provider-specific details if available
 					if (error.metadata) {
 						if (error.metadata.provider_name) {
 							parts.push(`Provider: ${error.metadata.provider_name}`);
 						}
-						
+
 						// If there's a raw HTML error, try to extract the meaningful part
-						if (error.metadata.raw && typeof error.metadata.raw === 'string') {
-							const htmlMatch = error.metadata.raw.match(/<title>(.*?)<\/title>/);
+						if (error.metadata.raw && typeof error.metadata.raw === "string") {
+							const htmlMatch = error.metadata.raw.match(
+								/<title>(.*?)<\/title>/,
+							);
 							if (htmlMatch) {
 								parts.push(`Raw error: ${htmlMatch[1]}`);
 							} else if (error.metadata.raw.length < 200) {
@@ -239,13 +249,13 @@ async function streamBotResponse(
 							}
 						}
 					}
-					
+
 					// Add error code if different from HTTP status
 					if (error.code && error.code !== response.status) {
 						parts.push(`Code: ${error.code}`);
 					}
-					
-					errorDetails = parts.length > 0 ? parts.join(' | ') : errorText;
+
+					errorDetails = parts.length > 0 ? parts.join(" | ") : errorText;
 				} else if (errorJson.message) {
 					errorDetails = errorJson.message;
 				}
@@ -350,7 +360,11 @@ async function streamBotResponse(
 								.where(eq(intentions.id, aiIntentionId));
 
 							// Trigger intention update to show partial response
-							notifyIntentionCreated(aiIntentionId, spaceId);
+							broadcastSyncEvent(spaceId, {
+								type: "intention-updated",
+								data: { id: aiIntentionId },
+								timestamp: new Date().toISOString(),
+							});
 
 							lastUpdateTime = now;
 						}
@@ -388,7 +402,11 @@ async function streamBotResponse(
 			.where(eq(intentions.id, aiIntentionId));
 
 		// Trigger intention update to show the completed bot response
-		notifyIntentionCreated(aiIntentionId, spaceId);
+		broadcastSyncEvent(spaceId, {
+			type: "intention-updated",
+			data: { id: aiIntentionId },
+			timestamp: new Date().toISOString(),
+		});
 
 		// Completion handled via intention update
 		botLogger.info({ aiIntentionId }, "Bot response stream fully completed");
@@ -420,6 +438,10 @@ async function streamBotResponse(
 			.where(eq(intentions.id, aiIntentionId));
 
 		// Trigger intention update to show the error response
-		notifyIntentionCreated(aiIntentionId, spaceId);
+		broadcastSyncEvent(spaceId, {
+			type: "intention-updated",
+			data: { id: aiIntentionId },
+			timestamp: new Date().toISOString(),
+		});
 	}
 }

@@ -84,40 +84,20 @@ setup("mock authentication", async ({ page }) => {
 		}
 	});
 
-	// Mock all sync-related endpoints
-	await page.route("**/api/sync**", async (route) => {
-		const url = route.request().url();
-		if (url.includes("/api/sync?")) {
-			// SSE endpoint
-			await route.fulfill({
-				status: 200,
-				contentType: "text/event-stream",
-				headers: {
-					"Cache-Control": "no-cache",
-					Connection: "keep-alive",
-					"Content-Type": "text/event-stream",
-					"Access-Control-Allow-Origin": "*",
-					"Access-Control-Allow-Methods": "GET, OPTIONS",
-					"Access-Control-Allow-Headers": "Content-Type",
-				},
-				body: 'data: {"type":"initial","data":[]}\n\n',
-			});
-		} else {
-			// Other sync endpoints
-			await route.fulfill({
-				status: 200,
-				contentType: "application/json",
-				body: JSON.stringify({ success: true, data: [] }),
-			});
-		}
-	});
-
-	// Mock legacy sync endpoints
-	await page.route("**/api/sync/**", async (route) => {
+	// Mock LiveKit endpoints
+	await page.route("**/api/trpc/livekit.**", async (route) => {
 		await route.fulfill({
 			status: 200,
 			contentType: "application/json",
-			body: JSON.stringify({ success: true, data: [] }),
+			body: JSON.stringify({
+				result: {
+					data: {
+						token: "mock-livekit-token",
+						url: "wss://mock-livekit-server",
+						success: true,
+					},
+				},
+			}),
 		});
 	});
 

@@ -6,7 +6,7 @@ import type { BeingType } from "packages/entity-kit/src/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
-import { useSync } from "~/hooks/use-stream";
+import { useSync } from "~/hooks/use-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";

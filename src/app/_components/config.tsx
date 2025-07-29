@@ -10,7 +10,7 @@ import { BeingEditModal } from "~/components/being-edit-modal";
 import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
-import { useSync } from "~/hooks/use-stream";
+import { useSync } from "~/hooks/use-sync";
 import { canEdit, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/server/db/types";
 import { api } from "~/trpc/react";

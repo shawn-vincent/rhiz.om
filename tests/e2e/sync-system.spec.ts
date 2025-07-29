@@ -30,17 +30,12 @@ async function setupMocking(page: Page) {
 		const url = route.request().url();
 		const method = route.request().method();
 
-		if (url.includes("/api/sync?")) {
-			// SSE endpoint - return proper SSE response
+		if (url.includes("/api/livekit/")) {
+			// LiveKit endpoints
 			await route.fulfill({
 				status: 200,
-				contentType: "text/event-stream",
-				headers: {
-					"Cache-Control": "no-cache",
-					Connection: "keep-alive",
-					"Content-Type": "text/event-stream",
-				},
-				body: 'data: {"type":"initial","data":[]}\n\n',
+				contentType: "application/json",
+				body: JSON.stringify({ success: true, token: "mock-token" }),
 			});
 		} else if (url.includes("/api/beings") || url.includes("/api/intentions")) {
 			// New API endpoints
@@ -67,31 +62,16 @@ async function setupMocking(page: Page) {
 	});
 }
 
-test.describe("Sync System Comparison", () => {
+test.describe("LiveKit Sync System", () => {
 	test.beforeEach(async ({ page }) => {
 		// Set up comprehensive mocking for each test
 		await setupMocking(page);
 		await page.goto("/");
 	});
 
-	test("Old system loads and works", async ({ page }) => {
-		// Test with old system (default)
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=false");
-
-		// Wait for the page to load
-		await page.waitForLoadState("networkidle");
-
-		// Check that the page loads without errors
-		await expect(page).toHaveTitle(/Rhiz\.om/);
-
-		// Just verify the page loads - presence elements may not exist in test env
-		const bodyElement = page.locator("body");
-		await expect(bodyElement).toBeVisible();
-	});
-
-	test("New system loads and works", async ({ page }) => {
-		// Test with new system
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=true");
+	test("LiveKit system loads and works", async ({ page }) => {
+		// Test LiveKit-based sync system
+		await page.goto("/");
 
 		// Wait for the page to load
 		await page.waitForLoadState("networkidle");
@@ -130,22 +110,25 @@ test.describe("Sync System Comparison", () => {
 		expect(intentionsData).toHaveProperty("success");
 	});
 
-	test("SSE sync endpoint works", async ({ page }) => {
-		// Test sync endpoint with authenticated user's space
-		try {
-			const response = await page.request.get(
-				`/api/sync?spaceId=${testUser.beingId}&types=beings,intentions`,
-				{ timeout: 5000 }, // Shorter timeout
-			);
-			expect(response.ok()).toBeTruthy();
-			expect(response.headers()["content-type"]).toContain("text/event-stream");
-		} catch (error) {
-			// If request fails due to mocking, verify mock was called
-			console.log(
-				"SSE test used mocked response (expected in test environment)",
-			);
-			expect(true).toBeTruthy(); // Pass the test since mocking means it's working
-		}
+	test("LiveKit sync system works", async ({ page }) => {
+		// Test that LiveKit integration loads without errors
+		await page.goto("/");
+		await page.waitForLoadState("networkidle");
+
+		// Check that the page loads without critical errors
+		const bodyElement = page.locator("body");
+		await expect(bodyElement).toBeVisible();
+
+		// Verify no critical console errors related to sync
+		const errors: string[] = [];
+		page.on("console", (msg) => {
+			if (msg.type() === "error" && msg.text().includes("sync")) {
+				errors.push(msg.text());
+			}
+		});
+
+		await page.waitForTimeout(2000);
+		expect(errors.length).toBe(0);
 	});
 
 	test.skip("No console errors in either system", async ({ page }) => {
@@ -157,15 +140,10 @@ test.describe("Sync System Comparison", () => {
 			}
 		});
 
-		// Test old system
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=false");
+		// Test LiveKit system
+		await page.goto("/");
 		await page.waitForLoadState("networkidle");
 		await page.waitForTimeout(2000); // Wait for any async operations
-
-		// Test new system
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=true");
-		await page.waitForLoadState("networkidle");
-		await page.waitForTimeout(2000);
 
 		// Filter out known non-critical errors and test environment issues
 		const criticalErrors = errors.filter(
@@ -174,8 +152,7 @@ test.describe("Sync System Comparison", () => {
 				!error.includes("favicon") &&
 				!error.includes("Non-critical") &&
 				!error.includes("Failed to fetch") && // Network mocking issues
-				!error.includes("Failed to request snapshot") && // Expected in test env
-				!error.includes("StateSyncClient error") && // Expected in test env
+				!error.includes("LiveKit") && // LiveKit connection issues in test env
 				!error.includes("TypeError: Failed to fetch") && // Network mocking
 				!error.includes("Auth API calls will fail") && // Expected in test
 				!error.includes("hydration") && // React hydration warnings
@@ -187,8 +164,8 @@ test.describe("Sync System Comparison", () => {
 	});
 });
 
-test.describe("Performance Comparison", () => {
-	test("Old system network requests", async ({ page }) => {
+test.describe("LiveKit Performance", () => {
+	test("LiveKit system network requests", async ({ page }) => {
 		const requests: string[] = [];
 
 		page.on("request", (request) => {
@@ -197,42 +174,23 @@ test.describe("Performance Comparison", () => {
 			}
 		});
 
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=false");
+		await page.goto("/");
 		await page.waitForLoadState("networkidle");
 		await page.waitForTimeout(5000);
 
-		console.log("Old system requests:", requests.length);
-		console.log("Old system unique endpoints:", [
+		console.log("LiveKit system requests:", requests.length);
+		console.log("LiveKit system unique endpoints:", [
 			...new Set(requests.map((url) => new URL(url).pathname)),
 		]);
 	});
 
-	test("New system network requests", async ({ page }) => {
-		const requests: string[] = [];
-
-		page.on("request", (request) => {
-			if (request.url().includes("/api/") || request.url().includes("/trpc/")) {
-				requests.push(request.url());
-			}
-		});
-
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=true");
-		await page.waitForLoadState("networkidle");
-		await page.waitForTimeout(5000);
-
-		console.log("New system requests:", requests.length);
-		console.log("New system unique endpoints:", [
-			...new Set(requests.map((url) => new URL(url).pathname)),
-		]);
-	});
-
-	test("Memory usage comparison", async ({ page }) => {
-		// Test old system memory usage
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=false");
+	test("LiveKit memory usage", async ({ page }) => {
+		// Test LiveKit system memory usage
+		await page.goto("/");
 		await page.waitForLoadState("networkidle");
 		await page.waitForTimeout(3000);
 
-		const oldSystemMemory = await page.evaluate(() => {
+		const liveKitMemory = await page.evaluate(() => {
 			if ("memory" in performance) {
 				return (performance as { memory: { usedJSHeapSize: number } }).memory
 					.usedJSHeapSize;
@@ -240,26 +198,7 @@ test.describe("Performance Comparison", () => {
 			return 0;
 		});
 
-		// Test new system memory usage
-		await page.goto("/?NEXT_PUBLIC_USE_SIMPLE_SYNC=true");
-		await page.waitForLoadState("networkidle");
-		await page.waitForTimeout(3000);
-
-		const newSystemMemory = await page.evaluate(() => {
-			if ("memory" in performance) {
-				return (performance as { memory: { usedJSHeapSize: number } }).memory
-					.usedJSHeapSize;
-			}
-			return 0;
-		});
-
-		console.log("Old system memory:", oldSystemMemory);
-		console.log("New system memory:", newSystemMemory);
-
-		if (oldSystemMemory > 0 && newSystemMemory > 0) {
-			const reduction =
-				((oldSystemMemory - newSystemMemory) / oldSystemMemory) * 100;
-			console.log("Memory reduction:", `${reduction.toFixed(2)}%`);
-		}
+		console.log("LiveKit system memory:", liveKitMemory);
+		expect(liveKitMemory).toBeGreaterThan(0);
 	});
 });

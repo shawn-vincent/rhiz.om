@@ -173,24 +173,36 @@ export class BeingService {
 		if (!existingBeing) {
 			// New being created - notify the space they're joining
 			if (input.locationId) {
-				const { notifyBeingCreated } = await import("~/server/lib/stream");
-				notifyBeingCreated(input.id, input.locationId);
+				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
+				broadcastSyncEvent(input.locationId, {
+					type: "being-created",
+					data: { id: input.id },
+					timestamp: new Date().toISOString(),
+				});
 			}
 		} else {
 			// Being updated - notify both old and new spaces if location changed
 			const oldSpaceId = existingBeing.locationId;
 			const newSpaceId = input.locationId;
-			
-			const { notifyBeingUpdated } = await import("~/server/lib/stream");
-			
+
 			if (oldSpaceId && oldSpaceId !== newSpaceId) {
 				// Notify old space that being left
-				notifyBeingUpdated(input.id, oldSpaceId);
+				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
+				broadcastSyncEvent(oldSpaceId, {
+					type: "being-updated",
+					data: { id: input.id },
+					timestamp: new Date().toISOString(),
+				});
 			}
-			
+
 			if (newSpaceId) {
 				// Notify new space that being joined/updated
-				notifyBeingUpdated(input.id, newSpaceId);
+				const { broadcastSyncEvent } = await import("~/server/lib/livekit");
+				broadcastSyncEvent(newSpaceId, {
+					type: "being-updated",
+					data: { id: input.id },
+					timestamp: new Date().toISOString(),
+				});
 			}
 		}
 

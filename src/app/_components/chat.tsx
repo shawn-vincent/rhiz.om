@@ -14,7 +14,7 @@ import { RichContent } from "~/app/_components/rich-content";
 import { ChatInput, type ChatInputRef } from "~/components/chat-input";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
-import { useSync } from "~/hooks/use-stream";
+import { useSync } from "~/hooks/use-sync";
 import { logger } from "~/lib/logger.client";
 import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId, Intention } from "~/server/db/types";
@@ -39,7 +39,11 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const chatInputRef = useRef<ChatInputRef>(null);
 
 	// Use sync for real-time intentions and beings
-	const { beings: syncBeings, intentions: utterances, isConnected } = useSync(beingId);
+	const {
+		beings: syncBeings,
+		intentions: utterances,
+		isConnected,
+	} = useSync(beingId);
 
 	// Utterances come directly from sync system with real-time updates
 
@@ -190,9 +194,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 					{groupedMessages.map((group, groupIndex) => {
 						const isCurrentUser = group.ownerId === currentUserBeingId;
 						// Use sync beings for real-time updates
-						const beingData = syncBeings.find(
-							(b) => b.id === group.ownerId,
-						);
+						const beingData = syncBeings.find((b) => b.id === group.ownerId);
 						const knownBeingType =
 							group.ownerId === AI_AGENT_BEING_ID
 								? "bot"

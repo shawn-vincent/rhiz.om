@@ -10,8 +10,8 @@ import type {
 } from "~/server/db/types";
 import { selectIntentionSchema } from "~/server/db/types";
 import { activateBots } from "~/server/lib/bots";
+import { broadcastSyncEvent } from "~/server/lib/livekit";
 import { logger } from "~/server/lib/logger";
-import { notifyIntentionCreated } from "~/server/lib/stream";
 import type { AuthContext } from "./auth-service";
 
 const intentionLogger = logger.child({ name: "IntentionService" });
@@ -54,8 +54,12 @@ export class IntentionService {
 			content: [input.content],
 		});
 
-		// Trigger stream update to notify clients of new message
-		notifyIntentionCreated(userIntentionId, input.beingId);
+		// Trigger sync update to notify clients of new message
+		broadcastSyncEvent(input.beingId, {
+			type: "intention-created",
+			data: { id: userIntentionId },
+			timestamp: new Date().toISOString(),
+		});
 
 		// Activate all bots in the space (fire and forget)
 		activateBots(input.beingId as BeingId, userIntentionId).catch((error) =>
