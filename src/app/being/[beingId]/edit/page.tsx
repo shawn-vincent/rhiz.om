@@ -92,18 +92,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 				llmApiKey: being.llmApiKey || undefined,
 			};
 
-			console.log("🐛 formValues.type:", formValues.type);
-			console.log("🐛 Full formValues:", formValues);
-
 			methods.reset(formValues);
-
-			// Check what the form thinks the type is after reset
-			setTimeout(() => {
-				console.log(
-					"🐛 After reset - form type value:",
-					methods.getValues("type"),
-				);
-			}, 100);
 		}
 	}, [being, methods]);
 

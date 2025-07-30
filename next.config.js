@@ -14,6 +14,11 @@ const withPWA = pwa({
 });
 
 /** @src/server/db/types.ts {import("next").NextConfig} */
-const config = {};
+const config = {
+	serverExternalPackages: ['pino', 'pino-pretty'],
+	experimental: {
+		instrumentationHook: true,
+	},
+};
 
 export default withPWA(config);

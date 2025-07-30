@@ -91,6 +91,8 @@ const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
 	const result = await next();
 	const durationMs = Date.now() - start;
 
+	const trpcLogger = logger.child({ name: "tRPC" });
+
 	const meta = {
 		path,
 		type,
@@ -100,9 +102,9 @@ const loggingMiddleware = t.middleware(async ({ path, type, next, ctx }) => {
 	};
 
 	if (result.ok) {
-		logger.info(meta, "tRPC OK");
+		trpcLogger.info(meta, "tRPC OK");
 	} else {
-		logger.error(result.error, "tRPC Error");
+		trpcLogger.error(result.error, "tRPC Error");
 	}
 
 	return result;

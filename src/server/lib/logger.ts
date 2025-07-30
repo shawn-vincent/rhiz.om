@@ -14,7 +14,8 @@ const prettyStream =
 		? pretty({
 				colorize: true,
 				levelFirst: true,
-				translateTime: "UTC:yyyy-mm-dd'T'HH:MM:ss'Z'",
+				translateTime: "SYS:h:MM:ss.l TT",
+				ignore: "pid,hostname", // Remove process ID and hostname from logs
 			})
 		: undefined;
 
