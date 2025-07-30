@@ -1,77 +1,70 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { LiveKitSync } from "~/lib/sync/livekit-sync";
+import { useEffect, useRef } from "react";
+import { RoomEvent, type RemoteParticipant } from "livekit-client";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "~/trpc/react";
 import { useBeingsInLocation } from "./use-beings-in-location";
 import { useIntentionsInLocation } from "./use-intentions-in-location";
-
-// Singleton sync client instance
-let syncClient: LiveKitSync | null = null;
+import { useLiveKitConnection } from "./use-livekit-connection";
+import type { SyncEvent } from "~/lib/sync";
 
 export function useSync(spaceId: string) {
-	const [isConnected, setIsConnected] = useState(false);
-
 	// Use focused data hooks for cleaner separation of concerns
 	const beings = useBeingsInLocation(spaceId);
 	const intentions = useIntentionsInLocation(spaceId);
 
-	// Get refetch functions from the existing data queries (avoiding duplication)
-	const beingsQuery = api.being.getByLocation.useQuery({ locationId: spaceId }, { enabled: false });
-	const intentionsQuery = api.intention.getAllUtterancesInBeing.useQuery({ beingId: spaceId }, { enabled: false });
+	// Use focused connection hook (eliminates singleton pattern)
+	const { room, isConnected } = useLiveKitConnection(spaceId);
 
-	// tRPC mutation for getting join tokens
-	const getJoinToken = api.livekit.getJoinToken.useMutation();
+	// Use query client for efficient invalidation
+	const queryClient = useQueryClient();
 
-	// Store refetch functions in refs to avoid dependency issues
-	const refetchBeingsRef = useRef(beingsQuery.refetch);
-	const refetchIntentionsRef = useRef(intentionsQuery.refetch);
-
-	// Update refs when functions change
-	refetchBeingsRef.current = beingsQuery.refetch;
-	refetchIntentionsRef.current = intentionsQuery.refetch;
-
-	// Store the mutation in a ref to avoid recreating the token function
-	const getJoinTokenRef = useRef(getJoinToken);
-	getJoinTokenRef.current = getJoinToken;
-
-	// Token function that can be used by the sync client
-	const getTokenFn = useCallback(async (roomBeingId: string) => {
-		return await getJoinTokenRef.current.mutateAsync({ roomBeingId });
-	}, []); // No dependencies - stable function
-
-	// Initialize sync client
+	// Handle sync events from LiveKit room
 	useEffect(() => {
-		if (!syncClient) {
-			syncClient = new LiveKitSync();
-		}
+		if (!room) return;
 
-		// Set the token function
-		syncClient.setTokenFunction(getTokenFn);
+		const handleDataReceived = (
+			payload: Uint8Array,
+			participant?: RemoteParticipant,
+			kind?: any,
+			topic?: string,
+		) => {
+			if (topic !== "sync") return;
 
-		const handleSyncEvent = () => {
-			refetchBeingsRef.current();
-			refetchIntentionsRef.current();
+			try {
+				const text = new TextDecoder().decode(payload);
+				const event = JSON.parse(text) as SyncEvent;
+				
+				// Invalidate queries based on event type for efficient updates
+				switch (event.type) {
+					case 'being-created':
+					case 'being-updated':
+						queryClient.invalidateQueries({
+							queryKey: [['being', 'getByLocation'], { input: { locationId: spaceId } }]
+						});
+						break;
+					case 'intention-created':
+					case 'intention-updated':
+						queryClient.invalidateQueries({
+							queryKey: [['intention', 'getAllUtterancesInBeing'], { input: { beingId: spaceId } }]
+						});
+						break;
+				}
+			} catch (error) {
+				console.error("Error parsing sync event:", error);
+			}
 		};
 
-		const unsubscribe = syncClient.subscribe(handleSyncEvent);
-
-		// Connect to space
-		syncClient.connect(spaceId).then(() => {
-			// Give the room a moment to fully connect
-			setTimeout(() => setIsConnected(syncClient?.isConnected || false), 100);
-		}).catch(() => {
-			setIsConnected(false);
-		});
+		room.on(RoomEvent.DataReceived, handleDataReceived);
 
 		return () => {
-			unsubscribe();
-			setIsConnected(false);
+			room.off(RoomEvent.DataReceived, handleDataReceived);
 		};
-	}, [spaceId]); // getTokenFn is now stable, removed from dependencies
+	}, [room, spaceId, queryClient]);
 
 	return {
 		beings,
 		intentions,
 		isConnected,
-		room: syncClient?.room || null,
+		room,
 	};
 }
