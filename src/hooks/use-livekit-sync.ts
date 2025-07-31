@@ -1,13 +1,14 @@
-import { useEffect } from "react";
-import { RoomEvent, type RemoteParticipant, type Room } from "livekit-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { type RemoteParticipant, type Room, RoomEvent } from "livekit-client";
+import { useEffect } from "react";
 import type { SyncEvent } from "~/lib/sync";
+import type { BeingId } from "~/lib/types";
 
 /**
  * Focused hook for coordinating sync events with data invalidation
  * Handles the mapping between LiveKit sync events and tRPC query invalidation
  */
-export function useLiveKitSync(locationId: string, room: Room | null): void {
+export function useLiveKitSync(locationId: BeingId, room: Room | null): void {
 	const queryClient = useQueryClient();
 
 	useEffect(() => {
@@ -24,19 +25,22 @@ export function useLiveKitSync(locationId: string, room: Room | null): void {
 			try {
 				const text = new TextDecoder().decode(payload);
 				const event = JSON.parse(text) as SyncEvent;
-				
+
 				// Invalidate queries based on event type for efficient updates
 				switch (event.type) {
-					case 'being-created':
-					case 'being-updated':
+					case "being-created":
+					case "being-updated":
 						queryClient.invalidateQueries({
-							queryKey: [['being', 'getByLocation'], { input: { locationId } }]
+							queryKey: [["being", "getByLocation"], { input: { locationId } }],
 						});
 						break;
-					case 'intention-created':
-					case 'intention-updated':
+					case "intention-created":
+					case "intention-updated":
 						queryClient.invalidateQueries({
-							queryKey: [['intention', 'getAllUtterancesInBeing'], { input: { beingId: locationId } }]
+							queryKey: [
+								["intention", "getAllUtterancesInBeing"],
+								{ input: { beingId: locationId } },
+							],
 						});
 						break;
 				}

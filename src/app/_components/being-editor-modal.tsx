@@ -11,10 +11,11 @@ import {
 	DialogTrigger,
 } from "~/components/ui/dialog";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import type { BeingId } from "~/lib/types";
 import { BeingEditor } from "./being-editor";
 
 interface BeingEditorModalProps {
-	beingId: string;
+	beingId: BeingId;
 	title: string;
 }
 

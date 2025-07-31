@@ -1,11 +1,12 @@
 import { eq } from "drizzle-orm";
 import { isSuperuser } from "~/lib/permissions";
+import type { BeingId } from "~/lib/types";
 import { db } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import { selectBeingSchema } from "~/server/db/types";
 
 export interface AuthContext {
-	sessionBeingId: string;
+	sessionBeingId: BeingId;
 	currentUser: ReturnType<typeof selectBeingSchema.parse> | null;
 	isCurrentUserSuperuser: boolean;
 }
@@ -15,7 +16,7 @@ export interface AuthContext {
  * Used by both tRPC middleware and REST API routes
  */
 export async function getAuthContext(
-	sessionBeingId: string,
+	sessionBeingId: BeingId,
 ): Promise<AuthContext> {
 	// Get current user's being to check superuser status
 	const currentUserRaw = await db.query.beings.findFirst({

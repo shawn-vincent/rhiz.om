@@ -4,8 +4,8 @@ import { BeingPresence } from "~/app/_components/being-presence";
 import { BottomBar } from "~/app/_components/bottom-bar";
 import { Chat } from "~/app/_components/chat";
 import ErrorBoundary from "~/components/ui/error-boundary";
+import { type BeingId, isBeingId } from "~/lib/types";
 import { auth } from "~/server/auth";
-import type { BeingId } from "~/server/db/types";
 import { HydrateClient, api } from "~/trpc/server";
 
 export default async function SpacePage({
@@ -13,7 +13,13 @@ export default async function SpacePage({
 }: { params: Promise<{ beingId: string }> }) {
 	const session = await auth();
 	const { beingId: encodedBeingId } = await params;
-	const beingId = decodeURIComponent(encodedBeingId);
+	const decodedBeingId = decodeURIComponent(encodedBeingId);
+
+	if (!isBeingId(decodedBeingId)) {
+		return <div>Invalid Being ID format</div>;
+	}
+
+	const beingId: BeingId = decodedBeingId;
 
 	// Temporarily disable prefetch to test refresh issue
 	// if (session?.user) {

@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod/v4";
 import { services } from "~/domain/services";
+import { beingIdSchema } from "~/lib/types";
 import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { broadcastToRoom, createJoinToken } from "~/server/lib/livekit";
 
@@ -16,7 +17,7 @@ export const livekitRouter = createTRPCRouter({
 	getJoinToken: protectedProcedure
 		.input(
 			z.object({
-				roomBeingId: z.string().min(1), // Being ID for the space (from current page)
+				roomBeingId: beingIdSchema, // Being ID for the space (from current page)
 				ttlSeconds: z.number().int().positive().optional(),
 			}),
 		)
@@ -65,10 +66,10 @@ export const livekitRouter = createTRPCRouter({
 	sendSystemMessage: protectedProcedure
 		.input(
 			z.object({
-				roomBeingId: z.string().min(1),
+				roomBeingId: beingIdSchema,
 				message: z.string().min(1),
 				topic: z.string().optional(),
-				targetBeingIds: z.array(z.string()).optional(),
+				targetBeingIds: z.array(beingIdSchema).optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {

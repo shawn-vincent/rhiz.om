@@ -14,10 +14,11 @@ import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
 import { useBeing } from "~/hooks/use-beings";
+import type { BeingId } from "~/lib/types";
 
 function NavigationSelector() {
 	const router = useRouter();
-	const [selectedBeing, setSelectedBeing] = useState<string>("");
+	const [selectedBeing, setSelectedBeing] = useState<BeingId | "">("");
 
 	const form = useForm({
 		defaultValues: {
@@ -66,7 +67,7 @@ function UserCard() {
 	return (
 		<div className="flex items-center gap-3 rounded-lg border border-white/20 bg-white/5 p-3">
 			<Avatar
-				beingId={currentUserBeing.id}
+				beingId={currentUserBeing.id as BeingId}
 				beingType="guest"
 				size="md"
 				showSuperuserBadge={true}
@@ -83,12 +84,12 @@ function UserCard() {
 	);
 }
 
-export function SiteMenu({ currentSpaceId }: { currentSpaceId?: string }) {
+export function SiteMenu({ currentSpaceId }: { currentSpaceId?: BeingId }) {
 	const router = useRouter();
 	const { data: session } = useSession();
 	const [isCreatingSpace, setIsCreatingSpace] = useState(false);
 
-	const handleSpaceCreated = (spaceId: string) => {
+	const handleSpaceCreated = (spaceId: BeingId) => {
 		console.log(
 			"🐛 SiteMenu - handleSpaceCreated called with spaceId:",
 			spaceId,

@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import type { BeingId } from "~/lib/types";
 import { db } from "~/server/db";
 import { beings, sessions, users } from "~/server/db/schema";
 
@@ -17,7 +18,7 @@ export async function GET(request: Request) {
 	try {
 		const url = new URL(request.url);
 		const callbackUrl = url.searchParams.get("callbackUrl") || "/";
-		const beingId = "@test-user-being"; // Fixed dev user
+		const beingId: BeingId = "@test-user-being"; // Fixed dev user
 
 		// Check if being exists, if not create it
 		let being = await db.query.beings.findFirst({

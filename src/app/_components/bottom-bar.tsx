@@ -35,17 +35,21 @@ import {
 import { Toggle } from "~/components/ui/toggle";
 import { useSync } from "~/hooks/use-sync";
 import { useLiveKitMediaControls } from "~/hooks/useLiveKitMediaControls";
+import { type BeingId, isBeingId } from "~/lib/types";
 import { BeingPresence } from "./being-presence";
 import { Config } from "./config";
 import { SiteMenu } from "./site-menu";
 
 export function BottomBar({ session }: { session?: Session | null }) {
 	const params = useParams();
-	const currentSpaceId = params?.beingId
-		? decodeURIComponent(params.beingId as string)
+	const currentSpaceId: BeingId | undefined = params?.beingId
+		? (() => {
+				const decoded = decodeURIComponent(params.beingId as string);
+				return isBeingId(decoded) ? decoded : undefined;
+			})()
 		: undefined;
 
-	const sync = useSync(currentSpaceId || "");
+	const sync = useSync(currentSpaceId || "@default-space");
 	const mediaControls = useLiveKitMediaControls(sync.room);
 
 	const base =

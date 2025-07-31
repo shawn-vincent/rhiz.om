@@ -11,10 +11,11 @@ import { useBeingForm } from "~/hooks/use-being-form";
 import type { BeingFormData } from "~/hooks/use-being-form";
 import { useBeing } from "~/hooks/use-beings";
 import type { BeingType } from "~/lib/space-types";
+import { type BeingId, isBeingId } from "~/lib/types";
 import { api } from "~/trpc/react";
 
 interface BeingEditModalProps {
-	beingId: string | null;
+	beingId: BeingId | null;
 	isOpen: boolean;
 	onClose: () => void;
 	onSaved?: () => void;
@@ -124,7 +125,7 @@ export function BeingEditModal({
 			title={
 				<>
 					<Avatar
-						beingId={being?.id || "@new-being"}
+						beingId={(being?.id as BeingId) || "@new-being"}
 						beingType={typeDisplayName}
 						size="md"
 						className="h-8 w-8"

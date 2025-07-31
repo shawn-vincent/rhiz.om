@@ -24,14 +24,14 @@ import type {
 const serverSync = new ServerSync();
 
 export interface UpdateBeingInput extends Partial<InsertBeing> {
-	id: string;
+	id: BeingId;
 }
 
 export interface CreateIntentionInput
 	extends Omit<InsertIntention, "modifiedAt" | "createdAt"> {}
 
 export interface UpdateIntentionInput extends Partial<CreateIntentionInput> {
-	id: string;
+	id: IntentionId;
 }
 
 /**
@@ -206,11 +206,13 @@ export async function createIntention(
 	// Validate input
 	const validatedInput = insertIntentionSchema.parse(input);
 
-	// Database insert
+	// Database insert - cast string fields to proper ID types
 	const result = await db
 		.insert(intentions)
 		.values({
 			...validatedInput,
+			ownerId: validatedInput.ownerId as BeingId,
+			locationId: validatedInput.locationId as BeingId,
 			modifiedAt: new Date(),
 		})
 		.returning();
@@ -260,11 +262,13 @@ export async function updateIntention(
 		});
 	}
 
-	// Database update
+	// Database update - cast string fields to proper ID types
 	await db
 		.update(intentions)
 		.set({
 			...input,
+			ownerId: input.ownerId ? (input.ownerId as BeingId) : undefined,
+			locationId: input.locationId ? (input.locationId as BeingId) : undefined,
 			modifiedAt: new Date(),
 		})
 		.where(eq(intentions.id, input.id));

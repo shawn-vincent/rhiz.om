@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { insertBeingSchema } from "~/server/db/types";
-import type { Being, InsertBeing } from "~/server/db/types";
+import type { Being, BeingId, InsertBeing } from "~/server/db/types";
 
 // Custom schema for form that makes ID optional (will be generated on save)
 const beingFormSchema = insertBeingSchema.extend({
@@ -105,7 +105,8 @@ export function useBeingForm({
 		// Create mode: generate ID if not provided
 		return {
 			...data,
-			id: data.id || `@new-being-${Math.random().toString(36).substring(2, 8)}`,
+			id: (data.id ||
+				`@new-being-${Math.random().toString(36).substring(2, 8)}`) as BeingId,
 		};
 	};
 

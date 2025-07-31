@@ -10,6 +10,7 @@ import {
 	SelectValue,
 } from "~/components/ui/select";
 import { useBeings } from "~/hooks/use-beings";
+import type { BeingId } from "~/lib/types";
 import { cn } from "~/lib/utils";
 import { api } from "~/trpc/react";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
@@ -22,8 +23,8 @@ import type {
 
 // Generic EntitySelector - reusable for any entity type
 interface EntitySelectorProps<T extends EntitySummary> {
-	value?: string;
-	onValueChange?: (value: string) => void;
+	value?: BeingId;
+	onValueChange?: (value: BeingId) => void;
 	items: T[];
 	isLoading: boolean;
 	isError: boolean;
@@ -48,7 +49,7 @@ function EntitySelector<T extends EntitySummary>({
 
 	const { data: fetchedEntity, isLoading: isFetchingEntity } =
 		api.being.getById.useQuery(
-			{ id: value as string },
+			{ id: value! },
 			{ enabled: !!value && !selectedEntity },
 		);
 
@@ -63,7 +64,7 @@ function EntitySelector<T extends EntitySummary>({
 			: undefined);
 
 	const handleSelect = (id: string) => {
-		onValueChange?.(id);
+		onValueChange?.(id as BeingId);
 		setOpen(false);
 	};
 
@@ -166,8 +167,8 @@ function BeingTypeFilter({
 
 // BeingSelector - extends EntitySelector with being-specific logic
 interface BeingSelectorProps {
-	value?: string;
-	onValueChange?: (value: string) => void;
+	value?: BeingId;
+	onValueChange?: (value: BeingId) => void;
 	showTypeFilter?: boolean;
 	placeholder?: string;
 	defaultTypeFilter?: BeingType;

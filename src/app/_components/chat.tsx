@@ -20,12 +20,12 @@ import type { ContentNode } from "~/server/db/content-types";
 import type { BeingId, Intention } from "~/server/db/types";
 import { api } from "~/trpc/react";
 
-const AI_AGENT_BEING_ID = "@rhiz.om-assistant";
+const AI_AGENT_BEING_ID: BeingId = "@rhiz.om-assistant";
 const chatLogger = logger.child({ name: "Chat" });
 
 interface ChatProps {
-	currentUserBeingId: string;
-	beingId: string;
+	currentUserBeingId: BeingId;
+	beingId: BeingId;
 }
 
 export function Chat({ currentUserBeingId, beingId }: ChatProps) {
@@ -39,10 +39,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const chatInputRef = useRef<ChatInputRef>(null);
 
 	// Use sync for real-time intentions and beings
-	const {
-		beings: syncBeings,
-		intentions: utterances,
-	} = useSync(beingId);
+	const { beings: syncBeings, intentions: utterances } = useSync(beingId);
 
 	// Utterances come directly from sync system with real-time updates
 
@@ -75,14 +72,20 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	// Group messages by owner (consecutive messages from same user)
 	const groupedMessages = useMemo(() => {
-		const groups: Array<{ ownerId: string; messages: Intention[] }> = [];
-		let currentGroup: { ownerId: string; messages: Intention[] } | null = null;
+		const groups: Array<{ ownerId: BeingId; messages: Intention[] }> = [];
+		let currentGroup: { ownerId: BeingId; messages: Intention[] } | null = null;
 
 		for (const utterance of utterances) {
-			if (currentGroup && currentGroup.ownerId === utterance.ownerId) {
+			if (
+				currentGroup &&
+				currentGroup.ownerId === (utterance.ownerId as BeingId)
+			) {
 				currentGroup.messages.push(utterance);
 			} else {
-				currentGroup = { ownerId: utterance.ownerId, messages: [utterance] };
+				currentGroup = {
+					ownerId: utterance.ownerId as BeingId,
+					messages: [utterance],
+				};
 				groups.push(currentGroup);
 			}
 		}
@@ -178,7 +181,6 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 			<div className="relative flex h-full w-full flex-col bg-white/20">
 				{/* Top shadow overlay */}
 				<div className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 bg-gradient-to-b from-black/30 to-transparent" />
-
 
 				<ul
 					ref={chatContainerRef}

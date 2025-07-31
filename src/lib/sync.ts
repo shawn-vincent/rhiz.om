@@ -1,6 +1,10 @@
 // Unified sync event types
 export interface SyncEvent {
-	type: "being-created" | "being-updated" | "intention-created" | "intention-updated";
+	type:
+		| "being-created"
+		| "being-updated"
+		| "intention-created"
+		| "intention-updated";
 	data: { id: string };
 	timestamp: string;
 	locationId: string;
@@ -12,7 +16,7 @@ let serverEventEmitter: any = null;
 if (typeof window === "undefined") {
 	// Only import EventEmitter on server side
 	const { EventEmitter } = require("node:events");
-	
+
 	const globalForSyncEmitter = globalThis as unknown as {
 		syncEmitter: any | undefined;
 	};

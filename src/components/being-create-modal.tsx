@@ -10,12 +10,13 @@ import { ResponsiveModal } from "~/components/ui/responsive-modal";
 import { useBeingForm } from "~/hooks/use-being-form";
 import type { BeingFormData } from "~/hooks/use-being-form";
 import type { BeingType } from "~/lib/space-types";
+import type { BeingId } from "~/lib/types";
 import { api } from "~/trpc/react";
 
 interface BeingCreateModalProps {
 	isOpen: boolean;
 	onClose: () => void;
-	onCreated?: (beingId: string) => void;
+	onCreated?: (beingId: BeingId) => void;
 	defaultValues?: Partial<BeingFormData>;
 }
 
@@ -40,7 +41,7 @@ export function BeingCreateModal({
 			toast.success("Being created successfully");
 
 			if (newBeing?.id) {
-				onCreated?.(newBeing.id);
+				onCreated?.(newBeing.id as BeingId);
 			}
 
 			onClose();

@@ -1,8 +1,9 @@
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm"; // Import eq for queries
-import type { DefaultSession, NextAuthConfig } from "next-auth";
+import type { DefaultSession, NextAuthConfig, Session } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+import { type BeingId, generateBeingId } from "~/lib/types";
 import { db } from "~/server/db";
 import {
 	accounts,
@@ -22,14 +23,20 @@ declare module "next-auth" {
 	interface Session extends DefaultSession {
 		user: {
 			id: string;
-			beingId?: string; // Add beingId to session user
+			beingId?: BeingId; // Add beingId to session user
 			// ...other properties
 			// role: UserRole;
 		} & DefaultSession["user"];
 	}
 
 	interface User {
-		beingId?: string; // Add beingId to User type
+		beingId?: BeingId; // Add beingId to User type
+	}
+}
+
+declare module "@auth/core/jwt" {
+	interface JWT {
+		beingId?: BeingId; // Add beingId to JWT token
 	}
 }
 
@@ -83,7 +90,7 @@ export const authConfig = {
 			}
 			return token;
 		},
-		async session({ session, token, user }) {
+		async session({ session, token, user }): Promise<Session> {
 			// Handle dev mode sessions
 			if (process.env.NODE_ENV === "development" && token?.devMode) {
 				return {
@@ -91,9 +98,9 @@ export const authConfig = {
 					user: {
 						...session.user,
 						id: token.sub as string,
-						beingId: token.beingId as string,
+						beingId: token.beingId,
 					},
-				};
+				} as Session;
 			}
 
 			return {
@@ -101,9 +108,9 @@ export const authConfig = {
 				user: {
 					...session.user,
 					id: user?.id ?? (token?.sub as string),
-					beingId: user?.beingId ?? (token?.beingId as string),
+					beingId: (user?.beingId as BeingId) ?? token?.beingId,
 				},
-			};
+			} as Session;
 		},
 		async signIn({ user, account, profile }) {
 			if (!user.id) {
@@ -119,7 +126,7 @@ export const authConfig = {
 
 			if (!userBeingId) {
 				// If user doesn't have a beingId, create a new Being
-				const newBeingId = crypto.randomUUID(); // Use crypto.randomUUID for modern ID generation
+				const newBeingId = generateBeingId();
 				const extIds = account
 					? [{ provider: account.provider, id: account.providerAccountId }]
 					: [];

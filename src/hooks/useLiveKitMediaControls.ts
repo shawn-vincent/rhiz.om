@@ -1,6 +1,6 @@
 "use client";
 
-import { Track, RoomEvent } from "livekit-client";
+import { RoomEvent, Track } from "livekit-client";
 import type { Room } from "livekit-client";
 import { useEffect, useState } from "react";
 import { logger } from "~/lib/logger.client";
@@ -65,11 +65,14 @@ export function useLiveKitMediaControls(room: Room | null): MediaControlsState {
 			setIsScreenShareEnabled(localParticipant.isScreenShareEnabled);
 
 			// Debug logging
-			mediaLogger.debug({
-				camera: localParticipant.isCameraEnabled,
-				microphone: localParticipant.isMicrophoneEnabled,
-				screenShare: localParticipant.isScreenShareEnabled,
-			}, "Updated track states");
+			mediaLogger.debug(
+				{
+					camera: localParticipant.isCameraEnabled,
+					microphone: localParticipant.isMicrophoneEnabled,
+					screenShare: localParticipant.isScreenShareEnabled,
+				},
+				"Updated track states",
+			);
 		};
 
 		// Initial state
@@ -77,11 +80,20 @@ export function useLiveKitMediaControls(room: Room | null): MediaControlsState {
 
 		// Listen for track events to update state - these are Room events, not participant events
 		const handleLocalTrackPublished = (publication: any, participant: any) => {
-			mediaLogger.debug({ source: publication.source }, "Local track published");
+			mediaLogger.debug(
+				{ source: publication.source },
+				"Local track published",
+			);
 			updateTrackStates();
 		};
-		const handleLocalTrackUnpublished = (publication: any, participant: any) => {
-			mediaLogger.debug({ source: publication.source }, "Local track unpublished");
+		const handleLocalTrackUnpublished = (
+			publication: any,
+			participant: any,
+		) => {
+			mediaLogger.debug(
+				{ source: publication.source },
+				"Local track unpublished",
+			);
 			updateTrackStates();
 		};
 		const handleLocalTrackMuted = (publication: any, participant: any) => {

@@ -14,8 +14,15 @@ export async function register() {
 		};
 
 		console.log = (...args: unknown[]) => {
-			const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
-			if (message.includes('GET ') || message.includes('POST ') || message.includes('PUT ') || message.includes('DELETE ')) {
+			const message = args
+				.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+				.join(" ");
+			if (
+				message.includes("GET ") ||
+				message.includes("POST ") ||
+				message.includes("PUT ") ||
+				message.includes("DELETE ")
+			) {
 				nextLogger.info(message);
 			} else {
 				originalConsole.log(...args);
@@ -23,22 +30,30 @@ export async function register() {
 		};
 
 		console.info = (...args: unknown[]) => {
-			const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+			const message = args
+				.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+				.join(" ");
 			nextLogger.info(message);
 		};
 
 		console.warn = (...args: unknown[]) => {
-			const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+			const message = args
+				.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+				.join(" ");
 			nextLogger.warn(message);
 		};
 
 		console.error = (...args: unknown[]) => {
-			const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+			const message = args
+				.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+				.join(" ");
 			nextLogger.error(message);
 		};
 
 		console.debug = (...args: unknown[]) => {
-			const message = args.map(arg => typeof arg === 'string' ? arg : JSON.stringify(arg)).join(' ');
+			const message = args
+				.map((arg) => (typeof arg === "string" ? arg : JSON.stringify(arg)))
+				.join(" ");
 			nextLogger.debug(message);
 		};
 	}

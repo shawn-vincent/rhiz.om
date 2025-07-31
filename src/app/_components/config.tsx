@@ -12,7 +12,7 @@ import ErrorBoundary from "~/components/ui/error-boundary";
 import { Separator } from "~/components/ui/separator";
 import { useSync } from "~/hooks/use-sync";
 import { canEdit, isSuperuser } from "~/lib/permissions";
-import type { BeingId } from "~/server/db/types";
+import { type BeingId, isBeingId } from "~/lib/types";
 import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 import type {
@@ -22,7 +22,7 @@ import type {
 
 // Convert being to EntitySummary format
 function toEntitySummary(being: {
-	id: string;
+	id: BeingId;
 	name: string;
 	type: string;
 }): EntitySummary {
@@ -35,15 +35,18 @@ function toEntitySummary(being: {
 
 export function Config() {
 	const params = useParams();
-	const beingId = params.beingId
-		? decodeURIComponent(params.beingId as string)
+	const beingId: BeingId | undefined = params.beingId
+		? (() => {
+				const decoded = decodeURIComponent(params.beingId as string);
+				return isBeingId(decoded) ? decoded : undefined;
+			})()
 		: undefined;
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
 
-	const [selectedBeingId, setSelectedBeingId] = useState<string | null>(null);
-	const [editingBeingId, setEditingBeingId] = useState<string | null>(null);
+	const [selectedBeingId, setSelectedBeingId] = useState<BeingId | null>(null);
+	const [editingBeingId, setEditingBeingId] = useState<BeingId | null>(null);
 	const [isCreatingBeing, setIsCreatingBeing] = useState(false);
 
 	// Fetch current user's being to check superuser status
@@ -73,8 +76,12 @@ export function Config() {
 	const isLoading = isLoadingCurrentSpace || isLoadingBeings;
 
 	// Check if current user can edit - now uses permission utility
-	const canEditBeing = (ownerId: string | null | undefined) => {
-		return canEdit(currentUserBeingId, ownerId, isCurrentUserSuperuser);
+	const canEditBeing = (ownerId: unknown) => {
+		return canEdit(
+			currentUserBeingId,
+			ownerId as BeingId | null | undefined,
+			isCurrentUserSuperuser,
+		);
 	};
 
 	const canCreateInSpace = currentSpace && canEditBeing(currentSpace.ownerId);
@@ -119,12 +126,12 @@ export function Config() {
 						<div className="mb-4 flex items-center justify-between">
 							<div className="min-w-0 flex-1">
 								<EntityCard
-									entity={toEntitySummary(currentSpace)}
+									entity={toEntitySummary(currentSpace as any)}
 									variant="default"
-									onClick={() => setSelectedBeingId(currentSpace.id)}
+									onClick={() => setSelectedBeingId(currentSpace.id as BeingId)}
 									onEdit={
 										canEditBeing(currentSpace.ownerId)
-											? () => setEditingBeingId(currentSpace.id)
+											? () => setEditingBeingId(currentSpace.id as BeingId)
 											: undefined
 									}
 									isSelected={selectedBeingId === currentSpace.id}
@@ -166,13 +173,13 @@ export function Config() {
 								return (
 									<EntityCard
 										key={being.id}
-										entity={toEntitySummary(being)}
+										entity={toEntitySummary(being as any)}
 										variant="default"
 										isOnline={isOnline}
-										onClick={() => setSelectedBeingId(being.id)}
+										onClick={() => setSelectedBeingId(being.id as BeingId)}
 										onEdit={
 											canEditBeing(being.ownerId)
-												? () => setEditingBeingId(being.id)
+												? () => setEditingBeingId(being.id as BeingId)
 												: undefined
 										}
 										isSelected={selectedBeingId === being.id}

@@ -1,19 +1,24 @@
 // src/server/api/routers/being.ts
 import { z } from "zod/v4";
 import { services } from "~/domain/services";
+import { beingIdSchema } from "~/lib/types";
 import {
 	createTRPCRouter,
 	protectedProcedure,
 	publicProcedure,
 } from "~/server/api/trpc";
-import { insertBeingSchema, selectBeingSchema } from "~/server/db/types";
+import {
+	type BeingId,
+	insertBeingSchema,
+	selectBeingSchema,
+} from "~/server/db/types";
 
 export const beingRouter = createTRPCRouter({
 	/**
 	 * Fetches a single being by its public ID.
 	 */
 	getById: publicProcedure
-		.input(z.object({ id: z.string() }))
+		.input(z.object({ id: beingIdSchema }))
 		.output(selectBeingSchema)
 		.query(async ({ input }) => {
 			return services.being.getBeing(input.id);
@@ -41,7 +46,7 @@ export const beingRouter = createTRPCRouter({
 	 * Fetches all beings in a specific location (space).
 	 */
 	getByLocation: publicProcedure
-		.input(z.object({ locationId: z.string() }))
+		.input(z.object({ locationId: beingIdSchema }))
 		.query(async ({ input }) => {
 			return services.being.getBeingsByLocation(input.locationId);
 		}),
@@ -56,7 +61,10 @@ export const beingRouter = createTRPCRouter({
 				kind: z.enum(["space", "guest", "bot", "document"]).optional(),
 				sort: z.enum(["name", "createdAt"]).default("name"),
 				limit: z.number().int().min(1).max(100).default(50),
-				cursor: z.string().nullish(),
+				cursor: z
+					.string()
+					.nullish()
+					.transform((val) => val as BeingId | undefined),
 			}),
 		)
 		.query(async ({ input }) => {

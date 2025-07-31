@@ -7,14 +7,15 @@ import {
 	useState,
 } from "react";
 import type { BeingType, EntitySummary } from "~/lib/space-types";
+import type { BeingId } from "~/lib/types";
 import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
 import { useRecents } from "./use-recents";
 
 // Global being cache context to prevent multiple stream connections
 interface BeingCacheContextType {
-	beingMap: Map<string, Being>;
-	getBeing: (id: string) => Being | undefined;
+	beingMap: Map<BeingId, Being>;
+	getBeing: (id: BeingId) => Being | undefined;
 }
 
 const BeingCacheContext = createContext<BeingCacheContextType | null>(null);
@@ -22,7 +23,7 @@ const BeingCacheContext = createContext<BeingCacheContextType | null>(null);
 /**
  * Combined being management hook with caching, search, and recents
  */
-export function useBeings(initialType?: BeingType, spaceId?: string) {
+export function useBeings(initialType?: BeingType, spaceId?: BeingId) {
 	// Local state for search/filter
 	const [query, setQuery] = useState("");
 	const [type, setType] = useState<BeingType | undefined>(initialType);
@@ -38,7 +39,7 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 
 	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
-		const map = new Map<string, Being>();
+		const map = new Map<BeingId, Being>();
 
 		// Add all beings from tRPC
 		if (rq.data) {
@@ -73,10 +74,10 @@ export function useBeings(initialType?: BeingType, spaceId?: string) {
 	const { recents, addRecent } = useRecents<EntitySummary>("beings", 20);
 
 	// Cache access functions
-	const getBeing = (id: string): Being | undefined => beingMap.get(id);
-	const getBeings = (ids: string[]): (Being | undefined)[] =>
+	const getBeing = (id: BeingId): Being | undefined => beingMap.get(id);
+	const getBeings = (ids: BeingId[]): (Being | undefined)[] =>
 		ids.map((id) => beingMap.get(id));
-	const hasBeing = (id: string): boolean => beingMap.has(id);
+	const hasBeing = (id: BeingId): boolean => beingMap.has(id);
 	const getAllBeings = (): Being[] => Array.from(beingMap.values());
 
 	return {
@@ -116,7 +117,7 @@ export function BeingCacheProvider({
 
 	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
-		const map = new Map<string, Being>();
+		const map = new Map<BeingId, Being>();
 
 		// Add all beings from tRPC
 		if (rq.data) {
@@ -128,7 +129,7 @@ export function BeingCacheProvider({
 		return map;
 	}, [rq.data]);
 
-	const getBeing = useMemo(() => (id: string) => beingMap.get(id), [beingMap]);
+	const getBeing = useMemo(() => (id: BeingId) => beingMap.get(id), [beingMap]);
 
 	const contextValue = useMemo(
 		() => ({
@@ -149,7 +150,7 @@ export function BeingCacheProvider({
  * Hook for getting a single being with automatic fallback to server query
  */
 export function useBeing(
-	id: string | undefined,
+	id: BeingId | undefined,
 	options?: {
 		enabled?: boolean;
 	},
@@ -171,7 +172,7 @@ export function useBeing(
 
 	// Only query server if not in cache
 	const { data: serverBeing, error } = api.being.getById.useQuery(
-		{ id: id ?? "" },
+		{ id: id! }, // id is guaranteed to be defined when shouldFetchFromServer is true
 		{
 			enabled: shouldFetchFromServer && typeof window !== "undefined",
 			retry: false,

@@ -1,26 +1,35 @@
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Room } from "livekit-client";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { BeingId } from "~/lib/types";
 import { api } from "~/trpc/react";
 
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'failed';
+export type ConnectionState =
+	| "disconnected"
+	| "connecting"
+	| "connected"
+	| "failed";
 
 // Shared connection state per location
-const connectionMap = new Map<string, {
-	room: Room | null;
-	connectionState: ConnectionState;
-	subscribers: Set<() => void>;
-	connectionPromise: Promise<void> | null;
-}>();
+const connectionMap = new Map<
+	BeingId,
+	{
+		room: Room | null;
+		connectionState: ConnectionState;
+		subscribers: Set<() => void>;
+		connectionPromise: Promise<void> | null;
+	}
+>();
 
 /**
  * Shared LiveKit connection hook that manages one connection per location
  * Multiple components can use the same connection without conflicts
  */
-export function useSharedLiveKitConnection(locationId: string) {
+export function useSharedLiveKitConnection(locationId: BeingId) {
 	const [room, setRoom] = useState<Room | null>(null);
-	const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
+	const [connectionState, setConnectionState] =
+		useState<ConnectionState>("disconnected");
 	const getJoinToken = api.livekit.getJoinToken.useMutation();
-	
+
 	// Store mutation in ref to avoid dependency issues
 	const getJoinTokenRef = useRef(getJoinToken.mutateAsync);
 	getJoinTokenRef.current = getJoinToken.mutateAsync;
@@ -36,7 +45,7 @@ export function useSharedLiveKitConnection(locationId: string) {
 
 	useEffect(() => {
 		if (!locationId) {
-			setConnectionState('disconnected');
+			setConnectionState("disconnected");
 			setRoom(null);
 			return;
 		}
@@ -46,7 +55,7 @@ export function useSharedLiveKitConnection(locationId: string) {
 		if (!connection) {
 			connection = {
 				room: null,
-				connectionState: 'disconnected',
+				connectionState: "disconnected",
 				subscribers: new Set(),
 				connectionPromise: null,
 			};
@@ -55,34 +64,37 @@ export function useSharedLiveKitConnection(locationId: string) {
 
 		// Subscribe to state changes
 		connection.subscribers.add(updateState);
-		
+
 		// Update current state
 		updateState();
 
 		// Start connection if not already connecting/connected
-		if (connection.connectionState === 'disconnected' && !connection.connectionPromise) {
-			connection.connectionState = 'connecting';
-			
+		if (
+			connection.connectionState === "disconnected" &&
+			!connection.connectionPromise
+		) {
+			connection.connectionState = "connecting";
+
 			const connect = async () => {
 				try {
-					const { token, wsUrl } = await getJoinTokenRef.current({ 
-						roomBeingId: locationId 
+					const { token, wsUrl } = await getJoinTokenRef.current({
+						roomBeingId: locationId,
 					});
 
 					const newRoom = new Room();
 					connection!.room = newRoom;
-					
+
 					await newRoom.connect(wsUrl, token);
-					
-					connection!.connectionState = 'connected';
+
+					connection!.connectionState = "connected";
 				} catch (error) {
-					connection!.connectionState = 'failed';
+					connection!.connectionState = "failed";
 					connection!.room = null;
-					console.error('LiveKit connection failed:', error);
+					console.error("LiveKit connection failed:", error);
 				} finally {
 					connection!.connectionPromise = null;
 					// Notify all subscribers
-					connection!.subscribers.forEach(subscriber => subscriber());
+					connection!.subscribers.forEach((subscriber) => subscriber());
 				}
 			};
 
@@ -93,7 +105,7 @@ export function useSharedLiveKitConnection(locationId: string) {
 			const connection = connectionMap.get(locationId);
 			if (connection) {
 				connection.subscribers.delete(updateState);
-				
+
 				// If no more subscribers, disconnect after a delay
 				if (connection.subscribers.size === 0) {
 					setTimeout(() => {
@@ -112,7 +124,7 @@ export function useSharedLiveKitConnection(locationId: string) {
 
 	return {
 		room,
-		isConnected: connectionState === 'connected',
-		connectionState
+		isConnected: connectionState === "connected",
+		connectionState,
 	};
 }

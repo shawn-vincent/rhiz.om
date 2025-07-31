@@ -4,7 +4,7 @@ import type { Being, BeingId, Intention } from "~/server/db/types";
 export type BeingType = "space" | "guest" | "bot" | "document";
 
 export interface EntitySummary {
-	id: string;
+	id: BeingId;
 	name: string;
 	type: BeingType;
 	avatarUrl?: string;

@@ -5,9 +5,13 @@ export class LiveKitSync implements SyncClient {
 	private _room: Room | null = null;
 	private currentLocationId: string | null = null;
 	private subscribers = new Set<(event: SyncEvent) => void>();
-	private getTokenFn: ((roomBeingId: string) => Promise<{ token: string; wsUrl: string }>) | null = null;
+	private getTokenFn:
+		| ((roomBeingId: string) => Promise<{ token: string; wsUrl: string }>)
+		| null = null;
 
-	setTokenFunction(fn: (roomBeingId: string) => Promise<{ token: string; wsUrl: string }>) {
+	setTokenFunction(
+		fn: (roomBeingId: string) => Promise<{ token: string; wsUrl: string }>,
+	) {
 		this.getTokenFn = fn;
 	}
 
@@ -76,7 +80,7 @@ export class LiveKitSync implements SyncClient {
 		try {
 			const text = new TextDecoder().decode(payload);
 			const event = JSON.parse(text) as SyncEvent;
-			
+
 			for (const callback of this.subscribers) {
 				callback(event);
 			}

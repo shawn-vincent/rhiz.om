@@ -22,6 +22,7 @@ import { Button } from "~/components/ui/button";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { useBeing } from "~/hooks/use-beings";
 import { logger } from "~/lib/logger.client";
+import { type BeingId, isBeingId } from "~/lib/types";
 import { type InsertBeing, insertBeingSchema } from "~/server/db/types";
 import { api } from "~/trpc/react";
 
@@ -35,10 +36,29 @@ type BeingFormData = z.infer<typeof insertBeingSchema>;
 
 export default function BeingEditPage({ params }: BeingEditPageProps) {
 	const resolvedParams = React.use(params);
-	const beingId = decodeURIComponent(resolvedParams.beingId);
+	const beingIdParam = decodeURIComponent(resolvedParams.beingId);
 	const router = useRouter();
 	const utils = api.useUtils();
 
+	// Validate that the URL parameter is a valid BeingId
+	if (!isBeingId(beingIdParam)) {
+		return (
+			<div className="flex min-h-screen items-center justify-center">
+				<div className="space-y-4 text-center">
+					<div className="text-destructive">Invalid Being ID format</div>
+					<div className="text-muted-foreground">
+						The ID "{beingIdParam}" is not a valid Being ID. IDs must start with
+						'@' or '/'.
+					</div>
+					<Link href="/">
+						<Button variant="outline">Go Home</Button>
+					</Link>
+				</div>
+			</div>
+		);
+	}
+
+	const beingId: BeingId = beingIdParam;
 	const { data: being, isLoading, error } = useBeing(beingId);
 
 	const upsertBeing = api.being.upsert.useMutation({
@@ -54,7 +74,7 @@ export default function BeingEditPage({ params }: BeingEditPageProps) {
 	});
 
 	const baseDefaults: DefaultValues<BeingFormData> = {
-		id: "",
+		id: "@new-being",
 		name: "",
 		type: "guest",
 		ownerId: undefined,

@@ -14,7 +14,7 @@ export interface CreateBeingInput
 	extends Omit<InsertBeing, "modifiedAt" | "createdAt"> {}
 
 export interface UpdateBeingInput extends Partial<CreateBeingInput> {
-	id: string;
+	id: BeingId;
 }
 
 export interface SearchBeingsInput {
@@ -22,12 +22,12 @@ export interface SearchBeingsInput {
 	kind?: BeingType;
 	sort?: "name" | "createdAt";
 	limit?: number;
-	cursor?: string;
+	cursor?: BeingId;
 }
 
 export interface SearchBeingsResult {
 	items: EntitySummary[];
-	nextCursor: string | null;
+	nextCursor: BeingId | null;
 }
 
 export class BeingService {
@@ -36,7 +36,7 @@ export class BeingService {
 	/**
 	 * Get a being by ID
 	 */
-	async getBeing(id: string): Promise<Being> {
+	async getBeing(id: BeingId): Promise<Being> {
 		const being = await this.db.query.beings.findFirst({
 			where: eq(beings.id, id),
 		});
@@ -64,7 +64,7 @@ export class BeingService {
 	/**
 	 * Get beings in a specific location
 	 */
-	async getBeingsByLocation(locationId: string): Promise<Being[]> {
+	async getBeingsByLocation(locationId: BeingId): Promise<Being[]> {
 		const results = await this.db.query.beings.findMany({
 			where: eq(beings.locationId, locationId),
 			orderBy: (beings, { asc }) => [asc(beings.name)],
@@ -103,11 +103,11 @@ export class BeingService {
 			limit: limit + 1,
 		});
 
-		let nextCursor: string | null = null;
+		let nextCursor: BeingId | null = null;
 		if (fetchedBeings.length > limit) {
 			const nextItem = fetchedBeings.pop();
 			if (nextItem) {
-				nextCursor = nextItem.id;
+				nextCursor = nextItem.id as BeingId;
 			}
 		}
 

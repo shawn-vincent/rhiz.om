@@ -2,13 +2,14 @@ import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import type { Session } from "next-auth";
 import { isSuperuser } from "~/lib/permissions";
+import type { BeingId } from "~/lib/types";
 import type { DrizzleDB } from "~/server/db";
 import { beings } from "~/server/db/schema";
 import { selectBeingSchema } from "~/server/db/types";
 import type { Being } from "~/server/db/types";
 
 export interface AuthContext {
-	sessionBeingId: string;
+	sessionBeingId: BeingId;
 	currentUser: Being | null;
 	isCurrentUserSuperuser: boolean;
 }
@@ -49,7 +50,7 @@ export class AuthService {
 	 * Gets authorization context for a given session being ID
 	 * Used by both tRPC middleware and REST API routes
 	 */
-	async getAuthContext(sessionBeingId: string): Promise<AuthContext> {
+	async getAuthContext(sessionBeingId: BeingId): Promise<AuthContext> {
 		// Get current user's being to check superuser status
 		const currentUserRaw = await this.db.query.beings.findFirst({
 			where: eq(beings.id, sessionBeingId),

@@ -9,6 +9,7 @@ import {
 	varchar,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccount } from "next-auth/adapters";
+import { beingId, beingIdNullable, intentionId } from "./custom-columns";
 
 /**
  * This is an example of how to use the multi-project schema feature of Drizzle ORM. Use the same
@@ -20,7 +21,7 @@ export const createTable = pgTableCreator((name) => `rhiz_om_${name}`);
 
 // Core "Being" entity table. Represents users, spaces, etc.
 export const beings = createTable("beings", {
-	id: varchar("id", { length: 255 }).primaryKey(), // e.g., @shawn-vincent or @some-space
+	id: beingId("id").primaryKey(), // e.g., @shawn-vincent or @some-space
 	name: varchar("name", { length: 256 }).notNull(),
 	type: varchar("type", { length: 50 }).notNull(), // 'guest', 'being', 'document', etc.
 	createdAt: timestamp("createdAt", { withTimezone: true })
@@ -29,10 +30,8 @@ export const beings = createTable("beings", {
 	modifiedAt: timestamp("modifiedAt", { withTimezone: true })
 		.default(sql`CURRENT_TIMESTAMP`)
 		.notNull(),
-	ownerId: varchar("ownerId", { length: 255 }).references((): any => beings.id), // Self-referential or to another being
-	locationId: varchar("locationId", { length: 255 }).references(
-		(): any => beings.id,
-	),
+	ownerId: beingIdNullable("ownerId").references((): any => beings.id), // Self-referential or to another being
+	locationId: beingIdNullable("locationId").references((): any => beings.id),
 	extIds: jsonb("extIds"), // { provider: string, id: string }[]
 	idHistory: jsonb("idHistory"), // string[]
 	metadata: jsonb("metadata"),
@@ -48,7 +47,7 @@ export const beings = createTable("beings", {
 export const intentions = createTable(
 	"intentions",
 	{
-		id: varchar("id", { length: 255 }).primaryKey(), // e.g., /msg-abcde
+		id: intentionId("id").primaryKey(), // e.g., /msg-abcde
 		name: varchar("name", { length: 256 }).notNull(),
 		type: varchar("type", { length: 50 }).notNull(), // 'utterance', 'error'
 		createdAt: timestamp("createdAt", { withTimezone: true })
@@ -57,10 +56,10 @@ export const intentions = createTable(
 		modifiedAt: timestamp("modifiedAt", { withTimezone: true })
 			.default(sql`CURRENT_TIMESTAMP`)
 			.notNull(),
-		ownerId: varchar("ownerId", { length: 255 })
+		ownerId: beingId("ownerId")
 			.notNull()
 			.references(() => beings.id),
-		locationId: varchar("locationId", { length: 255 })
+		locationId: beingId("locationId")
 			.notNull()
 			.references(() => beings.id),
 		state: varchar("state", {
@@ -91,7 +90,7 @@ export const users = createTable("users", (d) => ({
 		})
 		.default(sql`CURRENT_TIMESTAMP`),
 	image: d.varchar({ length: 255 }),
-	beingId: varchar("beingId", { length: 255 }).references(() => beings.id),
+	beingId: beingIdNullable("beingId").references(() => beings.id),
 }));
 
 export const usersRelations = relations(users, ({ many, one }) => ({

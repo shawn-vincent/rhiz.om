@@ -8,21 +8,21 @@ import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { useSync } from "~/hooks/use-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
-import type { BeingId } from "~/server/db/types";
+import type { BeingId } from "~/lib/types";
 import { api } from "~/trpc/react";
 import { EntityCard } from "../../../packages/entity-kit/src/components/ui/EntityCard";
 
 interface BeingPresenceData {
-	id: string;
+	id: BeingId;
 	name: string;
 	type: BeingType;
 	isOnline: boolean;
-	ownerId?: string | null;
+	ownerId?: BeingId | null;
 }
 
 interface BeingPresenceProps {
 	compact?: boolean;
-	currentSpaceId?: string;
+	currentSpaceId?: BeingId;
 }
 
 export function BeingPresence({
@@ -94,8 +94,8 @@ export function BeingPresence({
 
 	// State for showing popover and editing
 	const [showPopover, setShowPopover] = useState(false);
-	const [selectedBeingId, setSelectedBeingId] = useState<string | null>(null);
-	const [editingBeingId, setEditingBeingId] = useState<string | null>(null);
+	const [selectedBeingId, setSelectedBeingId] = useState<BeingId | null>(null);
+	const [editingBeingId, setEditingBeingId] = useState<BeingId | null>(null);
 	const popoverRef = useRef<HTMLDivElement>(null);
 
 	// Check if current user can edit a being - memoize the function and create a map for O(1) lookup
@@ -129,7 +129,7 @@ export function BeingPresence({
 		setSelectedBeingId(null);
 	}, []);
 
-	const handleEditBeing = useCallback((beingId: string) => {
+	const handleEditBeing = useCallback((beingId: BeingId) => {
 		setEditingBeingId(beingId);
 		setShowPopover(false);
 	}, []);
@@ -138,7 +138,7 @@ export function BeingPresence({
 		setEditingBeingId(null);
 	}, []);
 
-	const handleSelectBeing = useCallback((beingId: string) => {
+	const handleSelectBeing = useCallback((beingId: BeingId) => {
 		setSelectedBeingId(beingId);
 		setShowPopover(true);
 	}, []);

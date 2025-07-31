@@ -15,6 +15,7 @@ import { DialogFooter } from "~/components/ui/dialog";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { useBeing } from "~/hooks/use-beings";
 import { logger } from "~/lib/logger.client";
+import type { BeingId } from "~/lib/types";
 import {
 	type Being,
 	type InsertBeing,
@@ -26,7 +27,7 @@ import { BeingForm } from "./being-form";
 const beingEditorLogger = logger.child({ name: "BeingEditor" });
 
 interface BeingEditorProps {
-	beingId: string;
+	beingId: BeingId;
 }
 
 type BeingFormData = z.infer<typeof insertBeingSchema>;
@@ -47,7 +48,7 @@ export function BeingEditor({ beingId }: BeingEditorProps) {
 	});
 
 	const baseDefaults: DefaultValues<BeingFormData> = {
-		id: "",
+		id: "@new-being",
 		name: "",
 		type: "guest",
 		ownerId: undefined,

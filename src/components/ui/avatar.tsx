@@ -2,13 +2,14 @@ import { Bot, FileText, MapPinned, UserRound } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useBeing } from "~/hooks/use-beings";
 import { isSuperuser } from "~/lib/permissions";
+import type { BeingId } from "~/lib/types";
 import { cn } from "~/lib/utils";
 import { SuperuserBadge } from "./superuser-badge";
 
 export type BeingType = "space" | "guest" | "bot" | "document";
 
 interface AvatarProps {
-	beingId: string;
+	beingId?: BeingId;
 	beingType?: BeingType;
 	size?: "sm" | "md" | "lg";
 	className?: string;
