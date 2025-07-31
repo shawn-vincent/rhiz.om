@@ -17,6 +17,14 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { Avatar } from "~/components/ui/avatar";
+import type { BeingId } from "~/lib/types";
+import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
+import type { EntitySummary } from "../../packages/entity-kit/src/types";
+import { useBeing } from "~/hooks/use-beings";
+import { BeingEditModal } from "~/components/being-edit-modal";
+import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
+import { useSession } from "next-auth/react";
 
 interface ChatInputProps {
 	value: string;
@@ -24,6 +32,7 @@ interface ChatInputProps {
 	onSubmit: () => void;
 	disabled?: boolean;
 	placeholder?: string;
+	currentUserBeingId?: BeingId;
 }
 
 export interface ChatInputRef {
@@ -38,10 +47,21 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 			onSubmit,
 			disabled = false,
 			placeholder = "Say something...",
+			currentUserBeingId,
 		},
 		ref,
 	) => {
 		const editorRef = useRef<{ view?: any }>(null);
+		const [showPopover, setShowPopover] = useState(false);
+		const [selectedBeingId, setSelectedBeingId] = useState<BeingId | null>(null);
+		const [editingBeingId, setEditingBeingId] = useState<BeingId | null>(null);
+		const popoverRef = useRef<HTMLDivElement>(null);
+
+		// Get session data for permissions
+		const { data: session } = useSession();
+
+		// Fetch current user's being data
+		const { data: currentUserBeing } = useBeing(currentUserBeingId || "@");
 
 		// Expose focus method via ref
 		useImperativeHandle(ref, () => ({
@@ -204,6 +224,64 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 			setLocalValue(val);
 		}, []);
 
+		// Handle avatar click to show/hide popover
+		const handleTogglePopover = useCallback(() => {
+			setShowPopover(!showPopover);
+		}, [showPopover]);
+
+		const handleClosePopover = useCallback(() => {
+			setShowPopover(false);
+			setSelectedBeingId(null);
+		}, []);
+
+		const handleEditBeing = useCallback((beingId: BeingId) => {
+			setEditingBeingId(beingId);
+			setShowPopover(false);
+		}, []);
+
+		const handleCloseEditModal = useCallback(() => {
+			setEditingBeingId(null);
+		}, []);
+
+		// Click outside handler for popover
+		useEffect(() => {
+			function handleClickOutside(event: MouseEvent) {
+				if (
+					popoverRef.current &&
+					!popoverRef.current.contains(event.target as Node)
+				) {
+					handleClosePopover();
+				}
+			}
+
+			if (showPopover) {
+				document.addEventListener("mousedown", handleClickOutside);
+				return () =>
+					document.removeEventListener("mousedown", handleClickOutside);
+			}
+		}, [showPopover, handleClosePopover]);
+
+		// Convert being data to EntitySummary format
+		const userEntitySummary = useMemo((): EntitySummary | null => {
+			if (!currentUserBeing) return null;
+			return {
+				id: currentUserBeing.id,
+				name: currentUserBeing.name,
+				type: currentUserBeing.type as any,
+			};
+		}, [currentUserBeing]);
+
+		// Check if current user can edit their own being
+		const canEditCurrentUser = useMemo(() => {
+			if (!currentUserBeing || !session?.user?.beingId) return false;
+			const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
+			return canEditPermission(
+				session.user.beingId,
+				currentUserBeing.ownerId,
+				isCurrentUserSuperuser,
+			);
+		}, [currentUserBeing, session]);
+
 		return (
 			<div className="flex w-full min-w-0 items-end gap-2">
 				<div className="[&_.cm-editor]:!bg-gray-800 [&_.cm-content]:!bg-gray-800 [&_.cm-content]:!text-white [&_.cm-scroller]:!bg-gray-800 [&_.cm-line]:!text-white [&_.cm-placeholder]:!text-gray-400 min-w-0 flex-1">
@@ -241,6 +319,61 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 				>
 					<Send className="size-4" />
 				</button>
+				{currentUserBeingId && (
+					<div className="relative shrink-0">
+						<div
+							className="cursor-pointer"
+							onClick={handleTogglePopover}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									handleTogglePopover();
+								}
+							}}
+							tabIndex={0}
+							role="button"
+							aria-label="Show user details"
+						>
+							<Avatar
+								beingId={currentUserBeingId}
+								beingType="guest"
+								size="md"
+								className="transition-opacity hover:opacity-80"
+							/>
+						</div>
+
+						{/* Popover for user card */}
+						{showPopover && userEntitySummary && (
+							<div
+								ref={popoverRef}
+								className="absolute bottom-full right-full z-50 mb-2 mr-2 w-64 rounded-md border bg-popover p-2 shadow-md"
+							>
+								<EntityCard
+									entity={userEntitySummary}
+									variant="compact"
+									isOnline={true}
+									onClick={() => setSelectedBeingId(userEntitySummary.id)}
+									onEdit={
+										canEditCurrentUser
+											? () => handleEditBeing(userEntitySummary.id)
+											: undefined
+									}
+									isSelected={selectedBeingId === userEntitySummary.id}
+									showEditButton={
+										!!(selectedBeingId === userEntitySummary.id && canEditCurrentUser)
+									}
+								/>
+							</div>
+						)}
+					</div>
+				)}
+
+				{/* Edit modal */}
+				<BeingEditModal
+					beingId={editingBeingId}
+					isOpen={!!editingBeingId}
+					onClose={handleCloseEditModal}
+				/>
 			</div>
 		);
 	},

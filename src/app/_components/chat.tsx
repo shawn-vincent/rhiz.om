@@ -317,6 +317,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						onSubmit={handleSubmit}
 						disabled={isSubmitting}
 						placeholder="Say something..."
+						currentUserBeingId={currentUserBeingId}
 					/>
 				</div>
 			</div>
