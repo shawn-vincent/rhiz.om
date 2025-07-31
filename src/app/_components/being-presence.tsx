@@ -4,6 +4,8 @@
 import { useSession } from "next-auth/react";
 import type { BeingType } from "packages/entity-kit/src/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { Room } from "livekit-client";
+import { RoomEvent, ConnectionState } from "livekit-client";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
 import { useSync } from "~/hooks/use-sync";
@@ -30,15 +32,61 @@ export function BeingPresence({
 	currentSpaceId,
 }: BeingPresenceProps) {
 	// Use sync for real-time being and intention updates
-	const { beings: syncBeings, isConnected } = currentSpaceId
+	const { beings: syncBeings, isConnected, room } = currentSpaceId
 		? useSync(currentSpaceId)
-		: { beings: [], isConnected: false };
+		: { beings: [], isConnected: false, room: null };
 
 	// Filter beings to current space (beings from sync are already filtered)
 	const beings = syncBeings;
 
 	const { data: session } = useSession();
 	const currentUserBeingId = session?.user?.beingId;
+
+	// State to trigger re-renders when room participants change
+	const [participantVersion, setParticipantVersion] = useState(0);
+
+	// Listen for participant changes in the room
+	useEffect(() => {
+		if (!room) return;
+
+		const handleParticipantChange = () => {
+			setParticipantVersion(prev => prev + 1);
+		};
+
+		// Listen for participant connected/disconnected events and room connection changes
+		room.on(RoomEvent.ParticipantConnected, handleParticipantChange);
+		room.on(RoomEvent.ParticipantDisconnected, handleParticipantChange);
+		room.on(RoomEvent.Connected, handleParticipantChange);
+		room.on(RoomEvent.Disconnected, handleParticipantChange);
+
+		return () => {
+			room.off(RoomEvent.ParticipantConnected, handleParticipantChange);
+			room.off(RoomEvent.ParticipantDisconnected, handleParticipantChange);
+			room.off(RoomEvent.Connected, handleParticipantChange);
+			room.off(RoomEvent.Disconnected, handleParticipantChange);
+		};
+	}, [room]);
+
+	// Helper function to check if a being is online based on LiveKit room participants
+	const isBeingOnlineInRoom = useCallback((beingId: BeingId, room: Room | null): boolean => {
+		if (!room) return false;
+
+		// Only check participants if room is actually connected
+		if (room.state !== ConnectionState.Connected) {
+			return false;
+		}
+		
+		// Spaces and bots are always considered "online" (they have different colored dots)
+		const being = beings.find(b => b.id === beingId);
+		if (being && (being.type === 'space' || being.type === 'bot')) {
+			return true;
+		}
+		
+		// For guests, check if they're actually in the LiveKit room
+		// Check both local participant and remote participants
+		const allParticipants = [room.localParticipant, ...Array.from(room.remoteParticipants.values())];
+		return allParticipants.some(participant => participant?.identity === beingId);
+	}, [beings]);
 
 	// Memoize expensive computations
 	const {
@@ -54,14 +102,16 @@ export function BeingPresence({
 		const currentUserBeing = beings.find((b) => b.id === currentUserBeingId);
 		const isCurrentUserSuperuser = isSuperuser(currentUserBeing);
 
-		// Transform beings to match expected format
-		const beingPresenceData: BeingPresenceData[] = beings.map((being) => ({
-			id: being.id,
-			name: being.name,
-			type: being.type as BeingType,
-			isOnline: true, // All beings are "online" for now
-			ownerId: being.ownerId,
-		}));
+		// Transform beings to match expected format, excluding current user
+		const beingPresenceData: BeingPresenceData[] = beings
+			.filter((being) => being.id !== currentUserBeingId) // Exclude self
+			.map((being) => ({
+				id: being.id,
+				name: being.name,
+				type: being.type as BeingType,
+				isOnline: isBeingOnlineInRoom(being.id, room),
+				ownerId: being.ownerId,
+			}));
 
 		// Separate beings by type and connection status
 		const spacesAndBots = beingPresenceData.filter(
@@ -90,7 +140,7 @@ export function BeingPresence({
 			disconnectedGuests,
 			orderedBeings,
 		};
-	}, [beings, currentUserBeingId]);
+	}, [beings, currentUserBeingId, room, isBeingOnlineInRoom, participantVersion]);
 
 	// State for showing popover and editing
 	const [showPopover, setShowPopover] = useState(false);

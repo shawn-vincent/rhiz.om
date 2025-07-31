@@ -7,6 +7,7 @@ import { tags as t } from "@lezer/highlight";
 import { createTheme } from "@uiw/codemirror-themes";
 import CodeMirror from "@uiw/react-codemirror";
 import { Send } from "lucide-react";
+import { useSession } from "next-auth/react";
 import {
 	forwardRef,
 	memo,
@@ -17,14 +18,13 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { BeingEditModal } from "~/components/being-edit-modal";
 import { Avatar } from "~/components/ui/avatar";
+import { useBeing } from "~/hooks/use-beings";
+import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/lib/types";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
 import type { EntitySummary } from "../../packages/entity-kit/src/types";
-import { useBeing } from "~/hooks/use-beings";
-import { BeingEditModal } from "~/components/being-edit-modal";
-import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
-import { useSession } from "next-auth/react";
 
 interface ChatInputProps {
 	value: string;
@@ -53,7 +53,9 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 	) => {
 		const editorRef = useRef<{ view?: any }>(null);
 		const [showPopover, setShowPopover] = useState(false);
-		const [selectedBeingId, setSelectedBeingId] = useState<BeingId | null>(null);
+		const [selectedBeingId, setSelectedBeingId] = useState<BeingId | null>(
+			null,
+		);
 		const [editingBeingId, setEditingBeingId] = useState<BeingId | null>(null);
 		const popoverRef = useRef<HTMLDivElement>(null);
 
@@ -334,19 +336,23 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 							role="button"
 							aria-label="Show user details"
 						>
-							<Avatar
-								beingId={currentUserBeingId}
-								beingType="guest"
-								size="md"
-								className="transition-opacity hover:opacity-80"
-							/>
+							<div className="relative">
+								<Avatar
+									beingId={currentUserBeingId}
+									beingType="guest"
+									size="md"
+									className="transition-opacity hover:opacity-80"
+								/>
+								{/* Online indicator dot */}
+								<div className="-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black bg-green-400" />
+							</div>
 						</div>
 
 						{/* Popover for user card */}
 						{showPopover && userEntitySummary && (
 							<div
 								ref={popoverRef}
-								className="absolute bottom-full right-full z-50 mb-2 mr-2 w-64 rounded-md border bg-popover p-2 shadow-md"
+								className="absolute right-full bottom-full z-50 mr-2 mb-2 w-64 rounded-md border bg-popover p-2 shadow-md"
 							>
 								<EntityCard
 									entity={userEntitySummary}
@@ -360,7 +366,10 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 									}
 									isSelected={selectedBeingId === userEntitySummary.id}
 									showEditButton={
-										!!(selectedBeingId === userEntitySummary.id && canEditCurrentUser)
+										!!(
+											selectedBeingId === userEntitySummary.id &&
+											canEditCurrentUser
+										)
 									}
 								/>
 							</div>
