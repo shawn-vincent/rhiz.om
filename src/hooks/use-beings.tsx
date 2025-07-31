@@ -6,7 +6,7 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import type { BeingType, EntitySummary } from "~/lib/space-types";
+import type { BeingType, EntitySummary } from "../../packages/entity-kit/src/types";
 import type { BeingId } from "~/lib/types";
 import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
@@ -32,10 +32,11 @@ export function useBeings(initialType?: BeingType, spaceId?: BeingId) {
 	// No more stream beings - use tRPC only
 
 	// Get all beings from global cache
-	const rq = api.being.getAll.useQuery(void 0, {
+	const rq = api.being.getAll.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 		enabled: typeof window !== "undefined",
 	});
+
 
 	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
@@ -110,7 +111,7 @@ export function BeingCacheProvider({
 	// No more stream beings - using tRPC only
 
 	// Get all beings from global cache
-	const rq = api.being.getAll.useQuery(void 0, {
+	const rq = api.being.getAll.useQuery(undefined, {
 		staleTime: 5 * 60 * 1000,
 		enabled: typeof window !== "undefined",
 	});

@@ -61,7 +61,7 @@ export function Config() {
 
 	// Get all beings and filter to current space
 	const { data: allBeings, isLoading: isLoadingBeings } =
-		api.being.getAll.useQuery();
+		api.being.getAll.useQuery(undefined);
 
 	// Filter beings to current space
 	const beingsInSpace = allBeings

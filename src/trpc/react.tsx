@@ -32,34 +32,12 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 				loggerLink({
 					enabled: (op) =>
 						process.env.NODE_ENV === "development" &&
-						(op.direction === "down" ||
-							(op.direction === "up" &&
-								"path" in op &&
-								op.path?.includes("being.getAll"))),
+						(op.direction === "down" || op.direction === "up"),
 					logger: (opts) => {
-						// Temporary: Debug being.getAll calls with undefined
-						if ("path" in opts && opts.path?.includes("being.getAll")) {
-							console.log(`🔍 being.getAll DEBUG:`, {
-								path: "path" in opts ? opts.path : "unknown",
-								direction: opts.direction,
-								input: "input" in opts ? opts.input : "unknown",
-								inputString:
-									"input" in opts ? JSON.stringify(opts.input) : "unknown",
-								hasUndefined:
-									"input" in opts
-										? JSON.stringify(opts.input).includes("undefined")
-										: false,
-								result:
-									"result" in opts && opts.result instanceof Error
-										? "ERROR"
-										: "SUCCESS",
-							});
-						}
-
-						// Only log errors
+						// Log all errors
 						if (opts.direction === "down" && opts.result instanceof Error) {
 							const error = opts.result as any;
-							console.group(`🚨 tRPC Error: ${opts.path}`);
+							console.group(`🚨 tRPC Error: ${opts.path || 'unknown'}`);
 							console.error("Error Details:", {
 								message: error.message,
 								code: error.code,
@@ -69,7 +47,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 								cause: error.cause,
 							});
 							console.error("Request Details:", {
-								path: opts.path,
+								path: opts.path || 'unknown',
 								input: opts.input,
 								type: opts.type,
 								elapsedMs: opts.elapsedMs,
@@ -78,6 +56,19 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 								console.error("Validation Errors:", error.data.zodError);
 							}
 							console.groupEnd();
+						}
+						
+						// Log successful being.getAll calls for debugging (safely)
+						if (opts.direction === "down" && 
+							!(opts.result instanceof Error) &&
+							opts.path && 
+							typeof opts.path === "string" && 
+							opts.path === "being.getAll") {
+							console.log("✅ being.getAll success:", {
+								path: opts.path,
+								resultCount: Array.isArray(opts.result?.data?.json) ? opts.result.data.json.length : 'unknown',
+								elapsedMs: opts.elapsedMs,
+							});
 						}
 					},
 				}),
