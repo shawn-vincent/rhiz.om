@@ -12,6 +12,7 @@ import {
 import superjson from "superjson";
 import { RichContent } from "~/app/_components/rich-content";
 import { ChatInput, type ChatInputRef } from "~/components/chat-input";
+import { FloatingVideoOrbs } from "~/components/floating-video-orbs";
 import { Avatar, type BeingType } from "~/components/ui/avatar";
 import ErrorBoundary from "~/components/ui/error-boundary";
 import { useSync } from "~/hooks/use-sync";
@@ -178,6 +179,18 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 
 	return (
 		<ErrorBoundary>
+			<FloatingVideoOrbs
+				participants={syncBeings
+					.filter(
+						(b) =>
+							b.id !== currentUserBeingId &&
+							b.type === "guest" &&
+							!b.botModel &&
+							room?.remoteParticipants?.has(b.id),
+					)
+					.map((b) => b.id)}
+				room={room}
+			/>
 			<div className="relative flex h-full w-full flex-col bg-white/20">
 				{/* Top shadow overlay */}
 				<div className="pointer-events-none absolute top-0 right-0 left-0 z-10 h-4 bg-gradient-to-b from-black/30 to-transparent" />
