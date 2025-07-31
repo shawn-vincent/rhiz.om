@@ -39,7 +39,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 	const chatInputRef = useRef<ChatInputRef>(null);
 
 	// Use sync for real-time intentions and beings
-	const { beings: syncBeings, intentions: utterances } = useSync(beingId);
+	const { beings: syncBeings, intentions: utterances, room } = useSync(beingId);
 
 	// Utterances come directly from sync system with real-time updates
 
@@ -318,6 +318,7 @@ export function Chat({ currentUserBeingId, beingId }: ChatProps) {
 						disabled={isSubmitting}
 						placeholder="Say something..."
 						currentUserBeingId={currentUserBeingId}
+						room={room}
 					/>
 				</div>
 			</div>

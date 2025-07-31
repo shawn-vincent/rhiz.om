@@ -19,8 +19,9 @@ import {
 	useState,
 } from "react";
 import { BeingEditModal } from "~/components/being-edit-modal";
-import { Avatar } from "~/components/ui/avatar";
+import { VideoAvatar } from "~/components/ui/video-avatar";
 import { useBeing } from "~/hooks/use-beings";
+import type { Room } from "livekit-client";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/lib/types";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";
@@ -33,6 +34,7 @@ interface ChatInputProps {
 	disabled?: boolean;
 	placeholder?: string;
 	currentUserBeingId?: BeingId;
+	room?: Room | null;
 }
 
 export interface ChatInputRef {
@@ -48,6 +50,7 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 			disabled = false,
 			placeholder = "Say something...",
 			currentUserBeingId,
+			room,
 		},
 		ref,
 	) => {
@@ -337,11 +340,13 @@ const ChatInputComponent = forwardRef<ChatInputRef, ChatInputProps>(
 							aria-label="Show user details"
 						>
 							<div className="relative">
-								<Avatar
+								<VideoAvatar
 									beingId={currentUserBeingId}
 									beingType="guest"
 									size="md"
 									className="transition-opacity hover:opacity-80"
+									room={room}
+									mirrored={true}
 								/>
 								{/* Online indicator dot */}
 								<div className="-bottom-0.5 -right-0.5 absolute h-3 w-3 rounded-full border-2 border-black bg-green-400" />
