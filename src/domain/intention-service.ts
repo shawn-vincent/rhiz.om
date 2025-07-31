@@ -13,7 +13,7 @@ import type { AuthContext } from "./auth-service";
 
 export interface CreateUtteranceInput {
 	content: string;
-	beingId: string;
+	beingId: BeingId;
 }
 
 export class IntentionService {
@@ -22,7 +22,7 @@ export class IntentionService {
 	/**
 	 * Get all utterances/intentions in a specific being (location)
 	 */
-	async getIntentionsInLocation(beingId: string): Promise<Intention[]> {
+	async getIntentionsInLocation(beingId: BeingId): Promise<Intention[]> {
 		const results = await this.db.query.intentions.findMany({
 			where: eq(intentions.locationId, beingId),
 			orderBy: (intentions, { asc }) => [asc(intentions.createdAt)],
@@ -67,7 +67,7 @@ export class IntentionService {
 	/**
 	 * Get a specific intention by ID
 	 */
-	async getIntention(id: string): Promise<Intention | null> {
+	async getIntention(id: IntentionId): Promise<Intention | null> {
 		const result = await this.db.query.intentions.findFirst({
 			where: eq(intentions.id, id),
 		});
@@ -78,7 +78,7 @@ export class IntentionService {
 	 * Update an intention (for bot responses, state changes, etc.)
 	 */
 	async updateIntention(
-		id: string,
+		id: IntentionId,
 		updates: Partial<InsertIntention>,
 		actorId: BeingId,
 	): Promise<Intention> {

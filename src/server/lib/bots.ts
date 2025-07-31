@@ -48,7 +48,7 @@ export async function activateBot(
 		botLogger.info({ botId, spaceId, triggeringIntentionId }, "Activating bot");
 
 		// Create AI intention for this bot
-		const aiIntentionId = `/utterance-ai-${crypto.randomUUID()}`;
+		const aiIntentionId: IntentionId = `/utterance-ai-${crypto.randomUUID()}`;
 		const { createIntention } = await import("~/lib/being-operations");
 
 		await createIntention(
@@ -86,7 +86,7 @@ export async function activateBot(
 async function streamBotResponse(
 	botId: BeingId,
 	triggeringIntentionId: IntentionId,
-	aiIntentionId: string,
+	aiIntentionId: IntentionId,
 	spaceId: BeingId,
 ): Promise<void> {
 	try {

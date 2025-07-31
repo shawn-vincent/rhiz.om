@@ -1,6 +1,12 @@
 // src/server/db/types.ts
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import {
+	type BeingId,
+	type IntentionId,
+	beingIdSchema,
+	intentionIdSchema,
+} from "../../lib/types/ids";
 import * as schema from "./schema";
 
 // --- Component Schemas for JSONB columns ---
@@ -36,8 +42,11 @@ const baseInsertBeingSchema = createInsertSchema(schema.beings);
 const baseSelectIntentionSchema = createSelectSchema(schema.intentions);
 const baseInsertIntentionSchema = createInsertSchema(schema.intentions);
 
-// Beings - extend base schemas with proper JSONB column types
+// Beings - extend base schemas with proper JSONB column types and ID types
 export const selectBeingSchema = baseSelectBeingSchema.extend({
+	id: beingIdSchema,
+	ownerId: beingIdSchema.nullable(),
+	locationId: beingIdSchema.nullable(),
 	extIds: z.array(extIdSchema).nullable(),
 	idHistory: z.array(z.string()).nullable(),
 	metadata: z.record(z.string(), z.unknown()).nullable(),
@@ -49,6 +58,9 @@ export const selectBeingSchema = baseSelectBeingSchema.extend({
 });
 
 export const insertBeingSchema = baseInsertBeingSchema.extend({
+	id: beingIdSchema,
+	ownerId: beingIdSchema.nullable().optional(),
+	locationId: beingIdSchema.nullable().optional(),
 	extIds: z.array(extIdSchema).optional(),
 	idHistory: z.array(z.string()).optional(),
 	metadata: z.record(z.string(), z.unknown()).optional(),
@@ -59,26 +71,27 @@ export const insertBeingSchema = baseInsertBeingSchema.extend({
 	llmApiKey: z.string().optional(),
 });
 
-// Intentions - extend base schemas with proper JSONB column types
+// Intentions - extend base schemas with proper JSONB column types and ID types
 export const selectIntentionSchema = baseSelectIntentionSchema.extend({
+	id: intentionIdSchema,
 	content: z.array(contentNodeSchema), // This field is non-nullable
 });
 
 export const insertIntentionSchema = baseInsertIntentionSchema.extend({
+	id: intentionIdSchema,
 	content: z.array(contentNodeSchema),
 });
 
-// Users (no jsonb columns, so no custom schema needed)
-export const selectUserSchema = createSelectSchema(schema.users);
-export const insertUserSchema = createInsertSchema(schema.users);
+// Users - extend to properly type beingId
+export const selectUserSchema = createSelectSchema(schema.users).extend({
+	beingId: beingIdSchema.nullable(),
+});
+export const insertUserSchema = createInsertSchema(schema.users).extend({
+	beingId: beingIdSchema.nullable().optional(),
+});
 
-// --- ID Types (from data model spec) ---
-
-/** A Being's canonical identifier */
-export type BeingId = `@${string}` | `/${string}`;
-
-/** An Intention's identifier – **always** begins with `/` */
-export type IntentionId = `/${string}`;
+// --- ID Types (re-export from central location) ---
+export type { BeingId, IntentionId } from "../../lib/types/ids";
 
 // --- Inferred TypeScript Types ---
 
