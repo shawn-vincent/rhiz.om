@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Room } from "livekit-client";
 import { RoomEvent, ConnectionState } from "livekit-client";
 import { BeingEditModal } from "~/components/being-edit-modal";
-import { Avatar } from "~/components/ui/avatar";
+import { VideoAvatar } from "~/components/ui/video-avatar";
 import { useSync } from "~/hooks/use-sync";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/lib/types";
@@ -104,7 +104,10 @@ export function BeingPresence({
 
 		// Transform beings to match expected format, excluding current user
 		const beingPresenceData: BeingPresenceData[] = beings
-			.filter((being) => being.id !== currentUserBeingId) // Exclude self
+			.filter((being) => {
+				// Always exclude self - handle both undefined currentUserBeingId and ensure string comparison
+				return being.id !== currentUserBeingId && being.id !== session?.user?.beingId;
+			})
 			.map((being) => ({
 				id: being.id,
 				name: being.name,
@@ -235,15 +238,17 @@ export function BeingPresence({
 					aria-label="Show user details"
 				>
 					<div className="relative">
-						<Avatar
+						<VideoAvatar
 							beingId={firstBeing.id}
 							beingType={firstBeing.type}
-							size="sm"
+							size="md"
 							className={`ring-2 ${
 								firstBeing.isOnline
 									? "ring-green-400/50"
 									: "opacity-60 ring-gray-400/50"
 							}`}
+							room={room}
+							mirrored={false}
 						/>
 						{/* Online/offline indicator */}
 						<div
@@ -350,10 +355,10 @@ export function BeingPresence({
 							role="button"
 							aria-label={`View details for ${being.name}`}
 						>
-							<Avatar
+							<VideoAvatar
 								beingId={being.id}
 								beingType={being.type}
-								size="sm"
+								size="md"
 								className={`ring-2 transition-all hover:scale-110 ${
 									isSpace
 										? "ring-blue-400/50 hover:ring-blue-400"
@@ -361,6 +366,8 @@ export function BeingPresence({
 											? "ring-green-400/50 hover:ring-green-400"
 											: "ring-gray-600/30"
 								}`}
+								room={room}
+								mirrored={false}
 							/>
 							{/* Online/offline indicator */}
 							<div
