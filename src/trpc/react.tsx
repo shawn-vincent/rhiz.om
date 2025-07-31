@@ -66,7 +66,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 							opts.path === "being.getAll") {
 							console.log("✅ being.getAll success:", {
 								path: opts.path,
-								resultCount: Array.isArray(opts.result?.data?.json) ? opts.result.data.json.length : 'unknown',
+								resultCount: Array.isArray((opts.result as any)?.json) ? (opts.result as any).json.length : 'unknown',
 								elapsedMs: opts.elapsedMs,
 							});
 						}
