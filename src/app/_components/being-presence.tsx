@@ -1,11 +1,11 @@
 // src/app/_components/being-presence.tsx
 "use client";
 
+import type { Room } from "livekit-client";
+import { ConnectionState, RoomEvent } from "livekit-client";
 import { useSession } from "next-auth/react";
 import type { BeingType } from "packages/entity-kit/src/types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Room } from "livekit-client";
-import { RoomEvent, ConnectionState } from "livekit-client";
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { VideoAvatar } from "~/components/ui/video-avatar";
 import { useSync } from "~/hooks/use-sync";
@@ -32,7 +32,11 @@ export function BeingPresence({
 	currentSpaceId,
 }: BeingPresenceProps) {
 	// Use sync for real-time being and intention updates
-	const { beings: syncBeings, isConnected, room } = currentSpaceId
+	const {
+		beings: syncBeings,
+		isConnected,
+		room,
+	} = currentSpaceId
 		? useSync(currentSpaceId)
 		: { beings: [], isConnected: false, room: null };
 
@@ -50,7 +54,7 @@ export function BeingPresence({
 		if (!room) return;
 
 		const handleParticipantChange = () => {
-			setParticipantVersion(prev => prev + 1);
+			setParticipantVersion((prev) => prev + 1);
 		};
 
 		// Listen for participant connected/disconnected events and room connection changes
@@ -68,25 +72,33 @@ export function BeingPresence({
 	}, [room]);
 
 	// Helper function to check if a being is online based on LiveKit room participants
-	const isBeingOnlineInRoom = useCallback((beingId: BeingId, room: Room | null): boolean => {
-		if (!room) return false;
+	const isBeingOnlineInRoom = useCallback(
+		(beingId: BeingId, room: Room | null): boolean => {
+			if (!room) return false;
 
-		// Only check participants if room is actually connected
-		if (room.state !== ConnectionState.Connected) {
-			return false;
-		}
-		
-		// Spaces and bots are always considered "online" (they have different colored dots)
-		const being = beings.find(b => b.id === beingId);
-		if (being && (being.type === 'space' || being.type === 'bot')) {
-			return true;
-		}
-		
-		// For guests, check if they're actually in the LiveKit room
-		// Check both local participant and remote participants
-		const allParticipants = [room.localParticipant, ...Array.from(room.remoteParticipants.values())];
-		return allParticipants.some(participant => participant?.identity === beingId);
-	}, [beings]);
+			// Only check participants if room is actually connected
+			if (room.state !== ConnectionState.Connected) {
+				return false;
+			}
+
+			// Spaces and bots are always considered "online" (they have different colored dots)
+			const being = beings.find((b) => b.id === beingId);
+			if (being && (being.type === "space" || being.type === "bot")) {
+				return true;
+			}
+
+			// For guests, check if they're actually in the LiveKit room
+			// Check both local participant and remote participants
+			const allParticipants = [
+				room.localParticipant,
+				...Array.from(room.remoteParticipants.values()),
+			];
+			return allParticipants.some(
+				(participant) => participant?.identity === beingId,
+			);
+		},
+		[beings],
+	);
 
 	// Memoize expensive computations
 	const {
@@ -106,7 +118,9 @@ export function BeingPresence({
 		const beingPresenceData: BeingPresenceData[] = beings
 			.filter((being) => {
 				// Always exclude self - handle both undefined currentUserBeingId and ensure string comparison
-				return being.id !== currentUserBeingId && being.id !== session?.user?.beingId;
+				return (
+					being.id !== currentUserBeingId && being.id !== session?.user?.beingId
+				);
 			})
 			.map((being) => ({
 				id: being.id,
@@ -143,7 +157,13 @@ export function BeingPresence({
 			disconnectedGuests,
 			orderedBeings,
 		};
-	}, [beings, currentUserBeingId, room, isBeingOnlineInRoom, participantVersion]);
+	}, [
+		beings,
+		currentUserBeingId,
+		room,
+		isBeingOnlineInRoom,
+		participantVersion,
+	]);
 
 	// State for showing popover and editing
 	const [showPopover, setShowPopover] = useState(false);

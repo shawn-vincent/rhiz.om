@@ -1,11 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import type { Room, LocalVideoTrack, RemoteVideoTrack, TrackPublication, RemoteParticipant } from "livekit-client";
+import type {
+	LocalVideoTrack,
+	RemoteParticipant,
+	RemoteVideoTrack,
+	Room,
+	TrackPublication,
+} from "livekit-client";
 import { RoomEvent, Track } from "livekit-client";
-import { Avatar, type BeingType } from "./avatar";
+import { useEffect, useRef, useState } from "react";
 import type { BeingId } from "~/lib/types";
 import { cn } from "~/lib/utils";
+import { Avatar, type BeingType } from "./avatar";
 
 interface VideoAvatarProps {
 	beingId?: BeingId;
@@ -21,7 +27,7 @@ interface VideoAvatarProps {
 
 const sizeClasses = {
 	sm: "size-8", // 32px
-	md: "size-10", // 40px  
+	md: "size-10", // 40px
 	lg: "size-12", // 48px
 };
 
@@ -37,7 +43,9 @@ export function VideoAvatar({
 }: VideoAvatarProps) {
 	const videoRef = useRef<HTMLVideoElement>(null);
 	const [hasVideo, setHasVideo] = useState(false);
-	const [videoTrack, setVideoTrack] = useState<LocalVideoTrack | RemoteVideoTrack | null>(null);
+	const [videoTrack, setVideoTrack] = useState<
+		LocalVideoTrack | RemoteVideoTrack | null
+	>(null);
 
 	const sizeClass = sizeClasses[size];
 
@@ -54,23 +62,34 @@ export function VideoAvatar({
 
 		const updateCameraTrack = () => {
 			let cameraPublication: TrackPublication | undefined;
-			
+
 			if (isLocal) {
 				// Local participant
-				cameraPublication = room.localParticipant.getTrackPublication(Track.Source.Camera);
+				cameraPublication = room.localParticipant.getTrackPublication(
+					Track.Source.Camera,
+				);
 			} else {
 				// Remote participant - find by identity
-				const remoteParticipant = Array.from(room.remoteParticipants.values())
-					.find(p => p.identity === beingId);
-				
+				const remoteParticipant = Array.from(
+					room.remoteParticipants.values(),
+				).find((p) => p.identity === beingId);
+
 				if (remoteParticipant) {
-					cameraPublication = remoteParticipant.getTrackPublication(Track.Source.Camera);
+					cameraPublication = remoteParticipant.getTrackPublication(
+						Track.Source.Camera,
+					);
 				}
 			}
-			
+
 			// Check if track is available, subscribed, and not muted
-			if (cameraPublication?.track && cameraPublication.isSubscribed && !cameraPublication.isMuted) {
-				const track = cameraPublication.track as LocalVideoTrack | RemoteVideoTrack;
+			if (
+				cameraPublication?.track &&
+				cameraPublication.isSubscribed &&
+				!cameraPublication.isMuted
+			) {
+				const track = cameraPublication.track as
+					| LocalVideoTrack
+					| RemoteVideoTrack;
 				setVideoTrack(track);
 				setHasVideo(true);
 			} else {
@@ -114,7 +133,10 @@ export function VideoAvatar({
 			room.off(RoomEvent.TrackMuted, handleTrackMuted);
 			room.off(RoomEvent.TrackUnmuted, handleTrackUnmuted);
 			room.off(RoomEvent.ParticipantConnected, handleParticipantConnected);
-			room.off(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected);
+			room.off(
+				RoomEvent.ParticipantDisconnected,
+				handleParticipantDisconnected,
+			);
 		};
 	}, [room, beingId, isLocal]);
 
@@ -123,7 +145,7 @@ export function VideoAvatar({
 		if (!videoRef.current || !videoTrack) return;
 
 		const videoElement = videoRef.current;
-		
+
 		try {
 			videoTrack.attach(videoElement);
 		} catch (error) {
@@ -142,12 +164,18 @@ export function VideoAvatar({
 	// If we have video, show video element instead of avatar
 	if (hasVideo && videoTrack) {
 		return (
-			<div className={cn("relative overflow-hidden rounded-full", sizeClass, className)}>
+			<div
+				className={cn(
+					"relative overflow-hidden rounded-full",
+					sizeClass,
+					className,
+				)}
+			>
 				<video
 					ref={videoRef}
 					className={cn(
 						"h-full w-full object-cover",
-						mirrored && "scale-x-[-1]" // Mirror the video horizontally for self-view
+						mirrored && "scale-x-[-1]", // Mirror the video horizontally for self-view
 					)}
 					autoPlay
 					muted

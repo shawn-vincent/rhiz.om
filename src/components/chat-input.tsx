@@ -6,6 +6,7 @@ import { EditorView, keymap } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
 import { createTheme } from "@uiw/codemirror-themes";
 import CodeMirror from "@uiw/react-codemirror";
+import type { Room } from "livekit-client";
 import { Send } from "lucide-react";
 import { useSession } from "next-auth/react";
 import {
@@ -21,7 +22,6 @@ import {
 import { BeingEditModal } from "~/components/being-edit-modal";
 import { VideoAvatar } from "~/components/ui/video-avatar";
 import { useBeing } from "~/hooks/use-beings";
-import type { Room } from "livekit-client";
 import { canEdit as canEditPermission, isSuperuser } from "~/lib/permissions";
 import type { BeingId } from "~/lib/types";
 import { EntityCard } from "../../packages/entity-kit/src/components/ui/EntityCard";

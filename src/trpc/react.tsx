@@ -37,7 +37,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 						// Log all errors
 						if (opts.direction === "down" && opts.result instanceof Error) {
 							const error = opts.result as any;
-							console.group(`🚨 tRPC Error: ${opts.path || 'unknown'}`);
+							console.group(`🚨 tRPC Error: ${opts.path || "unknown"}`);
 							console.error("Error Details:", {
 								message: error.message,
 								code: error.code,
@@ -47,7 +47,7 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 								cause: error.cause,
 							});
 							console.error("Request Details:", {
-								path: opts.path || 'unknown',
+								path: opts.path || "unknown",
 								input: opts.input,
 								type: opts.type,
 								elapsedMs: opts.elapsedMs,
@@ -57,16 +57,20 @@ export function TRPCReactProvider(props: { children: React.ReactNode }) {
 							}
 							console.groupEnd();
 						}
-						
+
 						// Log successful being.getAll calls for debugging (safely)
-						if (opts.direction === "down" && 
+						if (
+							opts.direction === "down" &&
 							!(opts.result instanceof Error) &&
-							opts.path && 
-							typeof opts.path === "string" && 
-							opts.path === "being.getAll") {
+							opts.path &&
+							typeof opts.path === "string" &&
+							opts.path === "being.getAll"
+						) {
 							console.log("✅ being.getAll success:", {
 								path: opts.path,
-								resultCount: Array.isArray((opts.result as any)?.json) ? (opts.result as any).json.length : 'unknown',
+								resultCount: Array.isArray((opts.result as any)?.json)
+									? (opts.result as any).json.length
+									: "unknown",
 								elapsedMs: opts.elapsedMs,
 							});
 						}

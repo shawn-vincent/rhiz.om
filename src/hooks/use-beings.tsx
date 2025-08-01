@@ -6,10 +6,13 @@ import {
 	useMemo,
 	useState,
 } from "react";
-import type { BeingType, EntitySummary } from "../../packages/entity-kit/src/types";
 import type { BeingId } from "~/lib/types";
 import type { Being } from "~/server/db/types";
 import { api } from "~/trpc/react";
+import type {
+	BeingType,
+	EntitySummary,
+} from "../../packages/entity-kit/src/types";
 import { useRecents } from "./use-recents";
 
 // Global being cache context to prevent multiple stream connections
@@ -36,7 +39,6 @@ export function useBeings(initialType?: BeingType, spaceId?: BeingId) {
 		staleTime: 5 * 60 * 1000,
 		enabled: typeof window !== "undefined",
 	});
-
 
 	// Create being cache from tRPC data only
 	const beingMap = useMemo(() => {
