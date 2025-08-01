@@ -86,12 +86,14 @@ export function FloatingVideoOrbs({
 							height: orbSize,
 						}}
 					>
-						<VideoAvatar
-							beingId={beingId}
-							room={room}
-							size="lg"
-							className="pointer-events-none !h-full !w-full !size-auto [&>div]:!h-full [&>div]:!w-full [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover"
-						/>
+						<div className="h-full w-full [&>*]:!h-full [&>*]:!w-full">
+							<VideoAvatar
+								beingId={beingId}
+								room={room}
+								size="lg"
+								className="pointer-events-none [&_video]:!h-full [&_video]:!w-full [&_video]:!object-cover"
+							/>
+						</div>
 					</div>
 				);
 			})}
